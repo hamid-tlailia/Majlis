@@ -720,7 +720,11 @@ function go(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   $(id).classList.add('on'); cur=id; scrollTo(0,0);
   document.body.classList.toggle('playing',id!=='lobby');
-  if(id==='ludo') requestAnimationFrame(()=>{ sizeDie(); ludoPlace(); });
+  if(id==='ludo'){
+    lStop=false;
+    requestAnimationFrame(()=>{ sizeDie(); ludoPlace(); });
+    if(ACT.length&&!lOver&&!lBusy&&!lDie&&!HUM[lCur]) setTimeout(()=>{ if(cur==='ludo') roll(); },800);
+  }
   if(id!=='lobby'){ try{history.pushState({s:id},'');}catch(e){} }
 }
 function askExit(){
@@ -731,6 +735,9 @@ function askExit(){
 function cancelExit(){ sfx('tap'); $('ovExit').classList.remove('on'); }
 function doExit(){
   sfx('tap'); $('ovExit').classList.remove('on'); closeAll();
+  lStop=true; lBusy=false; lDie=0;
+  if(moveIV){ clearInterval(moveIV); moveIV=null; }
+  clearCan(); clearTimeout(tmr); $('toast').classList.remove('on');
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   $('lobby').classList.add('on'); cur='lobby'; document.body.classList.remove('playing'); scrollTo(0,0);
 }
@@ -1019,7 +1026,7 @@ function mix(a,b,t){
   return '#'+c(r1,r2)+c(g1,g2)+c(b1,b2);
 }
 let LT=[[],[],[],[]],ACT=[],HUM=[],lCur=0,lBusy=false,lDie=0,lOver=false;
-let stuck=[0,0,0,0],drought=[0,0,0,0];
+let stuck=[0,0,0,0],drought=[0,0,0,0],lStop=false,moveIV=null;
 const CP=()=>ACT[lCur];
 const cname=p=>COLNAME[lang][p];
 const nameOf=p=>(cfg.mode==='solo'&&p===ACT[0])?t('you'):cname(p);
@@ -1189,7 +1196,7 @@ function legal(p,d){
   LT[p].forEach((v,i)=>{ if(v<0){ if(d===6) out.push(i); } else if(v<56&&v+d<=56) out.push(i); });
   return out;
 }
-function hint(x,loud){ if(loud) toast(String(x).replace(/<[^>]*>/g,'').trim()); }
+function hint(x,loud){ if(loud&&cur==='ludo'&&!lStop) toast(String(x).replace(/<[^>]*>/g,'').trim()); }
 function ludoHintIdle(){}
 function ludoStart(){
   closeAll(); sfx('tap');
@@ -1204,7 +1211,7 @@ function ludoStart(){
   if(!HUM[lCur]) setTimeout(roll,700);
 }
 function roll(){
-  if(lBusy||lOver) return;
+  if(lBusy||lOver||lStop||cur!=='ludo') return;
   lBusy=true; clearCan();
   const p=CP(), d=$('die');
   sfx('roll'); buzz(20);
@@ -1243,15 +1250,18 @@ function botPick(p,mv,d){
   return mv[sc.indexOf(Math.max(...sc))];
 }
 function move(p,i){
+  if(lStop) return;
   const steps=lDie; let k=0; const el=$(`t${p}_${i}`);
   if(LT[p][i]<0){ LT[p][i]=0; ludoPlace(); sfx('step'); hop(el); setTimeout(()=>land(p,i,false),280); return; }
-  const iv=setInterval(()=>{
+  moveIV=setInterval(()=>{
+    if(lStop){ clearInterval(moveIV); moveIV=null; return; }
     LT[p][i]++; k++; ludoPlace(); sfx('step'); hop(el); buzz(6);
-    if(k===steps){ clearInterval(iv); setTimeout(()=>land(p,i,true),200); }
+    if(k===steps){ clearInterval(moveIV); moveIV=null; setTimeout(()=>land(p,i,true),200); }
   },165);
 }
 function hop(el){ el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); }
 function land(p,i,cap){
+  if(lStop) return;
   let extra=(lDie===6); const v=LT[p][i];
   if(cap&&v<=50){
     const abs=(PL[p].start+v)%52;
@@ -1262,7 +1272,7 @@ function land(p,i,cap){
             const dead=$(`t${q}_${j}`);
             dead.classList.add('dead'); setTimeout(()=>dead.classList.remove('dead'),420);
             LT[q][j]=-1; extra=true; sfx('cap'); shake(); buzz([30,40,60]); burstAt(dead,30);
-            toast(`${nameOf(p)} ${t('ate')} ${cname(q)}`);
+            if(cur==='ludo'&&!lStop) toast(`${nameOf(p)} ${t('ate')} ${cname(q)}`);
           }
         });
       });
@@ -1279,7 +1289,7 @@ function land(p,i,cap){
       showBanner(isYou?t('youWon'):`${t('won')} ${cname(p)}`,t('finished'),[PL[p].c,BONE,BRASS]);
       return;
     }
-    toast(t('homeIn'));
+    if(cur==='ludo'&&!lStop) toast(t('homeIn'));
   }
   lrail();
   if(extra){ lBusy=false; setDie(CP()); hint(`${nameOf(CP())} — ${t('extra')}`,true);
@@ -1287,6 +1297,7 @@ function land(p,i,cap){
   nextTurn();
 }
 function nextTurn(){
+  if(lStop) return;
   lCur=(lCur+1)%ACT.length; lDie=0; lBusy=false; lrail(); setDie(CP());
   const d=$('die');
   if(HUM[lCur]){ d.disabled=false; hint(cfg.mode==='solo'?t('yourTurn'):`${t('turnOf')} <b>${cname(CP())}</b> — ${t('pressDie')}`); }
