@@ -735,6 +735,8 @@ function askExit(){
 function cancelExit(){ sfx('tap'); $('ovExit').classList.remove('on'); }
 function doExit(){
   sfx('tap'); $('ovExit').classList.remove('on'); closeAll();
+  if(cur==='xo') xoZero();
+  if(cur==='mem') memZero();
   lStop=true; lBusy=false; lDie=0;
   if(moveIV){ clearInterval(moveIV); moveIV=null; }
   clearCan(); clearTimeout(tmr); $('toast').classList.remove('on');
@@ -823,8 +825,13 @@ function openXoSetup(){ sfx('tap'); buildSyms();
   $('ovXo').classList.add('on');
 }
 function xoNames(){ return cfgX.mode==='solo'?[t('you'),t('cpu')]:[t('p1'),t('p2')]; }
+function xoZero(){
+  xoS={a:0,b:0,d:0};
+  ['sx','sd','so'].forEach(id=>$(id).querySelector('b').textContent='0');
+}
 function xoNew(auto){
   closeAll(); if(!auto) sfx('tap');
+  if(!auto) xoZero();
   xoB=Array(9).fill(null); xoT=cfgX.first; xoLock=false;
   const bd=$('xoboard'); bd.innerHTML='';
   for(let i=0;i<9;i++){ const b=document.createElement('button'); b.onclick=()=>xoPlay(i); bd.appendChild(b); }
@@ -914,6 +921,10 @@ function openMemSetup(){ sfx('tap');
   document.querySelectorAll('[data-g="memSize"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgM.size));
   document.querySelectorAll('[data-g="memLvl"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgM.lvl));
   $('ovMem').classList.add('on');
+}
+function memZero(){
+  mScore=[0,0];
+  ['m1','m2'].forEach(id=>$(id).querySelector('b').textContent='0');
 }
 function memNew(auto){
   closeAll(); if(!auto) sfx('tap');
