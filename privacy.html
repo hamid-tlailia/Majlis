@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#100E0C">
+<title>الخصوصية · Privacy — المجلس</title>
+<link rel="icon" href="./icons/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans+Arabic:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#100E0C;--ink2:#1A1714;--bone:#EFE7D8;--brass:#CFA24A;--muted:#8C8375;--line:rgba(239,231,216,.10)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--bone);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;
+  line-height:1.85;padding:28px 20px 60px}
+main{max-width:640px;margin:0 auto}
+h1{font-family:"Aref Ruqaa",serif;font-size:34px;margin:6px 0 4px}
+h1 .en{font-family:"Fraunces",serif;font-size:22px;color:var(--muted);display:block;font-weight:600}
+h2{font-size:18px;margin:34px 0 8px;color:var(--brass)}
+p,li{font-size:14.5px;color:#D9D0BF}
+ul{padding-inline-start:20px}
+.card{background:var(--ink2);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-top:20px}
+.en-block{direction:ltr;text-align:left}
+.en-block h2{font-family:"Fraunces",serif}
+a{color:var(--brass)}
+.back{display:inline-block;margin-top:34px;color:var(--muted);text-decoration:none;font-size:14px}
+hr{border:none;border-top:1px solid var(--line);margin:38px 0}
+.badge{display:inline-block;font-size:11px;letter-spacing:.14em;color:var(--brass);
+  border:1px solid rgba(207,162,74,.4);border-radius:20px;padding:4px 11px}
+</style>
+</head>
+<body>
+<main>
+  <span class="badge">MAJLIS · v1.0.0</span>
+  <h1>سياسة الخصوصية<span class="en">Privacy Policy</span></h1>
+  <p>آخر تحديث: أغسطس 2026</p>
+
+  <div class="card">
+    <p><strong>الخلاصة:</strong> لا يجمع «المجلس» أي بيانات، ولا يرسل شيئاً إلى أي خادم، ولا يحتاج حساباً ولا إذناً من نظام هاتفك.</p>
+  </div>
+
+  <h2>ما الذي يُحفظ؟</h2>
+  <ul>
+    <li>الاسم المعروض والحالة واللغة وإعدادات الألعاب، وتُحفظ في <code>localStorage</code> داخل جهازك فقط.</li>
+    <li>ملفات التطبيق تُخزَّن مؤقتاً بواسطة عامل الخدمة (Service Worker) ليعمل دون إنترنت.</li>
+  </ul>
+
+  <h2>ما الذي لا يحدث؟</h2>
+  <ul>
+    <li>لا تتبّع، ولا تحليلات، ولا إعلانات، ولا ملفات ارتباط لطرف ثالث.</li>
+    <li>لا يُرسل أي شيء عبر الشبكة أثناء اللعب؛ التطبيق يعمل كاملاً دون اتصال.</li>
+    <li>لا وصول إلى جهات الاتصال أو الموقع أو الكاميرا أو الملفات.</li>
+  </ul>
+
+  <h2>الاتصال الخارجي الوحيد</h2>
+  <p>تُجلب الخطوط من Google Fonts عند أول فتح فقط، ثم تعمل النسخة المحفوظة. إن أردت انعداماً كاملاً للاتصال، احذف وسمَي الخطوط من <code>index.html</code> وستُستخدم خطوط النظام.</p>
+
+  <h2>حذف بياناتك</h2>
+  <p>إلغاء تثبيت التطبيق أو مسح بيانات الموقع من المتصفح يمحو كل شيء فوراً. لا توجد نسخة عندنا لنحذفها.</p>
+
+  <hr>
+
+  <div class="en-block">
+    <h2>Summary</h2>
+    <p>Majlis collects nothing. There is no account, no server, no analytics, and no third-party cookies.</p>
+    <h2>Stored on your device only</h2>
+    <ul>
+      <li>Display name, status, language and game settings, kept in <code>localStorage</code>.</li>
+      <li>App files cached by the service worker so the game runs offline.</li>
+    </ul>
+    <h2>Never collected</h2>
+    <ul>
+      <li>No tracking, telemetry, advertising or profiling.</li>
+      <li>No contacts, location, camera or file access.</li>
+      <li>Nothing is transmitted while you play.</li>
+    </ul>
+    <h2>Only outbound request</h2>
+    <p>Web fonts are fetched from Google Fonts on first load, then served from cache. Remove the two font tags in <code>index.html</code> for a fully self-contained build.</p>
+    <h2>Deleting your data</h2>
+    <p>Uninstalling the app or clearing site data erases everything instantly. We hold no copy.</p>
+  </div>
+
+  <a class="back" href="./index.html">← رجوع إلى المجلس / Back to Majlis</a>
+</main>
+</body>
+</html>
