@@ -1,5 +1,5 @@
 /* المجلس — عامل الخدمة | Majlis service worker */
-const VERSION = 'majlis-v1.5.4';
+const VERSION = 'majlis-v1.6.0';
 const SHELL = [
   './',
   './index.html',
