@@ -925,7 +925,7 @@ ar:{
  'net.share':'شارك هذا الرمز مع من تلعب معه','net.start':'ابدأ الجولة','net.leave':'خروج',
  'net.room':'غرفة','net.host':'المضيف','net.hostOnly':'المضيف وحده يبدأ الجولة',
  'net.connecting':'جارٍ الاتصال…','net.failed':'تعذّر الاتصال بالخادم','net.needUrl':'أدخل عنوان الخادم',
- 'net.needCode':'أدخل رمز الغرفة','net.left':'غادرت الغرفة','net.started':'بدأت الجولة',
+ 'net.needCode':'أدخل رمز الغرفة','net.badUrl':'العنوان يجب أن يبدأ بـ wss://','net.slow':'الاتصال يستغرق وقتاً — تأكّد من العنوان','net.left':'غادرت الغرفة','net.started':'بدأت الجولة',
  'net.weak':'الاتصال ضعيف — قد تتأخر الحركات',
  'net.micOn':'الميكروفون مفتوح','net.micMuted':'الميكروفون مكتوم','net.micOff':'أُغلق الصوت',
  'net.micDenied':'لم يُسمح باستخدام الميكروفون',
@@ -985,7 +985,7 @@ en:{
  'net.share':'Share this code with the person you are playing','net.start':'Start round','net.leave':'Leave',
  'net.room':'Room','net.host':'host','net.hostOnly':'Only the host starts the round',
  'net.connecting':'Connecting…','net.failed':'Could not reach the server','net.needUrl':'Enter the server address',
- 'net.needCode':'Enter the room code','net.left':'You left the room','net.started':'Round started',
+ 'net.needCode':'Enter the room code','net.badUrl':'Address must start with wss://','net.slow':'Taking a while — check the address','net.left':'You left the room','net.started':'Round started',
  'net.weak':'Weak connection — moves may lag',
  'net.micOn':'Microphone on','net.micMuted':'Microphone muted','net.micOff':'Voice off',
  'net.micDenied':'Microphone permission denied',
@@ -2475,27 +2475,34 @@ function openOnline(){
   if(netOn()) netRenderRoom(N().room);
   $('ovOnline').classList.add('on');
 }
+let netTimer=null;
 function netEnsure(){
   const url=$('netUrl').value.trim();
   if(!url){ sfx('miss'); toast(t('net.needUrl')); return false; }
+  if(!/^wss?:\/\//i.test(url)){ sfx('miss'); toast(t('net.badUrl')); return false; }
   N().url=netCfg.url=url; netSave();
   toast(t('net.connecting'));
+  clearTimeout(netTimer);
+  netTimer=setTimeout(()=>{ if(!netOn()) toast(t('net.slow')); },7000);
   return true;
 }
+function netDone(){ clearTimeout(netTimer); }
 async function netCreate(){
   if(!netEnsure()) return;
-  try{ await N().create(profile.name, cur==='lobby'?'mj':cur); }
-  catch(e){ sfx('miss'); toast(t('net.failed')); }
+  try{ await N().create(profile.name, cur==='lobby'?'mj':cur); netDone(); }
+  catch(e){ netDone(); sfx('miss'); toast(t('net.failed')); }
 }
 async function netJoin(){
   const code=$('netJoinCode').value.trim();
   if(code.length<4){ sfx('miss'); toast(t('net.needCode')); return; }
   if(!netEnsure()) return;
-  try{ await N().join(code, profile.name); }
-  catch(e){ sfx('miss'); toast(t('net.failed')); }
+  try{ await N().join(code, profile.name); netDone(); }
+  catch(e){ netDone(); sfx('miss'); toast(t('net.failed')); }
 }
 function netLeave(){
   closeAll(); N().disconnect();
+  $('netLobby').style.display='block';
+  $('netRoom').style.display='none';
   netCfg.code=''; netSave();
   $('netbar').style.display='none';
   toast(t('net.left'));
@@ -2506,6 +2513,8 @@ function netStart(){
 }
 function netRenderRoom(room){
   if(!room) return;
+  $('netLobby').style.display='none';
+  $('netRoom').style.display='block';
   $('roomCode').textContent=room.code;
   $('netcode').textContent=room.code;
   $('netbar').style.display='flex';
@@ -2541,7 +2550,7 @@ async function toggleMic(){
 /* ---- ربط الأحداث ---- */
 function netInit(){
   const M=N(); if(!M) return;
-  M.on.room = room=>{ netRenderRoom(room); netCfg.code=room.code; netSave(); };
+  M.on.room = room=>{ netDone(); netRenderRoom(room); netCfg.code=room.code; netSave(); };
   M.on.state = ({state,game})=>{ if(!netHost()) netApply(game,state); };
   M.on.game  = g=>{ if(!netHost()&&GAMEOF[g]) go(g); };
   M.on.input = m=>{ if(netHost()) netHandleInput(m); };
