@@ -1,8 +1,9 @@
 /* المجلس — عامل الخدمة | Majlis service worker */
-const VERSION = 'majlis-v3.0.0';
+const VERSION = 'majlis-v4.0.0';
 const SHELL = [
   './',
   './index.html',
+  './net.js',
   './privacy.html',
   './manifest.webmanifest',
   './icons/favicon-64.png',

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' ws: wss: https:; media-src 'self' blob:; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <title>المجلس · Majlis</title>
 <meta name="description" content="خمس ألعاب لوحية على جهاز واحد: إكس أو، لودو، الذاكرة، خطوط ومربّعات، ماهجونج. تعمل دون إنترنت. Five board games on one device, fully offline.">
@@ -346,7 +346,8 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
 /* ===== ماهجونج ===== */
 .mjwrap{width:100%;max-width:none;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;
   justify-content:space-evenly;gap:clamp(2px,.6vh,7px);--mjw:44px;perspective:1400px}
-.mjside{display:flex;justify-content:space-between;align-items:flex-start;gap:0;width:100%}
+.mjside{display:flex;justify-content:space-between;align-items:flex-start;gap:0;width:100%;
+  overflow:clip;overflow-clip-margin:12px}
 .mjside.foe{transform:rotateX(11deg);transform-origin:center bottom}
 .mjside.me{transform:rotateX(-9deg);transform-origin:center top}
 .mjframe{position:relative;width:100%;border-radius:20px;padding:clamp(8px,2vw,13px);align-self:center;
@@ -390,7 +391,7 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
 .mjcol.full{background:rgba(207,162,74,.16);box-shadow:0 0 0 2px var(--brass) inset}
 .mjcol.full .mjt{box-shadow:0 2px 0 #C9BEA6,0 4px 7px rgba(0,0,0,.42)}
 .mjcol.rev{flex-direction:column-reverse}
-.mjt{width:var(--mjw);height:var(--mjh);border-radius:var(--tr,10px);overflow:hidden;position:relative;
+.mjt{width:var(--mjw);height:var(--mjh);border-radius:var(--tr,10px);overflow:hidden;position:relative;isolation:isolate;
   background:var(--tileFace);box-shadow:0 2px 0 #C9BEA6,0 4px 7px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.9)}
 .mjt svg{width:100%;height:100%;display:block}
 .mjt.back{background:linear-gradient(158deg,var(--tileA),var(--tileB) 52%,var(--tileC));
@@ -424,7 +425,7 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
   transition:transform .5s cubic-bezier(.3,1.2,.4,1)}
 .mjlive.empty{opacity:0}
 .mjlive .fc{position:absolute;inset:0;border-radius:var(--tr,10px);overflow:hidden;backface-visibility:hidden;
-  box-shadow:0 8px 18px rgba(0,0,0,.6)}
+  box-shadow:0 0 0 3px var(--lc,var(--brass)),0 0 14px color-mix(in srgb,var(--lc,#CFA24A) 55%,transparent),0 8px 18px rgba(0,0,0,.6)}
 .mjlive .fc.front{background:var(--tileFace)}
 .mjlive .fc.rear{background:linear-gradient(158deg,var(--tileA),var(--tileB) 52%,var(--tileC));transform:rotateY(180deg)}
 .mjlive svg{width:100%;height:100%;display:block}
@@ -435,7 +436,7 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
 .mjfly{position:fixed;z-index:120;transform-style:preserve-3d;pointer-events:none;perspective:900px}
 .mjfly{max-width:110px;max-height:160px}
 .mjfly .fc{position:absolute;inset:0;border-radius:var(--tr,10px);overflow:hidden;backface-visibility:hidden;
-  box-shadow:0 10px 20px rgba(0,0,0,.65)}
+  box-shadow:0 0 0 3px var(--lc,var(--brass)),0 10px 20px rgba(0,0,0,.65)}
 .mjfly .fc.front{background:var(--tileFace)}
 .mjfly .fc.rear{background:linear-gradient(158deg,var(--tileA),var(--tileB) 52%,var(--tileC));transform:rotateY(180deg)}
 .mjfly .fc.rear::after{content:"";position:absolute;inset:15%;border-radius:12%;
@@ -454,6 +455,33 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
 .mjlot .l.top{border-color:var(--brass)}
 .mjlot .l.top .v{color:var(--brass)}
 
+/* ===== أونلاين ===== */
+.netbar{display:flex;align-items:center;gap:7px;margin:8px 0 0;padding:7px 11px;border-radius:12px;
+  background:var(--ink2);border:1px solid var(--line);font-size:12px;color:var(--bone2)}
+.netbar .dotq{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.netbar.good .dotq{background:var(--ok)} .netbar.ok .dotq{background:var(--brass)}
+.netbar.weak .dotq{background:var(--clay);animation:mjdot 1s infinite}
+.netbar.offline .dotq{background:#6a6a6a}
+.netbar .code{font-family:"IBM Plex Mono",monospace;letter-spacing:.18em;color:var(--brass);font-weight:600}
+.netbar .rtt{margin-inline-start:auto;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
+.netbar button{background:none;border:1px solid var(--line);color:var(--bone2);border-radius:8px;
+  padding:3px 9px;font-family:inherit;font-size:11.5px;cursor:pointer}
+.netbar button.mic.on{border-color:var(--ok);color:var(--ok)}
+.netbar button.mic.mut{border-color:var(--clay);color:var(--clay)}
+.roomcode{font-family:"IBM Plex Mono",monospace;font-size:30px;letter-spacing:.3em;color:var(--brass);
+  text-align:center;padding:14px 0 4px;font-weight:600}
+.roomhint{text-align:center;color:var(--muted);font-size:12.5px;margin:0 0 6px}
+.plist{display:flex;flex-direction:column;gap:7px;margin-top:12px}
+.prow{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:12px;
+  background:var(--ink3);border:1px solid var(--line)}
+.prow .av{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;
+  background:var(--bone);color:var(--ink);font-family:"Aref Ruqaa",serif;font-size:15px}
+.prow .nm{flex:1;min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow .tag{font-size:10.5px;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.prow.off{opacity:.45}
+.prow .mic{font-size:13px;color:var(--muted)}
+.prow .mic.on{color:var(--ok)}
+.codein{text-align:center;font-family:"IBM Plex Mono",monospace;letter-spacing:.28em;font-size:20px;text-transform:uppercase}
 /* ===== ثيمات ===== */
 html[data-theme="night"]{
   --ink:#0A0E18; --ink2:#141A28; --ink3:#1D2536; --line:rgba(214,226,245,.10);
@@ -491,6 +519,7 @@ html[data-theme="sand"]{
 </style>
 </head>
 <body>
+<script src="./net.js"></script>
 <canvas id="fx"></canvas>
 <div class="app" id="app">
 
@@ -512,7 +541,14 @@ html[data-theme="sand"]{
 
   <div class="strip">
     <span data-i="localOnly"></span>
-    <button onclick="openInvite()" data-i="inviteBtn"></button>
+    <button onclick="openOnline()" data-i="onlineBtn"></button>
+  </div>
+  <div class="netbar" id="netbar" style="display:none">
+    <i class="dotq"></i>
+    <span data-i="net.room"></span> <span class="code" id="netcode"></span>
+    <button class="mic" id="micBtn" onclick="toggleMic()">🎙</button>
+    <button onclick="netLeave()" data-i="net.leave"></button>
+    <span class="rtt" id="netrtt"></span>
   </div>
 
   <div class="games">
@@ -770,7 +806,7 @@ html[data-theme="sand"]{
 </div>
 
 <!-- ===== إعداد ماهجونج ===== -->
-<div class="overlay" id="ovMj" onclick="if(event.target===this)closeAll()">
+<div class="overlay" id="ovMj" onclick="if(event.target===this)dismissMjSetup()">
   <div class="sheet">
     <div class="grab"></div>
     <h2 data-i="g.mj"></h2><p class="sub" data-i="mj.s"></p>
@@ -818,6 +854,32 @@ html[data-theme="sand"]{
   </div>
 </div>
 
+<!-- ===== أونلاين ===== -->
+<div class="overlay" id="ovOnline" onclick="if(event.target===this)closeAll()">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 data-i="net.t"></h2><p class="sub" data-i="net.s"></p>
+
+    <div id="netLobby">
+      <label class="fl" data-i="net.server"></label>
+      <input class="txt" id="netUrl" autocomplete="off" spellcheck="false" placeholder="wss://example.com">
+      <label class="fl" data-i="net.code"></label>
+      <input class="txt codein" id="netJoinCode" maxlength="5" autocomplete="off" placeholder="ABCDE">
+      <button class="primary" onclick="netJoin()" data-i="net.join"></button>
+      <button class="secondary" onclick="netCreate()" data-i="net.create"></button>
+      <p class="note" data-i="net.note"></p>
+    </div>
+
+    <div id="netRoom" style="display:none">
+      <div class="roomcode" id="roomCode">-----</div>
+      <p class="roomhint" data-i="net.share"></p>
+      <div class="plist" id="plist"></div>
+      <button class="primary" onclick="netStart()" id="netStartBtn" data-i="net.start"></button>
+      <button class="secondary" onclick="netLeave()" data-i="net.leave"></button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== تأكيد الخروج ===== -->
 <div class="overlay" id="ovExit">
   <div class="sheet">
@@ -854,8 +916,22 @@ const I18N={
 ar:{
  brand:'المجلس',
  tagline:'خمس ألعاب لوحية على جهاز واحد. تعمل دون إنترنت.',
- localOnly:'نسخة محلية — الكل يلعب على هذا الجهاز',
+ localOnly:'العب محلياً أو عبر الشبكة',
  inviteBtn:'دعوة',
+ onlineBtn:'أونلاين',
+ 'net.t':'اللعب عبر الشبكة','net.s':'أنشئ غرفة وشارك رمزها، أو ادخل برمز صديقك.',
+ 'net.server':'عنوان الخادم','net.code':'رمز الغرفة','net.join':'انضم','net.create':'أنشئ غرفة جديدة',
+ 'net.note':'الخادم مفتوح المصدر داخل مجلد server — ارفعه على أي استضافة مجانية وضع عنوانه هنا مرة واحدة.',
+ 'net.share':'شارك هذا الرمز مع من تلعب معه','net.start':'ابدأ الجولة','net.leave':'خروج',
+ 'net.room':'غرفة','net.host':'المضيف','net.hostOnly':'المضيف وحده يبدأ الجولة',
+ 'net.connecting':'جارٍ الاتصال…','net.failed':'تعذّر الاتصال بالخادم','net.needUrl':'أدخل عنوان الخادم',
+ 'net.needCode':'أدخل رمز الغرفة','net.left':'غادرت الغرفة','net.started':'بدأت الجولة',
+ 'net.weak':'الاتصال ضعيف — قد تتأخر الحركات',
+ 'net.micOn':'الميكروفون مفتوح','net.micMuted':'الميكروفون مكتوم','net.micOff':'أُغلق الصوت',
+ 'net.micDenied':'لم يُسمح باستخدام الميكروفون',
+ 'net.sysJoined':'انضم إلى الغرفة','net.sysLeft':'غادر الغرفة','net.sysDrop':'انقطع اتصاله',
+ 'net.sysBack':'عاد إلى الغرفة','net.sysHost':'صار المضيف','net.sysRetry':'انقطع الاتصال — نحاول العودة…',
+ 'net.sysClosed':'أُغلقت الغرفة','net.errNoRoom':'لا توجد غرفة بهذا الرمز','net.errFull':'الغرفة ممتلئة',
  'g.xo':'إكس أو','g.ludo':'لودو','g.mem':'الذاكرة','g.dots':'خطوط ومربّعات','g.mj':'ماهجونج',
  'm.xo':'لاعبان','m.ludo':'٢-٤ لاعبين · ١٥ دقيقة','m.mem':'لاعبان · ٥ دقائق',
  'm.dots':'٢-٤ لاعبين',
@@ -900,8 +976,22 @@ ar:{
 en:{
  brand:'Majlis',
  tagline:'Five board games on one device. Works offline.',
- localOnly:'Local edition — everyone plays on this device',
+ localOnly:'Play locally or online',
  inviteBtn:'Invite',
+ onlineBtn:'Online',
+ 'net.t':'Play online','net.s':'Create a room and share its code, or enter a friend\'s code.',
+ 'net.server':'Server address','net.code':'Room code','net.join':'Join','net.create':'Create a room',
+ 'net.note':'The server is open source in the server folder — deploy it on any free host and paste its address here once.',
+ 'net.share':'Share this code with the person you are playing','net.start':'Start round','net.leave':'Leave',
+ 'net.room':'Room','net.host':'host','net.hostOnly':'Only the host starts the round',
+ 'net.connecting':'Connecting…','net.failed':'Could not reach the server','net.needUrl':'Enter the server address',
+ 'net.needCode':'Enter the room code','net.left':'You left the room','net.started':'Round started',
+ 'net.weak':'Weak connection — moves may lag',
+ 'net.micOn':'Microphone on','net.micMuted':'Microphone muted','net.micOff':'Voice off',
+ 'net.micDenied':'Microphone permission denied',
+ 'net.sysJoined':'joined the room','net.sysLeft':'left the room','net.sysDrop':'lost connection',
+ 'net.sysBack':'is back','net.sysHost':'is now the host','net.sysRetry':'Disconnected — reconnecting…',
+ 'net.sysClosed':'Room closed','net.errNoRoom':'No room with that code','net.errFull':'Room is full',
  'g.xo':'Tic-Tac-Toe','g.ludo':'Ludo','g.mem':'Memory','g.dots':'Dots & Boxes','g.mj':'Mahjong',
  'm.xo':'2 players','m.ludo':'2–4 players · 15 min','m.mem':'2 players · 5 min',
  'm.dots':'2–4 players',
@@ -1066,7 +1156,10 @@ function go(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   $(id).classList.add('on'); cur=id; scrollTo(0,0);
   document.body.classList.toggle('playing',id!=='lobby');
-  if(id==='mj') requestAnimationFrame(mjSize);
+  if(id==='mj'){
+    if(!mjWall.length) mjNew(true);
+    requestAnimationFrame(mjSize);
+  }
   if(id==='ludo'){
     requestAnimationFrame(()=>{ sizeDie(); ludoPlace(); });
     if(lStop) setTimeout(openLudoSetup,120);
@@ -1222,8 +1315,10 @@ function xoRail(){
 }
 function xoPlay(i){
   if(xoLock||xoB[i]!==null){ sfx('miss'); return; }
-  if(cfgX.mode==='solo'&&xoT===1) return;
+  if(netOn()&&!netHost()){ N().input('xo',{i}); return; }
+  if(!netOn()&&cfgX.mode==='solo'&&xoT===1) return;
   xoDo(i);
+  if(netOn()&&netHost()) setTimeout(netPush,60);
 }
 function xoDo(i){
   xoB[i]=xoT; sfx('place'); buzz(12);
@@ -1297,19 +1392,26 @@ function memZero(){
   mScore=[0,0];
   ['m1','m2'].forEach(id=>$(id).querySelector('b').textContent='0');
 }
-function memNew(auto){
-  closeAll(); if(!auto) sfx('tap');
-  const pairs=cfgM.size/2, kinds=MEMKINDS.slice(0,pairs);
-  mDeck=[...kinds,...kinds].sort(()=>Math.random()-.5);
-  mOpen=[]; mLock=false; mTurn=0; mScore=[0,0]; mSeen={}; mDone=0;
+function memBuild(){
   const bd=$('mboard'); bd.innerHTML='';
   bd.style.gridTemplateColumns=`repeat(${cfgM.size===20?5:4},1fr)`;
   mDeck.forEach((k,i)=>{
     const c=document.createElement('button'); c.className='mcard'; c.dataset.idx=i;
     c.innerHTML=`<div class="mface"><div class="mback">${S.star(BRASS)}</div><div class="mfront">${S[k](INK)}</div></div>`;
-    c.onclick=()=>{ if(cfgM.mode==='solo'&&mTurn===1) return; memFlip(i,c); };
+    c.onclick=()=>{
+      if(netOn()&&!netHost()){ N().input('mem',{i}); return; }
+      if(!netOn()&&cfgM.mode==='solo'&&mTurn===1) return;
+      memFlip(i,c);
+    };
     bd.appendChild(c);
   });
+}
+function memNew(auto){
+  closeAll(); if(!auto) sfx('tap');
+  const pairs=cfgM.size/2, kinds=MEMKINDS.slice(0,pairs);
+  mDeck=[...kinds,...kinds].sort(()=>Math.random()-.5);
+  mOpen=[]; mLock=false; mTurn=0; mScore=[0,0]; mSeen={}; mDone=0;
+  memBuild();
   $('m1').querySelector('b').textContent='0'; $('m2').querySelector('b').textContent='0';
   $('m1L').textContent=cfgM.mode==='solo'?t('you'):t('p1');
   $('m2L').textContent=cfgM.mode==='solo'?t('cpu'):t('p2');
@@ -1326,6 +1428,7 @@ function memRail(){
 }
 function memFlip(i,el){
   if(mLock||el.classList.contains('flip')||el.classList.contains('done')) return;
+  if(netOn()&&netHost()) setTimeout(netPush,420);
   el.classList.add('flip'); sfx('flip'); buzz(10);
   const keep = cfgM.lvl==='hard'?1:(cfgM.lvl==='mid'?.8:.5);
   if(Math.random()<keep) mSeen[i]=mDeck[i];
@@ -1613,6 +1716,7 @@ function ludoStart(){
   if(!HUM[lCur]) setTimeout(roll,700);
 }
 function roll(){
+  if(netOn()&&!netHost()){ N().input('ludoRoll',{}); return; }
   if(lBusy||lOver||lStop||lDie||cur!=='ludo') return;
   lBusy=true; clearCan();
   $('die').disabled=true;
@@ -1633,6 +1737,7 @@ function roll(){
 }
 function clearCan(){ document.querySelectorAll('.tok.can').forEach(x=>x.classList.remove('can')); }
 function tokClick(p,i){
+  if(netOn()&&!netHost()){ N().input('ludoPick',{p,i}); return; }
   if(lOver||lBusy||!lDie||p!==CP()||!HUM[lCur]) return;
   if(!$(`t${p}_${i}`).classList.contains('can')) return;
   lBusy=true; clearCan(); move(p,i);
@@ -1704,6 +1809,7 @@ function land(p,i,cap){
 }
 function nextTurn(){
   if(lStop) return;
+  if(netOn()&&netHost()) setTimeout(netPush,60);
   lCur=(lCur+1)%ACT.length; lDie=0; lBusy=false; lrail(); setDie(CP());
   const d=$('die');
   if(HUM[lCur]){ d.disabled=false; hint(cfg.mode==='solo'?t('yourTurn'):`${t('turnOf')} <b>${cname(CP())}</b> — ${t('pressDie')}`); }
@@ -1734,15 +1840,7 @@ function dbrail(){
     rail.appendChild(d);
   }
 }
-function dotsNew(auto){
-  closeAll(); if(!auto) sfx('tap');
-  dbN=cfgD.grid;
-  dbH=Array.from({length:dbN+1},()=>Array(dbN).fill(-1));   // خطوط أفقية
-  dbV=Array.from({length:dbN},()=>Array(dbN+1).fill(-1));   // خطوط رأسية
-  dbOwn=Array.from({length:dbN},()=>Array(dbN).fill(-1));
-  dbScore=Array(cfgD.count).fill(0);
-  dbHum=Array.from({length:cfgD.count},(_,i)=>cfgD.mode==='party'||i===0);
-  dbCur=0; dbLock=false; dbLeft=dbN*dbN;
+function dotsBuild(){
   const bd=$('dbboard'); bd.innerHTML='';
   const g=100/dbN;
   for(let r=0;r<dbN;r++)for(let c=0;c<dbN;c++){
@@ -1754,17 +1852,52 @@ function dotsNew(auto){
   for(let r=0;r<=dbN;r++)for(let c=0;c<dbN;c++){
     const b=document.createElement('button'); b.className='dbln h'; b.id=`h${r}_${c}`;
     b.style.top=(r*g)+'%'; b.style.insetInlineStart=(c*g+g*.10)+'%'; b.style.width=(g*.80)+'%';
-    b.onclick=()=>dbPlay('h',r,c); bd.appendChild(b);
+    b.onclick=()=>dbTap('h',r,c); bd.appendChild(b);
   }
   for(let r=0;r<dbN;r++)for(let c=0;c<=dbN;c++){
     const b=document.createElement('button'); b.className='dbln v'; b.id=`v${r}_${c}`;
     b.style.insetInlineStart=(c*g)+'%'; b.style.top=(r*g+g*.10)+'%'; b.style.height=(g*.80)+'%';
-    b.onclick=()=>dbPlay('v',r,c); bd.appendChild(b);
+    b.onclick=()=>dbTap('v',r,c); bd.appendChild(b);
   }
   for(let r=0;r<=dbN;r++)for(let c=0;c<=dbN;c++){
     const d=document.createElement('div'); d.className='dbdot';
     d.style.top=(r*g)+'%'; d.style.insetInlineStart=(c*g)+'%'; bd.appendChild(d);
   }
+}
+function dbTap(k,r,c){
+  if(netOn()&&!netHost()){ N().input('dots',{k,r,c}); return; }
+  dbPlay(k,r,c);
+}
+/* إعادة طلاء اللوح من الحالة (تُستعمل عند المزامنة) */
+function dotsPaint(){
+  for(let r=0;r<=dbN;r++)for(let c=0;c<dbN;c++){
+    const el=$(`h${r}_${c}`); if(!el) continue;
+    const v=dbH[r][c];
+    el.classList.toggle('on',v>=0); el.style.background = v>=0?DBC[v]:'';
+  }
+  for(let r=0;r<dbN;r++)for(let c=0;c<=dbN;c++){
+    const el=$(`v${r}_${c}`); if(!el) continue;
+    const v=dbV[r][c];
+    el.classList.toggle('on',v>=0); el.style.background = v>=0?DBC[v]:'';
+  }
+  for(let r=0;r<dbN;r++)for(let c=0;c<dbN;c++){
+    const bx=$(`bx${r}_${c}`); if(!bx) continue;
+    const o=dbOwn[r][c];
+    bx.classList.toggle('on',o>=0);
+    if(o>=0){ bx.style.background=DBC[o]; bx.querySelector('span').textContent=[...dbName(o)][0]; }
+    else { bx.style.background=''; bx.querySelector('span').textContent=''; }
+  }
+}
+function dotsNew(auto){
+  closeAll(); if(!auto) sfx('tap');
+  dbN=cfgD.grid;
+  dbH=Array.from({length:dbN+1},()=>Array(dbN).fill(-1));
+  dbV=Array.from({length:dbN},()=>Array(dbN+1).fill(-1));
+  dbOwn=Array.from({length:dbN},()=>Array(dbN).fill(-1));
+  dbScore=Array(cfgD.count).fill(0);
+  dbHum=Array.from({length:cfgD.count},(_,i)=>cfgD.mode==='party'||i===0);
+  dbCur=0; dbLock=false; dbLeft=dbN*dbN;
+  dotsBuild(); dotsPaint();
   $('dbres').textContent=''; dbrail();
   if(!dbHum[0]) setTimeout(dbBot,700);
 }
@@ -1787,6 +1920,7 @@ function dbPlay(k,r,c){
   if(dbLock||cur!=='dots') return;
   if(!dbHum[dbCur]) return;
   dbDo(k,r,c);
+  if(netOn()&&netHost()) setTimeout(netPush,60);
 }
 function dbDo(k,r,c){
   const arr = k==='h'?dbH:dbV;
@@ -1902,6 +2036,10 @@ const mjName=i=>cfgJ.mode==='solo'
   ? (i===0?t('you'):(cfgJ.count===2?t('cpu'):COLNAME[lang][i]))
   : COLNAME[lang][i];
 
+function dismissMjSetup(){
+  closeAll();
+  if(!mjWall.length || mjOver || mjLock) mjNew(true);
+}
 function openMjSetup(){ sfx('tap');
   document.querySelectorAll('[data-g="mjMode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgJ.mode));
   document.querySelectorAll('[data-g="mjDepth"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgJ.depth));
@@ -1942,7 +2080,9 @@ function mjColEl(p,ci,rev,clickable,owner){
   const shown=mjShown(col);
   let html='';
   col.forEach((k,i)=>{
-    html += (i<shown) ? `<div class="mjt">${mjFace(k)}</div>` : '<div class="mjt back"></div>';
+    const z = col.length-i;   // الأقرب للوسط فوق الأبعد
+    html += (i<shown) ? `<div class="mjt" style="z-index:${z}">${mjFace(k)}</div>`
+                      : `<div class="mjt back" style="z-index:${z}"></div>`;
   });
   b.innerHTML=html;
   if(mjFull(col)) b.classList.add('full');
@@ -1991,6 +2131,7 @@ function mjRender(){
   const canDraw = !mjDrawn && !mjLock && !mjOver && mjHum[mjCur] && (mjPile.length+mjDisc.length)>0;
   dk.disabled=!canDraw; dk.classList.toggle('ready',canDraw);
   const lv=$('mjlive');
+  lv.style.setProperty('--lc',MJC[mjCur]||BRASS);
   lv.classList.toggle('empty',!mjDrawn);
   lv.querySelector('.front').innerHTML = mjDrawn?mjFace(mjDrawn):'';
   lv.style.visibility = mjDrawn?'visible':'hidden';
@@ -2000,7 +2141,7 @@ function mjNew(auto){
   closeAll(); if(!auto) sfx('tap');
   const n=cfgJ.count, dep=cfgJ.depth;
   const need=n*MJCOLS*dep;
-  let total=need+60; if(total%2) total++;
+  let total=need+110; if(total%2) total++;
   mjPickKinds();
   const kinds=mjKinds();
   let per=Math.ceil(total/kinds.length); if(per%2) per++;
@@ -2063,18 +2204,34 @@ function mjSpin(){
   lv.classList.remove('spin','out'); void lv.offsetWidth; lv.classList.add('spin');
   setTimeout(()=>lv.classList.remove('spin'),520);
 }
+function mjNeedCount(kind){
+  let n=0;
+  for(let p=0;p<cfgJ.count;p++)
+    mjWall[p].forEach(c=>{ if(c.length && !mjFull(c) && c[0]===kind) n++; });
+  return n;
+}
+/* اختيار مرجّح: كلما كانت البلاطة مطلوبة في أعمدة أكثر ارتفع حظّها */
+function mjPullWeighted(){
+  const w=mjPile.map(k=>1+mjNeedCount(k)*5);
+  const tot=w.reduce((a,b)=>a+b,0);
+  let r=Math.random()*tot, i=0;
+  while(i<w.length-1 && r>w[i]){ r-=w[i]; i++; }
+  return mjPile.splice(i,1)[0];
+}
 function mjDraw(){
+  if(netOn()&&!netHost()){ N().input('mjDraw',{}); return; }
   if(mjDrawn||mjLock||mjOver||cur!=='mj') return;
   if(!mjPile.length){
     if(!mjDisc.length){ mjEndByCount(); return; }
     mjPile=mjDisc.sort(()=>Math.random()-.5); mjDisc=[]; toast(t('mj.reshuffle'));
   }
   if(++mjIdle>70){ mjEndByCount(); return; }
-  mjDrawn=mjPile.pop(); sfx('flip'); buzz(10);
+  mjDrawn=mjPullWeighted(); sfx('flip'); buzz(10);
   mjRender(); mjSpin();
   mjOffer(mjCur);
 }
 function mjOffer(p){
+  if(netOn()&&netHost()) setTimeout(netPush,60);
   if(mjHasMatch(p)){
     mjCur=p; mjRender();
     $('mjres').textContent = mjHum[p]?t('mj.match'):'';
@@ -2085,6 +2242,7 @@ function mjOffer(p){
   }
 }
 function mjPick(ci,who){
+  if(netOn()&&!netHost()){ N().input('mjPick',{ci,p:who}); return; }
   if(mjLock||mjOver||!mjDrawn||!mjHum[mjCur]) return;
   if(who!==undefined && who!==mjCur) return;
   const p=mjCur;
@@ -2108,95 +2266,106 @@ function makeFly(r,faceHTML,showBack){
   const f=document.createElement('div'); f.className='mjfly';
   f.style.left=r.x+'px'; f.style.top=r.y+'px'; f.style.width=r.w+'px'; f.style.height=r.h+'px';
   f.innerHTML=`<div class="fc front">${faceHTML}</div><div class="fc rear"></div>`;
+  f.style.setProperty('--lc',MJC[mjCur]||BRASS);
   if(showBack) f.style.transform='rotateY(180deg)';
   document.body.appendChild(f); return f;
-}
-function mjShove(p,ci,isMine){
-  const el = isMine ? $(`mc${ci}`) : $(`fc${p}_${ci}`);
-  if(!el) return;
-  const kids=[...el.children];
-  const step = (kids[0]?kids[0].getBoundingClientRect().height:0) + 3;
-  const dir = isMine ? -1 : 1;          // لوحتي تُدفع للأسفل، ولوحة الخصم للأعلى
-  const seq = isMine ? kids : kids.slice().reverse();
-  seq.forEach((k,i)=>{
-    if(i===0){
-      k.animate([{transform:`translateY(${dir*step*1.15}px) scale(.86)`,opacity:0},
-                 {transform:'translateY(0) scale(1)',opacity:1}],
-        {duration:380,easing:'cubic-bezier(.28,1.35,.4,1)'});
-    }else{
-      k.animate([{transform:`translateY(${dir*step}px)`},{transform:'translateY(0)'}],
-        {duration:340,delay:i*22,easing:'cubic-bezier(.3,1.1,.4,1)'});
-    }
-  });
 }
 function mjPush(p,ci){
   mjLock=true;
   const col=mjWall[p][ci];
   const isMine=(p===0);
   const colEl = isMine ? $(`mc${ci}`) : $(`fc${p}_${ci}`);
-  const headEl = colEl ? (isMine ? colEl.firstChild : colEl.lastChild) : null;
-  const backEl = colEl ? (isMine ? colEl.lastChild : colEl.firstChild) : null;
   const liveEl = $('mjlive');
   const kind=mjDrawn;
-  const backRect = rectOf(backEl);
+  const kids = colEl ? [...colEl.children] : [];
+  const rects = kids.map(rectOf);
+  const headEl = isMine ? kids[0] : kids[kids.length-1];   // الرأس هو الأقرب للوسط
+  const lastEl = isMine ? kids[kids.length-1] : kids[0];   // والذيل هو الأبعد
+  const hr = rectOf(headEl), lr = rectOf(lastEl);
   const liveRect = rectOf(liveEl) || rectOf($('mjdeck'));
+  const gapPx = (rects.length>1 && rects[0] && rects[1])
+      ? Math.abs(rects[1].y-rects[0].y)-rects[0].h : 3;
+  const stepPx = (hr ? hr.h : 40) + Math.max(2,gapPx);
+  const away = isMine ? 1 : -1;      // اتجاه الدفع بعيداً عن الوسط
 
-  /* 1) البلاطة الحية تنزلق إلى رأس الصف */
-  liveEl.classList.add('empty');
-  const hr = rectOf(headEl);
-  const fly = (hr&&liveRect) ? makeFly(hr, mjFace(kind), false) : null;
-  if(fly && hr && liveRect){
-    const s0=clampSc(liveRect.w/hr.w);
-    fly.animate([
-      {transform:`translate(${liveRect.x-hr.x}px,${liveRect.y-hr.y}px) scale(${s0})`},
-      {transform:'translate(0,0) scale(1)'}],
-      {duration:360,easing:'cubic-bezier(.3,1.2,.4,1)',fill:'forwards'});
+  if(!hr||!liveRect){                // مسار احتياطي بلا حركة
+    col.unshift(kind); const pp=col.pop(); mjDrawn=pp;
+    mjCur=p; mjLock=false; mjRender();
+    if(mjDone(p)){ mjWin(p); return; }
+    mjOffer(p); return;
   }
+
+  /* ١) البلاطة الحيّة تطير إلى فم العمود، وتقف أمام الرأس */
+  liveEl.classList.add('empty');
+  const ghost=makeFly(hr, mjFace(kind), false);
+  const s0=clampSc(liveRect.w/hr.w);
+  const preY = -away*stepPx;         // موضع خارج العمود من جهة الوسط
+  ghost.animate([
+    {transform:`translate(${liveRect.x-hr.x}px,${liveRect.y-hr.y}px) scale(${s0}) rotate(-8deg)`},
+    {transform:`translate(0px,${preY}px) scale(1.04) rotate(0deg)`}
+  ],{duration:340,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
   sfx('step');
 
   setTimeout(()=>{
-    if(cur!=='mj'){ if(fly) fly.remove(); return; }
-    /* 2) الزوج يلتصق ويُرفع من الصف */
-    if(fly) fly.remove();
+    if(cur!=='mj'){ ghost.remove(); return; }
 
-    sfx('match'); buzz([15,40,15]);
-    if(colEl) burstAt(colEl,20);
+    /* ٢) الدفع: البلاطة تدخل مكان الرأس، والعمود كله ينزلق للخلف، والذيل يخرج */
+    ghost.animate([
+      {transform:`translate(0px,${preY}px) scale(1.04)`},
+      {transform:'translate(0px,0px) scale(1)'}
+    ],{duration:330,easing:'cubic-bezier(.34,1.2,.42,1)',fill:'forwards'});
+    kids.forEach((k,i)=>{
+      const isTail = (k===lastEl);
+      if(isTail){
+        k.style.zIndex=99;
+        k.animate([{transform:'translateY(0) scale(1)',opacity:1},
+                   {transform:`translateY(${away*stepPx*1.45}px) scale(.94)`,opacity:.45}],
+          {duration:360,easing:'cubic-bezier(.36,.02,.3,1)',fill:'forwards'});
+      }else{
+        const d = isMine ? i*14 : (kids.length-1-i)*14;
+        k.animate([{transform:'translateY(0)'},{transform:`translateY(${away*stepPx}px)`}],
+          {duration:330,delay:d,easing:'cubic-bezier(.34,1.1,.42,1)',fill:'forwards'});
+      }
+    });
+    sfx('match'); buzz([12,30,12]);
 
     setTimeout(()=>{
-      if(cur!=='mj') return;
-      /* 3) الصف يُدفع للخلف، والأخيرة تُطرد وتُقلب في الطريق */
-      col.unshift(kind);          // تدخل أمام مثيلتها فتبقى الاثنتان
-      const popped = col.pop();   // وتخرج آخر بلاطة من الصف
+      if(cur!=='mj'){ ghost.remove(); return; }
+      /* ٣) تحديث الحالة ثم طيران الذيل المكشوف إلى الوسط */
+      col.unshift(kind);
+      const popped=col.pop();
       mjDrawn=null; mjIdle=0;
-      const wasCur=(p===mjCur); mjCur=p; mjRender();
-      mjShove(p,ci,isMine);
-      if(mjFull(col)) sfx('home');
+      const wasCur=(p===mjCur); mjCur=p;
+
+    const outRect = lr ? {x:lr.x, y:lr.y+away*stepPx*1.45, w:lr.w, h:lr.h} : null;
+      ghost.remove();
+      mjRender();
+      if(colEl) burstAt(colEl,16);
+      if(mjFull(col)){ sfx('home'); const ne=isMine?$(`mc${ci}`):$(`fc${p}_${ci}`); if(ne) burstAt(ne,28); }
       if(mjDone(p)){ mjLock=false; mjWin(p); return; }
       if(!wasCur) toast(`${mjName(p)} ${t('mj.took')}`);
+
       const target=rectOf($('mjlive'))||rectOf($('mjdeck'));
-      const from = backRect || target;
+      const from=outRect||target;
       const f2=(from&&target)?makeFly(target, mjFace(popped), true):null;
+      if(!f2){ mjDrawn=popped; mjLock=false; mjRender(); mjOffer(p); return; }
       sfx('flip');
-      if(!f2){
-        mjDrawn=popped; mjLock=false; mjRender(); mjOffer(p); return;
-      }
-      const dx=from.x-target.x, dy=from.y-target.y, s0=clampSc(from.w/target.w);
-      const out = isMine ? 26 : -26;   // تخرج من طرف الصف أولاً
+      const dx=from.x-target.x, dy=from.y-target.y, sc=clampSc(from.w/target.w);
       f2.animate([
-        {transform:`rotateY(180deg) translate(${dx}px,${dy}px) scale(${s0})`,offset:0},
-        {transform:`rotateY(180deg) translate(${dx}px,${dy+out}px) scale(${s0*1.1})`,offset:.26},
-        {transform:`rotateY(90deg) translate(${dx*.55}px,${dy*.55+out*.6}px) scale(${(s0+1)/2*1.12})`,offset:.55},
-        {transform:`rotateY(-12deg) translate(${dx*.14}px,${dy*.14}px) scale(1.08)`,offset:.84},
+        {transform:`rotateY(180deg) translate(${dx}px,${dy}px) scale(${sc})`,offset:0},
+        {transform:`rotateY(180deg) translate(${dx}px,${dy-away*10}px) scale(${sc*1.06})`,offset:.18},
+        {transform:`rotateY(90deg) translate(${dx*.55}px,${dy*.55}px) scale(${(sc+1)/2*1.18})`,offset:.55},
+        {transform:`rotateY(-10deg) translate(${dx*.12}px,${dy*.12}px) scale(1.1)`,offset:.84},
         {transform:'rotateY(0deg) translate(0,0) scale(1)',offset:1}
-      ],{duration:780,easing:'cubic-bezier(.32,.9,.35,1)',fill:'forwards'});
+      ],{duration:720,easing:'cubic-bezier(.3,.85,.32,1)',fill:'forwards'});
       setTimeout(()=>{
         f2.remove();
         if(cur!=='mj') return;
         mjDrawn=popped; mjLock=false; mjRender();
         mjOffer(p);
-      },800);
-    },380);
-  },370);
+      },740);
+    },370);
+  },350);
 }
 function mjPass(){
   if(cur!=='mj'||mjOver) return;
@@ -2232,13 +2401,182 @@ function mjEndByCount(){
   setTimeout(()=>{ if(cur==='mj'&&mjOver) mjNew(true); },3200);
 }
 
+
+/* ================= أونلاين: الغرف والمزامنة والصوت ================= */
+const NETKEY='majlis.net';
+let netCfg={url:'',code:'',id:''};
+try{ Object.assign(netCfg, JSON.parse(localStorage.getItem(NETKEY)||'{}')); }catch(e){}
+const netSave=()=>{ try{ localStorage.setItem(NETKEY,JSON.stringify(netCfg)); }catch(e){} };
+const N=()=>window.MajlisNet;
+const netOn=()=>!!(N()&&N().room);
+const netHost=()=>!!(N()&&N().isHost());
+const GAMEOF={xo:'xo',ludo:'ludo',mem:'mem',dots:'dots',mj:'mj'};
+
+/* ---- لقطات الحالة لكل لعبة ---- */
+const SNAP={
+  xo:{
+    get:()=>({b:xoB,t:xoT,l:xoLock,s:xoS,c:cfgX}),
+    set:s=>{ Object.assign(cfgX,s.c); xoB=s.b; xoT=s.t; xoLock=s.l; xoS=s.s;
+      const bd=$('xoboard'); [...bd.querySelectorAll('button')].forEach((b,i)=>{
+        b.innerHTML = xoB[i]===null?'':`<span class="glyph" style="color:${xoB[i]?CLAY:INK}">${SYM[cfgX.sym][xoB[i]]}</span>`; });
+      $('sx').querySelector('b').textContent=xoS.a; $('sd').querySelector('b').textContent=xoS.d;
+      $('so').querySelector('b').textContent=xoS.b; xoRail(); }
+  },
+  mem:{
+    get:()=>({d:mDeck,o:mOpen.map(x=>x.i),t:mTurn,s:mScore,n:mDone,c:cfgM,
+      f:[...document.querySelectorAll('.mcard')].map(c=>c.classList.contains('flip')?(c.classList.contains('done')?2:1):0)}),
+    set:s=>{ Object.assign(cfgM,s.c);
+      if(!mDeck||mDeck.length!==s.d.length||mDeck.join()!==s.d.join()){ mDeck=s.d; memBuild(); }
+      mTurn=s.t; mScore=s.s; mDone=s.n;
+      [...document.querySelectorAll('.mcard')].forEach((c,i)=>{
+        c.classList.toggle('flip',s.f[i]>0); c.classList.toggle('done',s.f[i]===2); });
+      $('m1').querySelector('b').textContent=mScore[0]; $('m2').querySelector('b').textContent=mScore[1]; memRail(); }
+  },
+  dots:{
+    get:()=>({h:dbH,v:dbV,o:dbOwn,c:dbCur,s:dbScore,l:dbLeft,g:cfgD}),
+    set:s=>{ Object.assign(cfgD,s.g);
+      if(!dbH||dbH.length!==s.h.length){ dotsBuild(); }
+      dbH=s.h; dbV=s.v; dbOwn=s.o; dbCur=s.c; dbScore=s.s; dbLeft=s.l;
+      dotsPaint(); dbrail(); }
+  },
+  ludo:{
+    get:()=>({p:LT,c:lCur,d:lDie,o:lOver,a:ACT,h:HUM,g:cfg}),
+    set:s=>{ Object.assign(cfg,s.g);
+      const rebuild = ACT.join()!==s.a.join();
+      ACT=s.a; HUM=s.h; LT=s.p; lCur=s.c; lDie=s.d; lOver=s.o;
+      if(rebuild) ludoBuild();
+      ludoPlace(); lrail(); setDie(CP()); showFace(lDie||1,false,true);
+      $('die').disabled = !(netHost()? true : false) || lOver; }
+  },
+  mj:{
+    get:()=>({w:mjWall,p:mjPile,d:mjDisc,k:mjDrawn,c:mjCur,o:mjOver,h:mjHum,r:mjRound,g:cfgJ}),
+    set:s=>{ Object.assign(cfgJ,s.g); mjRound=s.r; mjWall=s.w; mjPile=s.p; mjDisc=s.d;
+      mjDrawn=s.k; mjCur=s.c; mjOver=s.o; mjHum=s.h; mjLock=false; mjRender(); }
+  }
+};
+function netPush(){
+  if(!netOn()||!netHost()) return;
+  const g=cur; if(!SNAP[g]) return;
+  try{ N().pushState(g, JSON.parse(JSON.stringify(SNAP[g].get()))); }catch(e){}
+}
+function netApply(game,state){
+  if(!SNAP[game]) return;
+  if(cur!==game) go(game);
+  try{ SNAP[game].set(state); }catch(e){ console.error(e); }
+}
+
+/* ---- واجهة الغرفة ---- */
+function openOnline(){
+  sfx('tap');
+  $('netUrl').value=netCfg.url||'';
+  $('netJoinCode').value='';
+  $('netLobby').style.display = netOn()?'none':'block';
+  $('netRoom').style.display  = netOn()?'block':'none';
+  if(netOn()) netRenderRoom(N().room);
+  $('ovOnline').classList.add('on');
+}
+async function netEnsure(){
+  const url=$('netUrl').value.trim();
+  if(!url){ sfx('miss'); toast(t('net.needUrl')); return false; }
+  netCfg.url=url; netSave();
+  if(N().connected) return true;
+  toast(t('net.connecting'));
+  try{ await N().connect(url); return true; }
+  catch(e){ sfx('miss'); toast(t('net.failed')); return false; }
+}
+async function netCreate(){ if(await netEnsure()) N().create(profile.name, cur==='lobby'?'mj':cur); }
+async function netJoin(){
+  const code=$('netJoinCode').value.trim();
+  if(code.length<4){ sfx('miss'); toast(t('net.needCode')); return; }
+  if(await netEnsure()) N().join(code, profile.name);
+}
+function netLeave(){
+  closeAll(); N().disconnect();
+  netCfg.code=''; netSave();
+  $('netbar').style.display='none';
+  toast(t('net.left'));
+}
+function netStart(){
+  if(!netHost()){ toast(t('net.hostOnly')); return; }
+  closeAll(); netPush(); toast(t('net.started'));
+}
+function netRenderRoom(room){
+  if(!room) return;
+  $('roomCode').textContent=room.code;
+  $('netcode').textContent=room.code;
+  $('netbar').style.display='flex';
+  $('netStartBtn').style.display = netHost()?'block':'none';
+  const box=$('plist'); box.innerHTML='';
+  room.players.forEach(p=>{
+    const d=document.createElement('div'); d.className='prow'+(p.online?'':' off');
+    d.innerHTML=`<div class="av">${[...(p.name||'?')][0]}</div>
+      <div class="nm">${p.name}${p.id===N().you?' •':''}</div>
+      <span class="mic${p.voice?' on':''}">${p.voice?'🎙':'🔇'}</span>
+      <span class="tag">${p.isHost?t('net.host'):''} ${p.ping!=null?p.ping+'ms':''}</span>`;
+    box.appendChild(d);
+  });
+}
+function netQuality(q){
+  const bar=$('netbar');
+  bar.className='netbar '+q.quality;
+  $('netrtt').textContent = q.rtt!=null? q.rtt+'ms' : '';
+  if(q.quality==='weak') toast(t('net.weak'));
+}
+async function toggleMic(){
+  const V=N().Voice, btn=$('micBtn');
+  if(!V.on){
+    const ok=await V.start();
+    if(ok){ btn.className='mic on'; btn.textContent='🎙'; toast(t('net.micOn')); }
+  }else if(!V.muted){
+    V.setMuted(true); btn.className='mic mut'; btn.textContent='🔇'; toast(t('net.micMuted'));
+  }else{
+    V.setMuted(false); V.stop(); btn.className='mic'; btn.textContent='🎙'; toast(t('net.micOff'));
+  }
+}
+
+/* ---- ربط الأحداث ---- */
+function netInit(){
+  const M=N(); if(!M) return;
+  M.on.room = room=>{ netRenderRoom(room); netCfg.code=room.code; netSave(); };
+  M.on.state = ({state,game})=>{ if(!netHost()) netApply(game,state); };
+  M.on.game  = g=>{ if(!netHost()&&GAMEOF[g]) go(g); };
+  M.on.input = m=>{ if(netHost()) netHandleInput(m); };
+  M.on.quality = netQuality;
+  M.on.emote = m=>toast(`${m.name} ${m.e}`);
+  M.on.sys = m=>{
+    const map={joined:'net.sysJoined',left:'net.sysLeft',disconnected:'net.sysDrop',
+      reconnected:'net.sysBack',host_changed:'net.sysHost',reconnecting:'net.sysRetry',
+      closed:'net.sysClosed',mic_denied:'net.micDenied',err_no_room:'net.errNoRoom',
+      err_full:'net.errFull'};
+    const k=map[m.code]; if(!k) return;
+    toast((m.name? m.name+' — ':'')+t(k));
+    if(m.code==='disconnected'||m.code==='reconnecting') sfx('miss');
+    if(m.code==='reconnected'||m.code==='joined') sfx('ding');
+  };
+}
+/* المضيف ينفّذ نيّات الضيوف ثم يبثّ اللقطة */
+function netHandleInput(m){
+  const a=m.action, g=m.args||{};
+  try{
+    if(a==='xo') xoPlay(g.i);
+    else if(a==='mem') { const el=document.querySelector(`.mcard[data-idx="${g.i}"]`); if(el) memFlip(g.i,el); }
+    else if(a==='dots') dbPlay(g.k,g.r,g.c);
+    else if(a==='ludoRoll') roll();
+    else if(a==='ludoPick') tokClick(g.p,g.i);
+    else if(a==='mjDraw') mjDraw();
+    else if(a==='mjPick') mjPick(g.ci,g.p);
+  }catch(e){ console.error(e); }
+  setTimeout(netPush,80);
+}
+
 /* ================= تشغيل ================= */
 load();
 $('pname').textContent=profile.name;
 $('av').textContent=[...profile.name][0]; $('av').dataset.st=profile.status;
 $('sndBtn').textContent=SND.on?'♪':'✕'; $('sndBtn').classList.toggle('off',!SND.on);
 applyTheme();
-xoNew(); memNew(); dotsNew(true); ludoStart(); applyLang(); closeAll();
+netInit();
+xoNew(); memNew(); dotsNew(true); mjNew(true); ludoStart(); applyLang(); closeAll();
 document.addEventListener('click',()=>AC(),{once:true});
 if('serviceWorker' in navigator){
   addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
