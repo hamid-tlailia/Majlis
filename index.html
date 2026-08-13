@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' ws: wss: https:; media-src 'self' blob:; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' ws: wss: http: https:; media-src 'self' blob:; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <title>المجلس · Majlis</title>
 <meta name="description" content="خمس ألعاب لوحية على جهاز واحد: إكس أو، لودو، الذاكرة، خطوط ومربّعات، ماهجونج. تعمل دون إنترنت. Five board games on one device, fully offline.">
@@ -2475,20 +2475,24 @@ function openOnline(){
   if(netOn()) netRenderRoom(N().room);
   $('ovOnline').classList.add('on');
 }
-async function netEnsure(){
+function netEnsure(){
   const url=$('netUrl').value.trim();
   if(!url){ sfx('miss'); toast(t('net.needUrl')); return false; }
-  netCfg.url=url; netSave();
-  if(N().connected) return true;
+  N().url=netCfg.url=url; netSave();
   toast(t('net.connecting'));
-  try{ await N().connect(url); return true; }
-  catch(e){ sfx('miss'); toast(t('net.failed')); return false; }
+  return true;
 }
-async function netCreate(){ if(await netEnsure()) N().create(profile.name, cur==='lobby'?'mj':cur); }
+async function netCreate(){
+  if(!netEnsure()) return;
+  try{ await N().create(profile.name, cur==='lobby'?'mj':cur); }
+  catch(e){ sfx('miss'); toast(t('net.failed')); }
+}
 async function netJoin(){
   const code=$('netJoinCode').value.trim();
   if(code.length<4){ sfx('miss'); toast(t('net.needCode')); return; }
-  if(await netEnsure()) N().join(code, profile.name);
+  if(!netEnsure()) return;
+  try{ await N().join(code, profile.name); }
+  catch(e){ sfx('miss'); toast(t('net.failed')); }
 }
 function netLeave(){
   closeAll(); N().disconnect();

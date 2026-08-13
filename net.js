@@ -44,6 +44,7 @@
         ws.onerror = () => { clearTimeout(timeout); };
         ws.onclose = () => {
           clearTimeout(timeout);
+          if (this.ws !== ws) return;        // قناة قديمة — تجاهلها
           this.connected = false;
           this._stopPing();
           this._setQuality('offline');
@@ -60,9 +61,9 @@
       this._reTimer = setTimeout(async () => {
         this._reTimer = null;
         try {
-          await this.connect();
-          /* العودة إلى نفس الغرفة بنفس الهوية */
-          if (this.room?.code) this.send({ t: 'join', code: this.room.code, name: Net.myName, rejoin: this.you });
+          const code = this.room?.code || this._openCode;
+          if (code && this._openCode) await this.openFor(code); else await this.connect();
+          if (code) this.send({ t: 'join', code, name: Net.myName, rejoin: this.you });
         } catch { this._retry(); }
       }, wait);
     },
@@ -77,8 +78,52 @@
     },
 
     /* ---------- الغرف ---------- */
-    create(name, game) { Net.myName = name; return this.send({ t: 'create', name, game }); },
-    join(code, name) { Net.myName = name; return this.send({ t: 'join', code: String(code || '').toUpperCase().trim(), name }); },
+    /* بعض الخوادم (Cloudflare) توجّه كل غرفة إلى كائن مستقل عبر ?code= */
+    _base() { return (this.url || '').replace(/\/(ws)?$/, ''); },
+    _wsUrl(code) {
+      const b = this._base();
+      const path = /\/ws$/.test(this.url || '') ? this.url : (b + '/ws');
+      return code ? `${path}?code=${encodeURIComponent(code)}` : (this.url || path);
+    },
+    async _newCode() {
+      try {
+        const http = this._base().replace(/^ws/, 'http');
+        const r = await fetch(http + '/new', { cache: 'no-store' });
+        if (!r.ok) return null;
+        const j = await r.json();
+        return j.code || null;
+      } catch { return null; }
+    },
+    async openFor(code) {
+      /* أعِد الاتصال إن كانت القناة الحالية لغرفة أخرى */
+      if (this.connected && this._openCode === (code || null)) return true;
+      if (this.ws) {                       // افصل القناة القديمة بلا آثار جانبية
+        const old = this.ws;
+        old.onclose = old.onmessage = old.onerror = old.onopen = null;
+        try { old.close(); } catch {}
+        this.ws = null; this.connected = false;
+      }
+      const target = code ? this._wsUrl(code) : this.url;
+      const keep = this.url;
+      await this.connect(target);
+      this.url = keep;              // نحتفظ بالعنوان الأصلي للإعدادات
+      this._openCode = code || null;
+      return true;
+    },
+    async _plain() { if (!this.connected) await this.connect(this.url); return true; },
+    async create(name, game) {
+      Net.myName = name;
+      const code = await this._newCode();          // Cloudflare يعطينا رمزاً مسبقاً
+      if (code) await this.openFor(code); else await this._plain();
+      return this.send({ t: 'create', name, game, code });
+    },
+    async join(code, name) {
+      Net.myName = name;
+      const c = String(code || '').toUpperCase().trim();
+      const pre = await this._newCode();           // هل الخادم يوجّه كل غرفة إلى مسار خاص؟
+      if (pre !== null) await this.openFor(c); else await this._plain();
+      return this.send({ t: 'join', code: c, name });
+    },
     setGame(game) { return this.send({ t: 'game', game }); },
 
     /* المضيف يبثّ لقطة، والضيف يرسل نيّة */
