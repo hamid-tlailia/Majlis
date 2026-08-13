@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <title>المجلس · Majlis</title>
-<meta name="description" content="ثلاث ألعاب لوحية على جهاز واحد: إكس أو، لودو، الذاكرة. تعمل دون إنترنت. Three board games on one device, fully offline.">
+<meta name="description" content="خمس ألعاب لوحية على جهاز واحد: إكس أو، لودو، الذاكرة، خطوط ومربّعات، ماهجونج. تعمل دون إنترنت. Five board games on one device, fully offline.">
 <link rel="manifest" href="./manifest.webmanifest">
 <meta name="theme-color" content="#12100E">
 <meta name="color-scheme" content="dark">
@@ -14,7 +14,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="المجلس">
-<link rel="icon" href="./icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="./icons/favicon-64.png" type="image/png">
+<link rel="icon" sizes="192x192" href="./icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="./icons/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,6 +29,7 @@
   --clay:#AC4529; --indigo:#375480; --muted:#8C8375;
   --ok:#4FA88A;
   --pad:18px; --r:14px;
+  --tileA:#F7CB5A; --tileB:#E5A21C; --tileC:#C8830A; --tileEdge:#96620A; --tileFace:#FBF7EE;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%;overscroll-behavior:none}
@@ -80,9 +82,9 @@ h1,h2,h3{font-weight:700}
 button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 
 /* ===== ترويسة ===== */
-.hero{padding:clamp(10px,3vh,28px) 2px 4px;flex:none;text-align:center}
+.hero{padding:clamp(8px,2.2vh,22px) 2px 4px;flex:none;text-align:center}
 .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.22em;color:var(--brass)}
-.hero h1{margin:clamp(6px,1.4vh,12px) 0 clamp(5px,1.2vh,10px);line-height:.95;font-size:clamp(32px,7.4vh,58px)}
+.hero h1{margin:clamp(5px,1.1vh,10px) 0 clamp(4px,1vh,8px);line-height:.95;font-size:clamp(30px,6.4vh,52px)}
 .hero h1 .ar{font-family:"Aref Ruqaa",serif}
 .hero h1 .en{font-family:"Fraunces",serif;letter-spacing:-.02em}
 .hero p{margin:0 auto;color:var(--muted);font-size:clamp(12.5px,1.7vh,14.5px);max-width:34ch;line-height:1.55}
@@ -96,10 +98,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-
 /* ===== بطاقات الألعاب ===== */
 .games{display:grid;grid-template-columns:1fr 1fr;gap:clamp(9px,1.6vh,12px);
   margin:clamp(12px,2.2vh,22px) auto 0;flex:1;min-height:0;width:100%;align-content:center}
-.games .wide{grid-column:1 / -1;flex-direction:row;align-items:center;justify-content:center;gap:14px;min-height:88px;text-align:start}
+.games .wide{grid-column:1 / -1;flex-direction:row;align-items:center;justify-content:center;gap:14px;min-height:72px;text-align:start}
 .games .wide .txt{display:flex;flex-direction:column}
 .card{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
-  min-height:112px;gap:clamp(6px,1.2vh,10px);width:100%;text-align:start;
+  min-height:88px;gap:clamp(6px,1.2vh,10px);width:100%;text-align:start;
   padding:clamp(10px,1.8vh,14px);border-radius:18px;cursor:pointer;color:inherit;font-family:inherit;
   background:linear-gradient(180deg,var(--ink3),var(--ink2));border:1px solid var(--line);
   transition:transform .18s,border-color .18s;position:relative;overflow:hidden}
@@ -841,7 +843,7 @@ const INK='#100E0C',BRASS='#CFA24A',CLAY='#AC4529',INDIGO='#375480',FELT='#1B3A3
 const I18N={
 ar:{
  brand:'المجلس',
- tagline:'ثلاث ألعاب لوحية على جهاز واحد. تعمل دون إنترنت.',
+ tagline:'خمس ألعاب لوحية على جهاز واحد. تعمل دون إنترنت.',
  localOnly:'نسخة محلية — الكل يلعب على هذا الجهاز',
  inviteBtn:'دعوة',
  'g.xo':'إكس أو','g.ludo':'لودو','g.mem':'الذاكرة','g.dots':'خطوط ومربّعات','g.mj':'ماهجونج',
@@ -885,7 +887,7 @@ ar:{
 },
 en:{
  brand:'Majlis',
- tagline:'Three board games on one device. Works offline.',
+ tagline:'Five board games on one device. Works offline.',
  localOnly:'Local edition — everyone plays on this device',
  inviteBtn:'Invite',
  'g.xo':'Tic-Tac-Toe','g.ludo':'Ludo','g.mem':'Memory','g.dots':'Dots & Boxes','g.mj':'Mahjong',

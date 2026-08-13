@@ -2,27 +2,85 @@
   "id": "/majlis/",
   "name": "المجلس — ألعاب لوحية | Majlis Board Games",
   "short_name": "المجلس",
-  "description": "ثلاث ألعاب لوحية على جهاز واحد: إكس أو، لودو، الذاكرة. تعمل دون إنترنت ودون حساب. Three board games on one device — offline, no account.",
+  "description": "خمس ألعاب لوحية على جهاز واحد: إكس أو، لودو، الذاكرة، خطوط ومربّعات، ماهجونج. تعمل دون إنترنت ودون حساب. Five board games on one device — offline, no account.",
   "lang": "ar",
   "dir": "auto",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone", "fullscreen", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "fullscreen",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
   "background_color": "#100E0C",
   "theme_color": "#100E0C",
-  "categories": ["games", "entertainment"],
+  "categories": [
+    "games",
+    "entertainment"
+  ],
   "prefer_related_applications": false,
   "icons": [
-    { "src": "./icons/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "./icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "shortcuts": [
-    { "name": "لودو | Ludo", "url": "./index.html#ludo", "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "إكس أو | Tic-Tac-Toe", "url": "./index.html#xo", "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "الذاكرة | Memory", "url": "./index.html#mem", "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }] }
+    {
+      "name": "لودو | Ludo",
+      "url": "./index.html#ludo",
+      "icons": [
+        {
+          "src": "./icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "إكس أو | Tic-Tac-Toe",
+      "url": "./index.html#xo",
+      "icons": [
+        {
+          "src": "./icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "الذاكرة | Memory",
+      "url": "./index.html#mem",
+      "icons": [
+        {
+          "src": "./icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "ماهجونج | Mahjong",
+      "url": "./index.html#mj",
+      "icons": [
+        {
+          "src": "./icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }
