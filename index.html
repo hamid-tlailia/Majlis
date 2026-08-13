@@ -566,7 +566,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.xo"></div>
     <button class="icon" onclick="sfx('tap');openXoSetup()">⚙</button>
-    <button class="icon" onclick="xoNew()">↺</button>
+    <button class="icon" onclick="askReset(()=>xoNew())">↺</button>
   </div>
   <div class="gwrap">
     <div class="score">
@@ -586,7 +586,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.ludo"></div>
     <button class="icon" onclick="sfx('tap');openLudoSetup()">⚙</button>
-    <button class="icon" onclick="ludoStart()">↺</button>
+    <button class="icon" onclick="askReset(()=>ludoStart())">↺</button>
   </div>
   <div class="gwrap">
     <div class="ludo-wrap">
@@ -602,7 +602,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.dots"></div>
     <button class="icon" onclick="sfx('tap');openDotsSetup()">⚙</button>
-    <button class="icon" onclick="dotsNew()">↺</button>
+    <button class="icon" onclick="askReset(()=>dotsNew())">↺</button>
   </div>
   <div class="gwrap">
     <div class="dbrail" id="dbrail"></div>
@@ -617,7 +617,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.mj"></div>
     <button class="icon" onclick="sfx('tap');openMjSetup()">⚙</button>
-    <button class="icon" onclick="mjNew()">↺</button>
+    <button class="icon" onclick="askReset(()=>mjNew())">↺</button>
   </div>
   <div class="gwrap">
     <div class="mjwrap" id="mjwrap"><span id="mjres" hidden></span>
@@ -641,7 +641,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.mem"></div>
     <button class="icon" onclick="sfx('tap');openMemSetup()">⚙</button>
-    <button class="icon" onclick="memNew()">↺</button>
+    <button class="icon" onclick="askReset(()=>memNew())">↺</button>
   </div>
   <div class="gwrap">
     <div class="score">
@@ -828,6 +828,16 @@ html[data-theme="sand"]{
   </div>
 </div>
 
+<!-- ===== تأكيد الإعادة ===== -->
+<div class="overlay" id="ovReset">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 data-i="reset.t"></h2><p class="sub" data-i="reset.s"></p>
+    <button class="primary" onclick="doReset()" data-i="reset.yes"></button>
+    <button class="secondary" onclick="closeReset()" data-i="reset.no"></button>
+  </div>
+</div>
+
 <div class="banner" id="banner" onclick="closeBanner()">
   <div class="in"><h2 id="bTitle"></h2><p id="bText"></p>
     <button class="primary" onclick="closeBanner()" data-i="continue"></button></div>
@@ -877,6 +887,8 @@ ar:{
  start:'ابدأ اللعبة',continue:'تابع',draw:'تعادل',
  'exit.t':'إنهاء الجولة؟','exit.s':'ستفقد تقدّم هذه الجولة ولن يمكن استعادتها.',
  'exit.leave':'نعم، اخرج','exit.stay':'ابقَ في اللعبة',
+ 'reset.t':'إعادة الجولة؟','reset.s':'ستبدأ جولة جديدة من الصفر، ويضيع تقدّم الجولة الحالية.',
+ 'reset.yes':'نعم، أعِد','reset.no':'تراجع',
  you:'أنت',cpu:'الحاسوب',p1:'اللاعب الأول',p2:'اللاعب الثاني',human:'لاعب',bot:'حاسوب',
  turnOf:'دور',yourTurn:'دورك — اضغط النرد.',pressDie:'اضغط النرد.',
  noMove:'لا حركة ممكنة.',extra:'رمية إضافية',pick:'اختر حجراً',
@@ -921,6 +933,8 @@ en:{
  start:'Start game',continue:'Continue',draw:'Draw',
  'exit.t':'End this round?','exit.s':'Progress in this round will be lost.',
  'exit.leave':'Yes, leave','exit.stay':'Stay in game',
+ 'reset.t':'Restart the round?','reset.s':'A new round starts from zero and the current progress is lost.',
+ 'reset.yes':'Yes, restart','reset.no':'Cancel',
  you:'You',cpu:'Computer',p1:'Player 1',p2:'Player 2',human:'human',bot:'CPU',
  turnOf:'Turn:',yourTurn:'Your turn — roll the die.',pressDie:'Roll the die.',
  noMove:'No legal move.',extra:'Extra roll',pick:'Pick a piece',
@@ -938,7 +952,9 @@ function applyLang(){
   document.documentElement.dir=rtl?'rtl':'ltr';
   $('langBtn').textContent = rtl?'EN':'ع';
   document.querySelectorAll('[data-i]').forEach(el=>{
-    const k=el.dataset.i, v=t(k);
+    const k=el.dataset.i;
+    if(I18N[lang][k]===undefined) return;   // ليس مفتاح ترجمة
+    const v=t(k);
     if(k==='brand'||k==='g.xo'||k==='g.ludo'||k==='g.mem'){
       el.innerHTML = rtl?`<span class="ar">${v}</span>`:`<span class="en">${v}</span>`;
     } else el.textContent=v;
@@ -1057,6 +1073,16 @@ function go(id){
   }
   if(id!=='lobby'){ try{history.pushState({s:id},'');}catch(e){} }
 }
+let resetFn=null;
+function askReset(fn){
+  sfx('tap'); resetFn=fn;
+  $('ovReset').classList.add('on');
+}
+function closeReset(){ sfx('tap'); $('ovReset').classList.remove('on'); resetFn=null; }
+function doReset(){
+  $('ovReset').classList.remove('on');
+  const f=resetFn; resetFn=null; if(f) f();
+}
 function askExit(){
   sfx('tap');
   if(cur==='lobby') return;
@@ -1082,7 +1108,7 @@ addEventListener('popstate',()=>{
 let tmr=null;
 function toast(x){ const el=$('toast'); el.textContent=x; el.classList.add('on');
   clearTimeout(tmr); tmr=setTimeout(()=>el.classList.remove('on'),2300); }
-function closeAll(){ document.querySelectorAll('.overlay').forEach(o=>{ if(o.id!=='ovExit') o.classList.remove('on'); }); }
+function closeAll(){ document.querySelectorAll('.overlay').forEach(o=>{ if(o.id!=='ovExit'&&o.id!=='ovReset') o.classList.remove('on'); }); }
 function showBanner(title,text,cols){
   $('bTitle').innerHTML=`<span class="${lang==='ar'?'ar':'en'}">${title}</span>`;
   $('bText').textContent=text; $('banner').classList.add('on');
@@ -1279,7 +1305,7 @@ function memNew(auto){
   const bd=$('mboard'); bd.innerHTML='';
   bd.style.gridTemplateColumns=`repeat(${cfgM.size===20?5:4},1fr)`;
   mDeck.forEach((k,i)=>{
-    const c=document.createElement('button'); c.className='mcard'; c.dataset.i=i;
+    const c=document.createElement('button'); c.className='mcard'; c.dataset.idx=i;
     c.innerHTML=`<div class="mface"><div class="mback">${S.star(BRASS)}</div><div class="mfront">${S[k](INK)}</div></div>`;
     c.onclick=()=>{ if(cfgM.mode==='solo'&&mTurn===1) return; memFlip(i,c); };
     bd.appendChild(c);
@@ -1332,7 +1358,7 @@ function memFlip(i,el){
 function memBot(){
   if(mDone===cfgM.size/2||cur!=='mem') return;
   const cards=[...document.querySelectorAll('.mcard')].filter(c=>!c.classList.contains('done'));
-  const idxs=cards.map(c=>+c.dataset.i);
+  const idxs=cards.map(c=>+c.dataset.idx);
   let pair=null;
   const keys=Object.keys(mSeen).filter(i=>idxs.includes(+i));
   for(const a of keys) for(const b of keys)
@@ -1343,15 +1369,15 @@ function memBot(){
     const unseen=idxs.filter(i=>mSeen[i]===undefined);
     first = (unseen.length?unseen:idxs)[Math.floor(Math.random()*(unseen.length?unseen.length:idxs.length))];
   }
-  const el1=document.querySelector(`.mcard[data-i="${first}"]`);
+  const el1=document.querySelector(`.mcard[data-idx="${first}"]`);
   memFlip(first,el1);
   setTimeout(()=>{
     if(second===undefined){
-      const rest=idxs.filter(i=>i!==first && !document.querySelector(`.mcard[data-i="${i}"]`).classList.contains('flip'));
+      const rest=idxs.filter(i=>i!==first && !document.querySelector(`.mcard[data-idx="${i}"]`).classList.contains('flip'));
       const known=rest.find(i=>mSeen[i]===mDeck[first]);
       second = known!==undefined?known:rest[Math.floor(Math.random()*rest.length)];
     }
-    const el2=document.querySelector(`.mcard[data-i="${second}"]`);
+    const el2=document.querySelector(`.mcard[data-idx="${second}"]`);
     if(el2) memFlip(second,el2);
   },700);
 }
