@@ -12,34 +12,65 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans+Arabic:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#100E0C;--ink2:#1A1714;--bone:#EFE7D8;--brass:#CFA24A;--muted:#8C8375;--line:rgba(239,231,216,.10)}
+/* أسماء الأصناف كلها مسبوقة بـ pv- كي لا تتقاطع مع أنماط اللعبة */
+.pv-root{
+  --pv-ink:#100E0C; --pv-ink2:#1A1714; --pv-bone:#EFE7D8; --pv-brass:#CFA24A;
+  --pv-muted:#8C8375; --pv-line:rgba(239,231,216,.10);
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--ink);color:var(--bone);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;
-  line-height:1.9;padding:30px 20px 60px}
-main{max-width:620px;margin:0 auto}
-h1{font-family:"Aref Ruqaa",serif;font-size:34px;margin:10px 0 2px}
-h1 .en{font-family:"Fraunces",serif;font-size:21px;color:var(--muted);display:block;font-weight:600}
-h2{font-size:17.5px;margin:32px 0 6px;color:var(--brass)}
-p,li{font-size:15px;color:#D9D0BF}
-ul{padding-inline-start:20px;margin:6px 0}
-.card{background:var(--ink2);border:1px solid var(--line);border-radius:16px;padding:16px 20px;margin-top:18px}
-.card p{margin:0}
-.en-block{direction:ltr;text-align:left}
-.en-block h1,.en-block h2{font-family:"Fraunces",serif}
-.back{display:inline-block;margin-top:36px;color:var(--muted);text-decoration:none;font-size:14px}
-hr{border:none;border-top:1px solid var(--line);margin:40px 0}
-.badge{display:inline-block;font-size:11px;letter-spacing:.14em;color:var(--brass);
-  border:1px solid rgba(207,162,74,.4);border-radius:20px;padding:4px 11px}
-.date{color:var(--muted);font-size:13px;margin-top:4px}
+html,body{margin:0}
+body{background:#100E0C}
+.pv-root{
+  background:var(--pv-ink);color:var(--pv-bone);
+  font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;line-height:1.9;
+  min-height:100vh;padding:0 20px 60px;
+}
+.pv-bar{
+  position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;
+  max-width:620px;margin:0 auto;padding:14px 0 12px;
+  background:linear-gradient(180deg,var(--pv-ink) 78%,rgba(16,14,12,0));
+}
+.pv-back{
+  width:40px;height:40px;flex:none;display:grid;place-items:center;border-radius:12px;
+  background:var(--pv-ink2);border:1px solid var(--pv-line);color:var(--pv-bone);
+  text-decoration:none;font-size:18px;line-height:1;
+}
+.pv-back:hover{border-color:var(--pv-brass);color:var(--pv-brass)}
+html[dir=ltr] .pv-back{transform:scaleX(-1)}
+.pv-bar b{font-size:15px;font-weight:600}
+.pv-bar .pv-tag{
+  margin-inline-start:auto;font-size:10.5px;letter-spacing:.14em;color:var(--pv-brass);
+  border:1px solid rgba(207,162,74,.4);border-radius:20px;padding:4px 10px;
+}
+.pv-main{max-width:620px;margin:0 auto}
+.pv-main h1{font-family:"Aref Ruqaa",serif;font-size:33px;margin:14px 0 2px}
+.pv-main h1 .pv-en{font-family:"Fraunces",serif;font-size:20px;color:var(--pv-muted);display:block;font-weight:600}
+.pv-main h2{font-size:17px;margin:30px 0 6px;color:var(--pv-brass)}
+.pv-main p,.pv-main li{font-size:15px;color:#D9D0BF}
+.pv-main ul{padding-inline-start:20px;margin:6px 0}
+.pv-card{background:var(--pv-ink2);border:1px solid var(--pv-line);border-radius:16px;padding:16px 20px;margin-top:18px}
+.pv-card p{margin:0}
+.pv-date{color:var(--pv-muted);font-size:13px;margin-top:4px}
+.pv-ltr{direction:ltr;text-align:left}
+.pv-ltr h1,.pv-ltr h2{font-family:"Fraunces",serif}
+.pv-hr{border:none;border-top:1px solid var(--pv-line);margin:40px 0}
+.pv-foot{display:block;margin-top:36px;color:var(--pv-muted);text-decoration:none;font-size:14px;text-align:center}
 </style>
 </head>
 <body>
-<main>
-  <span class="badge">MAJLIS · v1.0</span>
-  <h1>الخصوصية<span class="en">Privacy</span></h1>
-  <p class="date">آخر تحديث: أغسطس 2026</p>
+<div class="pv-root">
 
-  <div class="card">
+<div class="pv-bar">
+  <a class="pv-back" href="./index.html" aria-label="رجوع">‹</a>
+  <b>المجلس</b>
+  <span class="pv-tag">v2.8</span>
+</div>
+
+<main class="pv-main">
+  <h1>الخصوصية<span class="pv-en">Privacy</span></h1>
+  <p class="pv-date">آخر تحديث: أغسطس 2026</p>
+
+  <div class="pv-card">
     <p><strong>باختصار:</strong> «المجلس» لعبة لا تجمع عنك شيئاً. لا حساب، ولا تسجيل دخول، ولا إعلانات، ولا إرسال لأي معلومة إلى أي جهة.</p>
   </div>
 
@@ -69,13 +100,13 @@ hr{border:none;border-top:1px solid var(--line);margin:40px 0}
   <h2>الأطفال</h2>
   <p>اللعبة مناسبة لجميع الأعمار، ولا تطلب أي معلومة شخصية من أحد.</p>
 
-  <hr>
+  <hr class="pv-hr">
 
-  <div class="en-block">
+  <div class="pv-ltr">
     <h1>Privacy</h1>
-    <p class="date">Last updated: August 2026</p>
+    <p class="pv-date">Last updated: August 2026</p>
 
-    <div class="card"><p><strong>In short:</strong> Majlis collects nothing about you. No account, no sign-in, no ads, and nothing is ever sent anywhere.</p></div>
+    <div class="pv-card"><p><strong>In short:</strong> Majlis collects nothing about you. No account, no sign-in, no ads, and nothing is ever sent anywhere.</p></div>
 
     <h2>What is saved</h2>
     <p>Only the things that let the game remember you next time, and all of it stays on your phone:</p>
@@ -103,7 +134,8 @@ hr{border:none;border-top:1px solid var(--line);margin:40px 0}
     <p>The game is suitable for all ages and asks no one for any personal information.</p>
   </div>
 
-  <a class="back" href="./index.html">← رجوع إلى المجلس · Back to Majlis</a>
+  <a class="pv-foot" href="./index.html">رجوع إلى المجلس · Back to Majlis</a>
 </main>
+</div>
 </body>
 </html>
