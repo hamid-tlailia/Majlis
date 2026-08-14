@@ -492,6 +492,19 @@ body.playing .micfab.live{display:grid;place-items:center}
 .micfab .dotq{position:absolute;top:5px;inset-inline-end:5px;width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .micfab.good .dotq{background:var(--ok)} .micfab.ok .dotq{background:var(--brass)}
 .micfab.weak .dotq{background:var(--clay)}
+.micmenu{position:fixed;z-index:70;display:none;flex-direction:column;gap:2px;padding:6px;
+  background:var(--ink2);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 10px 26px rgba(0,0,0,.6)}
+.micmenu.on{display:flex}
+.micmenu button{display:flex;align-items:center;gap:9px;background:none;border:none;cursor:pointer;
+  color:var(--bone2);font-family:inherit;font-size:13.5px;padding:9px 12px;border-radius:10px;white-space:nowrap}
+.micmenu button:hover{background:var(--ink3)}
+.micmenu button.sel{color:var(--brass)}
+.micmenu svg{width:18px;height:18px;flex:none}
+.prow .inv{background:var(--brass);border:none;color:var(--ink);border-radius:9px;padding:6px 13px;
+  font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.prow .inv[disabled]{background:var(--ink3);color:var(--muted);cursor:default}
+.prow .st{font-size:10.5px;color:var(--muted)}
 .codein{text-align:center;font-family:"IBM Plex Mono",monospace;letter-spacing:.28em;font-size:20px;text-transform:uppercase}
 /* ===== ثيمات ===== */
 html[data-theme="night"]{
@@ -532,7 +545,12 @@ html[data-theme="sand"]{
 <body>
 <script src="./net.js"></script>
 <canvas id="fx"></canvas>
-<button class="micfab" id="micFab" onclick="toggleMic()" aria-label="mic"><i class="dotq"></i>🎙</button>
+<button class="micfab" id="micFab" onclick="micMenu()" aria-label="mic"><i class="dotq"></i><span id="micIco"></span></button>
+<div class="micmenu" id="micMenu">
+  <button onclick="micSet('on')" id="mm_on"></button>
+  <button onclick="micSet('mute')" id="mm_mute"></button>
+  <button onclick="micSet('off')" id="mm_off"></button>
+</div>
 <div class="app" id="app">
 
 <!-- ===== الصالة ===== -->
@@ -924,6 +942,16 @@ html[data-theme="sand"]{
   </div>
 </div>
 
+<!-- ===== دعوة واردة ===== -->
+<div class="overlay" id="ovInvitePrompt">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 data-i="inv.incoming"></h2><p class="sub" id="ipSub"></p>
+    <button class="primary" onclick="inviteAccept()" data-i="inv.accept"></button>
+    <button class="secondary" onclick="inviteDecline()" data-i="inv.decline"></button>
+  </div>
+</div>
+
 <!-- ===== غرفة سابقة ===== -->
 <div class="overlay" id="ovPrev">
   <div class="sheet">
@@ -990,6 +1018,12 @@ ar:{
  'net.sysJoined':'انضم إلى الغرفة','net.sysLeft':'غادر الغرفة','net.sysDrop':'انقطع اتصاله',
  'net.sysBack':'عاد إلى الغرفة','net.sysHost':'صار المضيف','net.sysRetry':'انقطع الاتصال — نحاول العودة…',
  'net.sysClosed':'أُغلقت الغرفة','net.errNoRoom':'لا توجد غرفة بهذا الرمز','net.errFull':'الغرفة ممتلئة',
+ 'mic.on':'الميكروفون مفتوح','mic.mute':'كتم مؤقّت','mic.off':'إغلاق الصوت',
+ 'inv.onlineNow':'متصلون الآن','inv.nobody':'لا أحد متصل الآن — استعمل الرابط للدعوة.',
+ 'inv.btn':'ادعُ','inv.free':'متاح','inv.busy':'في لعبة',
+ 'inv.sent':'أُرسلت الدعوة','inv.accepted':'قبل الدعوة','inv.declined':'اعتذر عن الدعوة',
+ 'inv.incoming':'دعوة للعب','inv.wants':'يدعوك إلى','inv.accept':'اقبل وادخل','inv.decline':'اعتذر',
+ 'inv.micOn':'فتح الميكروفون','inv.micOff':'أغلق الميكروفون',
  'pv.t':'غرفة سابقة','pv.s':'لك غرفة مفتوحة في هذه اللعبة — هل تعود إليها؟',
  'pv.join':'عُد إلى الغرفة','pv.drop':'لا، اتركها','pv.dropped':'أُبلغ اللاعب الآخر',
  'cl.t':'انتهت الجولة','cl.host':'المضيف غادر اللعبة','cl.guest':'اللاعب الآخر غادر اللعبة',
@@ -1061,6 +1095,12 @@ en:{
  'net.sysJoined':'joined the room','net.sysLeft':'left the room','net.sysDrop':'lost connection',
  'net.sysBack':'is back','net.sysHost':'is now the host','net.sysRetry':'Disconnected — reconnecting…',
  'net.sysClosed':'Room closed','net.errNoRoom':'No room with that code','net.errFull':'Room is full',
+ 'mic.on':'Microphone on','mic.mute':'Mute temporarily','mic.off':'Turn voice off',
+ 'inv.onlineNow':'Online now','inv.nobody':'Nobody is online — use the link to invite.',
+ 'inv.btn':'Invite','inv.free':'free','inv.busy':'in a game',
+ 'inv.sent':'Invite sent','inv.accepted':'accepted the invite','inv.declined':'declined the invite',
+ 'inv.incoming':'Game invite','inv.wants':'invites you to','inv.accept':'Accept and join','inv.decline':'Decline',
+ 'inv.micOn':'turned the mic on','inv.micOff':'turned the mic off',
  'pv.t':'Previous room','pv.s':'You have an open room in this game — rejoin it?',
  'pv.join':'Rejoin the room','pv.drop':'No, drop it','pv.dropped':'The other player was notified',
  'cl.t':'Round ended','cl.host':'the host left the game','cl.guest':'the other player left',
@@ -1360,7 +1400,7 @@ const MEMKINDS=['star','hex','ring','arch','dia','wave','tri','latt','moon','kno
 
 /* ================= إكس أو ================= */
 const SYM=[['✕','◯'],['★','❖'],['▲','■'],['ض','ق']];
-let xoB,xoT,xoLock,xoS={a:0,b:0,d:0};
+let xoB,xoT,xoLock,xoWin=null,xoS={a:0,b:0,d:0};
 const WINS=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 function buildSyms(){
   const box=$('xoSyms'); if(!box) return; box.innerHTML='';
@@ -1386,7 +1426,7 @@ function xoNew(auto){
   closeAll(); if(!auto) sfx('tap');
   netTune();
   if(!auto) xoZero();
-  xoB=Array(9).fill(null); xoT=cfgX.first; xoLock=false;
+  xoB=Array(9).fill(null); xoT=cfgX.first; xoLock=false; xoWin=null;
   const bd=$('xoboard'); bd.innerHTML='';
   for(let i=0;i<9;i++){ const b=document.createElement('button'); b.onclick=()=>xoPlay(i); bd.appendChild(b); }
   [1,2].forEach(k=>{const l=document.createElement('div');l.className='ln v';l.style.left=(33.3*k)+'%';bd.appendChild(l);});
@@ -1418,7 +1458,7 @@ function xoDo(i){
   const w=WINS.find(c=>c.every(k=>xoB[k]===xoT));
   const n=xoNames();
   if(w){
-    xoLock=true; const key=xoT?'b':'a'; xoS[key]++;
+    xoLock=true; xoWin=w; const key=xoT?'b':'a'; xoS[key]++;
     const tile=$(xoT?'so':'sx'); tile.querySelector('b').textContent=xoS[key];
     tile.classList.remove('bump'); void tile.offsetWidth; tile.classList.add('bump');
     xoDrawLine(w);
@@ -1459,7 +1499,7 @@ function xoBest(b,p){
   }
   return best;
 }
-function xoDrawLine(w){
+function xoDrawLine(w,quiet){
   const bd=$('xoboard'),r=bd.getBoundingClientRect();
   const a=bd.children[w[0]].getBoundingClientRect(),b=bd.children[w[2]].getBoundingClientRect();
   const x1=a.left+a.width/2-r.left,y1=a.top+a.height/2-r.top;
@@ -1468,7 +1508,7 @@ function xoDrawLine(w){
   const el=document.createElement('div'); el.className='winline';
   el.style.width=len+'px'; el.style.left=x1+'px'; el.style.top=(y1-3)+'px';
   el.style.transform=`rotate(${ang}deg)`; el.style.transformOrigin='0 50%';
-  bd.appendChild(el); burstAt(el,44);
+  bd.appendChild(el); if(!quiet) burstAt(el,44);
 }
 
 /* ================= الذاكرة ================= */
@@ -1908,6 +1948,7 @@ function land(p,i,cap){
             dead.classList.add('dead'); setTimeout(()=>dead.classList.remove('dead'),420);
             LT[q][j]=-1; extra=true; sfx('cap'); shake(); buzz([30,40,60]); burstAt(dead,30);
             if(cur==='ludo'&&!lStop) toast(`${nameOf(p)} ${t('ate')} ${cname(q)}`);
+            netFx('eat',{q,j,p});
           }
         });
       });
@@ -1930,6 +1971,7 @@ function land(p,i,cap){
   if(extra){
     lBusy=false; lDie=0; setDie(CP());
     if(HUM[lCur]) $('die').disabled=false;
+    netSyncControls(); if(netOn()&&netHost()) netPush();
     hint(`${nameOf(CP())} — ${t('extra')}`,true);
     if(!HUM[lCur]) setTimeout(roll,600); return; }
   nextTurn();
@@ -2559,12 +2601,15 @@ function roomLink(code){
 /* ---- لقطات الحالة لكل لعبة ---- */
 const SNAP={
   xo:{
-    get:()=>({b:xoB,t:xoT,l:xoLock,s:xoS,c:cfgX}),
+    get:()=>({b:xoB,t:xoT,l:xoLock,s:xoS,c:cfgX,w:xoWin}),
     set:s=>{ Object.assign(cfgX,s.c); xoB=s.b; xoT=s.t; xoLock=s.l; xoS=s.s;
       const bd=$('xoboard'); [...bd.querySelectorAll('button')].forEach((b,i)=>{
         b.innerHTML = xoB[i]===null?'':`<span class="glyph" style="color:${xoB[i]?CLAY:INK}">${SYM[cfgX.sym][xoB[i]]}</span>`; });
       $('sx').querySelector('b').textContent=xoS.a; $('sd').querySelector('b').textContent=xoS.d;
-      $('so').querySelector('b').textContent=xoS.b; xoRail(); }
+      $('so').querySelector('b').textContent=xoS.b; xoRail();
+      bd.querySelectorAll('.winline').forEach(e=>e.remove());
+      xoWin=s.w||null;
+      if(xoWin) requestAnimationFrame(()=>xoDrawLine(xoWin,true)); }
   },
   mem:{
     get:()=>({d:mDeck,o:mOpen.map(x=>x.i),t:mTurn,s:mScore,n:mDone,c:cfgM,
@@ -2624,6 +2669,11 @@ function netPlayFx(f){
       if(cur!=='ludo'||!LT[f.p]) return;
       LT[f.p][f.i]=f.v; ludoPlace(); sfx('step');
       const el=$(`t${f.p}_${f.i}`); if(el) hop(el);
+    }else if(f.type==='eat'){                 // ضربة: الحجر يعود للصندوق
+      if(cur!=='ludo'||!LT[f.q]) return;
+      const dead=$(`t${f.q}_${f.j}`);
+      if(dead){ dead.classList.add('dead'); setTimeout(()=>dead.classList.remove('dead'),420); burstAt(dead,26); }
+      LT[f.q][f.j]=-1; ludoPlace(); sfx('cap'); shake(); buzz([30,40,60]);
     }else if(f.type==='mjdraw'){              // بلاطة سُحبت
       if(cur!=='mj') return;
       mjDrawn=f.k; mjRender(); sfx('flip');
@@ -2686,15 +2736,34 @@ function netRenderPresence(){
   ['netCodeLbl','netJoinCode','netJoinBtn'].forEach(id=>$(id).style.display = inRoom?'none':'');
   $('netLeaveBtn').style.display = inRoom?'':'none';
   const box=$('plist'); box.innerHTML='';
-  if(!inRoom) return;
-  N().room.players.forEach(p=>box.appendChild(prow(p)));
+  if(inRoom) N().room.players.forEach(p=>box.appendChild(prow(p)));
+  const L=N().Lobby, others=L?L.others():[];
+  if(others.length){
+    const hd=document.createElement('p'); hd.className='note';
+    hd.textContent=t('inv.onlineNow')+' ('+others.length+')';
+    box.appendChild(hd);
+    others.forEach(p=>box.appendChild(prow(p,true)));
+  }else if(!inRoom){
+    const e=document.createElement('p'); e.className='note'; e.textContent=t('inv.nobody');
+    box.appendChild(e);
+  }
 }
-function prow(p){
+function prow(p,invitable){
   const d=document.createElement('div'); d.className='prow'+(p.online?'':' off');
   d.innerHTML=`<div class="av">${[...(p.name||'?')][0]}</div>
-    <div class="nm">${p.name}${p.id===N().you?' •':''}</div>
-    <span class="mic${p.voice?' on':''}">${p.voice?'🎙':'🔇'}</span>
-    <span class="tag">${p.isHost?t('net.host'):''} ${p.ping!=null?p.ping+'ms':''}</span>`;
+    <div class="nm">${p.name}${(!invitable&&p.id===N().you)?' •':''}
+      <span class="st">${invitable? t(p.status==='busy'?'inv.busy':'inv.free') : (p.isHost?t('net.host'):'')}</span></div>`;
+  if(invitable){
+    const b=document.createElement('button'); b.className='inv';
+    b.textContent=t('inv.btn'); b.disabled = p.status==='busy' || cur==='lobby';
+    b.onclick=()=>invitePerson(p.id);
+    d.appendChild(b);
+  }else{
+    const s=document.createElement('span'); s.className='mic'+(p.voice?' on':'');
+    s.innerHTML=p.voice?ICO.mic:ICO.mute; s.style.width='16px'; d.appendChild(s);
+    const tg=document.createElement('span'); tg.className='tag';
+    tg.textContent = p.ping!=null? p.ping+'ms':''; d.appendChild(tg);
+  }
   return d;
 }
 async function netJoin(code){
@@ -2706,7 +2775,7 @@ async function netJoin(code){
 }
 function netLeave(){
   closeAll(); N().disconnect();
-  $('netbar').style.display='none'; micPaint();
+  $('netbar').style.display='none'; micPaint(); lobbyBusy(false);
   netCfg.code=''; netSave(); netColors=[];
   if(location.hash) history.replaceState(null,'',location.pathname+location.search);
   toast(t('net.left'));
@@ -2767,23 +2836,97 @@ function netQuality(q){
   $('netrtt').textContent = q.rtt!=null? q.rtt+'ms' : '';
   if(q.quality==='weak') toast(t('net.weak'));
 }
+/* ---- أيقونات الميكروفون ---- */
+const ICO={
+  mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21"/><path d="M8.5 21h7"/></svg>',
+  mute:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 9V5.5a3 3 0 0 1 6 0V11"/><path d="M5.5 11a6.5 6.5 0 0 0 10 5.5"/><path d="M12 17.5V21"/><path d="M8.5 21h7"/><path d="M3.5 3.5l17 17"/></svg>',
+  off:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>'
+};
+function micState(){ const V=N().Voice; return !V.on?'off':(V.muted?'mute':'on'); }
 function micPaint(){
-  const V=N().Voice, b=$('micBtn'), f=$('micFab');
-  const st = !V.on ? '' : (V.muted?'mut':'on');
-  const icon = (!V.on||V.muted) ? (V.on?'🔇':'🎙') : '🎙';
-  if(b){ b.className='mic '+st; b.textContent=icon; }
+  const st=micState();
+  const b=$('micBtn'), f=$('micFab');
+  if(b){ b.className='mic '+(st==='on'?'on':st==='mute'?'mut':''); b.innerHTML=ICO[st==='off'?'mic':st]; }
   if(f){
-    f.className='micfab '+st+' '+(netOn()?'live ':'')+(N().quality||'');
-    f.innerHTML='<i class="dotq"></i>'+icon;
+    f.className='micfab '+(st==='on'?'on':st==='mute'?'mut':'')+' '+(netOn()?'live ':'')+(N().quality||'');
+    $('micIco').innerHTML=ICO[st==='off'?'mic':st];
+  }
+  const M=$('micMenu');
+  if(M){
+    [['mm_on','on',ICO.mic,'mic.on'],['mm_mute','mute',ICO.mute,'mic.mute'],['mm_off','off',ICO.off,'mic.off']]
+      .forEach(([id,k,ic,key])=>{
+        const el=$(id); if(!el) return;
+        el.innerHTML=ic+'<span>'+t(key)+'</span>';
+        el.classList.toggle('sel',st===k);
+      });
   }
 }
-async function toggleMic(){
-  const V=N().Voice;
+function micMenu(){
   if(!netOn()){ toast(t('net.noRoom')); return; }
-  if(!V.on){ const ok=await V.start(); if(ok) toast(t('net.micOn')); }
-  else if(!V.muted){ V.setMuted(true); toast(t('net.micMuted')); }
-  else { V.setMuted(false); V.stop(); toast(t('net.micOff')); }
+  sfx('tap');
+  const M=$('micMenu'), f=$('micFab');
+  const open=!M.classList.contains('on');
+  M.classList.toggle('on',open);
+  if(open){
+    const r=f.getBoundingClientRect();
+    M.style.bottom=(innerHeight-r.bottom)+'px';
+    const rtl=document.documentElement.dir!=='ltr';
+    M.style.left=''; M.style.right='';
+    if(rtl) M.style.left=(r.right+10)+'px'; else M.style.right=(innerWidth-r.left+10)+'px';
+    micPaint();
+    setTimeout(()=>document.addEventListener('click',micClose,{once:true}),50);
+  }
+}
+function micClose(e){ if(e&&e.target.closest('#micMenu')) return; $('micMenu').classList.remove('on'); }
+async function micSet(mode){
+  const V=N().Voice;
+  $('micMenu').classList.remove('on'); sfx('tap');
+  if(mode==='off'){ if(V.on) V.stop(); toast(t('net.micOff')); }
+  else{
+    if(!V.on){ const ok=await V.start(); if(!ok){ micPaint(); return; } }
+    V.setMuted(mode==='mute');
+    toast(t(mode==='mute'?'net.micMuted':'net.micOn'));
+  }
   micPaint();
+}
+/* ---- الردهة: من متاح الآن ---- */
+let lobbyList=[], pendingInvite=null;
+function lobbyStart(){
+  const L=N().Lobby; if(!L) return;
+  N().url=serverUrl();
+  L.on.list = arr=>{ lobbyList=arr; if($('ovOnline').classList.contains('on')) netRenderPresence(); };
+  L.on.invite = m=>{ pendingInvite=m; showInvitePrompt(m); };
+  L.on.reply = m=>{ toast(m.name+' — '+t(m.ok?'inv.accepted':'inv.declined')); if(!m.ok) sfx('miss'); };
+  L.join(profile.name);
+}
+function lobbyBusy(v){ try{ N().Lobby.status(v?'busy':'free'); }catch(e){} }
+function showInvitePrompt(m){
+  const gname={xo:'g.xo',ludo:'g.ludo',mem:'g.mem',dots:'g.dots',mj:'g.mj'}[m.game]||'g.xo';
+  $('ipSub').textContent = m.name+' — '+t('inv.wants')+' '+t(gname);
+  $('ovInvitePrompt').classList.add('on');
+  sfx('ding'); buzz([40,70,40]);
+}
+function inviteAccept(){
+  $('ovInvitePrompt').classList.remove('on');
+  const m=pendingInvite; pendingInvite=null; if(!m) return;
+  try{ N().Lobby.reply(m.from,true); }catch(e){}
+  netJoin(m.code);
+}
+function inviteDecline(){
+  $('ovInvitePrompt').classList.remove('on');
+  const m=pendingInvite; pendingInvite=null; if(!m) return;
+  try{ N().Lobby.reply(m.from,false); }catch(e){}
+  sfx('tap');
+}
+/* دعوة شخص متصل إلى اللعبة الحالية */
+async function invitePerson(id){
+  if(!netOn()||!netHost()){ await inviteHere(); }
+  setTimeout(()=>{
+    if(!netOn()){ toast(t('net.failed')); return; }
+    const ok=N().Lobby.invite(id, N().room.code, cur);
+    toast(t(ok?'inv.sent':'net.failed'));
+    netRenderPresence();
+  },500);
 }
 /* ---- ضبط الألعاب لوضع الشبكة ---- */
 let netColors=[];                 // لون كل مقعد في لودو
@@ -2879,7 +3022,7 @@ function netInit(){
   const M=N(); if(!M) return;
   M.url=serverUrl();
   M.on.room = room=>{
-    netRenderRoom(room); netCfg.code=room.code; netCfg.you=N().you; netSave(); netTune(); prevSave();
+    netRenderRoom(room); netCfg.code=room.code; netCfg.you=N().you; netSave(); netTune(); prevSave(); lobbyBusy(true);
     if(!netHost() && GAMEOF[room.game] && cur!==room.game) go(room.game);
     if(netHost() && cur!=='lobby') setTimeout(netPush,120);
   };
@@ -2887,6 +3030,11 @@ function netInit(){
   M.on.game  = g=>{ if(!netHost()&&GAMEOF[g]) go(g); };
   M.on.input = m=>{ if(netHost()) netHandleInput(m); };
   M.on.quality = netQuality;
+  M.on.voice = v=>{
+    const p=(N().room?.players||[]).find(x=>x.id===v.id);
+    if(p && v.id!==N().you) toast(p.name+' — '+t(v.on?'inv.micOn':'inv.micOff'));
+    micPaint();
+  };
   M.on.emote = m=>{
     if(m.e==='#end'||m.e==='#out'){
       $('clSub').textContent = (m.name||'')+' — '+t(m.e==='#end'?'cl.host':'cl.guest');
@@ -2950,6 +3098,7 @@ $('av').textContent=[...profile.name][0]; $('av').dataset.st=profile.status;
 $('sndBtn').textContent=SND.on?'♪':'✕'; $('sndBtn').classList.toggle('off',!SND.on);
 applyTheme();
 netInit();
+setTimeout(()=>{ try{ lobbyStart(); }catch(e){} },1200);
 xoNew(); memNew(); dotsNew(true); mjNew(true); ludoStart(); applyLang(); closeAll();
 document.addEventListener('click',()=>AC(),{once:true});
 if('serviceWorker' in navigator){

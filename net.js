@@ -339,6 +339,46 @@
     _removeAudio(id) { document.getElementById('va_' + id)?.remove(); }
   };
 
+
+  /* ============================================================
+     الردهة — حضور عام ودعوات مباشرة (قناة مستقلة)
+     ============================================================ */
+  const Lobby = {
+    ws: null, you: null, players: [], on: {}, name: '', _t: null,
+    emit(e, d) { const f = this.on[e]; if (f) { try { f(d); } catch (x) { console.error(x); } } },
+    connected() { return !!(this.ws && this.ws.readyState === 1); },
+    send(o) { if (this.connected()) { this.ws.send(JSON.stringify(o)); return true; } return false; },
+
+    join(name) {
+      this.name = name || this.name;
+      if (this.connected()) { this.send({ t: 'status', s: 'free' }); return; }
+      const base = Net._base ? Net._base() : (Net.url || '');
+      const path = /\/ws$/.test(Net.url || '') ? Net.url : (base + '/ws');
+      let ws;
+      try { ws = new WebSocket(path + '?code=LOBBY'); } catch { return; }
+      this.ws = ws;
+      ws.onopen = () => {
+        this.send({ t: 'join', code: 'LOBBY', name: this.name });
+        clearInterval(this._t);
+        this._t = setInterval(() => this.send({ t: 'ping', ts: Date.now() }), 25000);
+      };
+      ws.onmessage = ev => {
+        let m; try { m = JSON.parse(ev.data); } catch { return; }
+        if (m.t === 'joined') { this.you = m.you; this.players = m.room.players; this.emit('list', this.players); }
+        else if (m.t === 'room') { this.players = m.room.players; this.emit('list', this.players); }
+        else if (m.t === 'invite') this.emit('invite', m);
+        else if (m.t === 'inviteReply') this.emit('reply', m);
+        else if (m.t === 'err') this.emit('err', m);
+      };
+      ws.onclose = () => { clearInterval(this._t); this.ws = null; this.you = null; this.players = []; this.emit('list', []); };
+    },
+    leave() { clearInterval(this._t); try { this.ws && this.ws.close(); } catch {} this.ws = null; },
+    status(s) { this.send({ t: 'status', s }); },
+    invite(to, code, game) { return this.send({ t: 'invite', to, code, game }); },
+    reply(to, ok) { return this.send({ t: 'inviteReply', to, ok }); },
+    others() { return this.players.filter(p => p.id !== this.you && p.online); }
+  };
+  Net.Lobby = Lobby;
   Net.Voice = Voice;
   global.MajlisNet = Net;
 })(window);
