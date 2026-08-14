@@ -913,6 +913,26 @@ html[data-theme="sand"]{
   </div>
 </div>
 
+<!-- ===== الغرفة أُغلقت ===== -->
+<div class="overlay" id="ovClosed">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 data-i="cl.t"></h2><p class="sub" id="clSub"></p>
+    <button class="primary" onclick="closedLeave()" data-i="cl.leave"></button>
+    <button class="secondary" onclick="closedStay()" data-i="cl.stay"></button>
+  </div>
+</div>
+
+<!-- ===== عاد الاتصال ===== -->
+<div class="overlay" id="ovBack">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 data-i="rc.t"></h2><p class="sub" data-i="rc.s"></p>
+    <button class="primary" onclick="rejoinYes()" data-i="rc.yes"></button>
+    <button class="secondary" onclick="rejoinNo()" data-i="rc.no"></button>
+  </div>
+</div>
+
 <div class="banner" id="banner" onclick="closeBanner()">
   <div class="in"><h2 id="bTitle"></h2><p id="bText"></p>
     <button class="primary" onclick="closeBanner()" data-i="continue"></button></div>
@@ -948,6 +968,9 @@ ar:{
  'net.sysJoined':'انضم إلى الغرفة','net.sysLeft':'غادر الغرفة','net.sysDrop':'انقطع اتصاله',
  'net.sysBack':'عاد إلى الغرفة','net.sysHost':'صار المضيف','net.sysRetry':'انقطع الاتصال — نحاول العودة…',
  'net.sysClosed':'أُغلقت الغرفة','net.errNoRoom':'لا توجد غرفة بهذا الرمز','net.errFull':'الغرفة ممتلئة',
+ 'cl.t':'انتهت الجولة','cl.host':'المضيف غادر اللعبة','cl.guest':'اللاعب الآخر غادر اللعبة',
+ 'cl.leave':'العودة إلى الصالة','cl.stay':'ابقَ في الغرفة','cl.waiting':'في انتظار اللاعب الآخر…',
+ 'rc.t':'عاد الاتصال','rc.s':'هل تعود إلى الغرفة وتكمل الجولة؟','rc.yes':'نعم، عُد','rc.no':'لا، اخرج',
  'inv.t':'ادعُ إلى هذه اللعبة','inv.s':'غرفة خاصة بهذه اللعبة وحدها',
  'inv.make':'أنشئ دعوة','inv.share':'أرسل هذا الرابط — يفتحه صديقك فيدخل معك مباشرة',
  'inv.note':'تُنشأ غرفة مقفلة على اللعبة الحالية، ولا يدخلها إلا من معه الرابط.',
@@ -1014,6 +1037,9 @@ en:{
  'net.sysJoined':'joined the room','net.sysLeft':'left the room','net.sysDrop':'lost connection',
  'net.sysBack':'is back','net.sysHost':'is now the host','net.sysRetry':'Disconnected — reconnecting…',
  'net.sysClosed':'Room closed','net.errNoRoom':'No room with that code','net.errFull':'Room is full',
+ 'cl.t':'Round ended','cl.host':'the host left the game','cl.guest':'the other player left',
+ 'cl.leave':'Back to lobby','cl.stay':'Stay in the room','cl.waiting':'Waiting for the other player…',
+ 'rc.t':'Connection restored','rc.s':'Rejoin the room and continue the round?','rc.yes':'Yes, rejoin','rc.no':'No, leave',
  'inv.t':'Invite to this game','inv.s':'A private room for this game only',
  'inv.make':'Create invite','inv.share':'Send this link — your friend joins you directly',
  'inv.note':'Creates a room locked to the current game; only people with the link can enter.',
@@ -1210,6 +1236,10 @@ function askExit(){
 function cancelExit(){ sfx('tap'); $('ovExit').classList.remove('on'); }
 function doExit(){
   sfx('tap'); $('ovExit').classList.remove('on'); closeAll();
+  if(netOn()){                       // مغادرة اللعبة تُنهي الغرفة
+    try{ N().emote(netHost()?'#end':'#out'); }catch(e){}
+    setTimeout(()=>{ N().disconnect(); $('netbar').style.display='none'; netColors=[]; },220);
+  }
   if(cur==='mj'){ mjOver=true; mjLock=true; }
   if(cur==='xo') xoZero();
   if(cur==='mem') memZero();
@@ -1228,7 +1258,13 @@ let tmr=null;
 function toast(x){ const el=$('toast'); el.textContent=x; el.classList.add('on');
   clearTimeout(tmr); tmr=setTimeout(()=>el.classList.remove('on'),2300); }
 function closeAll(){ document.querySelectorAll('.overlay').forEach(o=>{ if(o.id!=='ovExit'&&o.id!=='ovReset') o.classList.remove('on'); }); }
+let netEvt=null;
+function netEmit(type,a,b,c){ if(netOn()&&netHost()){ netEvt={type,a,b,c}; setTimeout(netPush,40); } }
 function showBanner(title,text,cols){
+  netEmit('banner',title,text,cols);
+  showBannerLocal(title,text,cols);
+}
+function showBannerLocal(title,text,cols){
   $('bTitle').innerHTML=`<span class="${lang==='ar'?'ar':'en'}">${title}</span>`;
   $('bText').textContent=text; $('banner').classList.add('on');
   sfx('win'); buzz([40,60,40,60,120]);
@@ -2097,7 +2133,7 @@ function mjPickKinds(){
   mjRound=Object.keys(mjSet()).sort(()=>Math.random()-.5).slice(0,8);
 }
 let mjWall=[],mjPile=[],mjDisc=[],mjDrawn=null,mjCur=0,mjHum=[],mjLock=false,mjOver=false,mjIdle=0;
-const mjView=()=>0;   // اللوحة السفلية دائماً للاعب الأول
+const mjView=()=>netOn()?Math.min(netSeat(),cfgJ.count-1):0;   // لوحتي أنا في الأسفل
 const mjName=i=>cfgJ.mode==='solo'
   ? (i===0?t('you'):(cfgJ.count===2?t('cpu'):COLNAME[lang][i]))
   : COLNAME[lang][i];
@@ -2142,7 +2178,7 @@ function mjColEl(p,ci,rev,clickable,owner){
   const b=document.createElement('button');
   b.className='mjcol'+(rev?' rev':'');
   if(!col.length){ b.style.visibility='hidden'; b.innerHTML='<div class="mjt back"></div>'; return b; }
-  b.id = (p===0)?`mc${ci}`:`fc${p}_${ci}`;
+  b.id = (p===mjView())?`mc${ci}`:`fc${p}_${ci}`;
   const shown=mjShown(col);
   let html='';
   col.forEach((k,i)=>{
@@ -2160,7 +2196,7 @@ function mjOrn(fr){
   ['t','b'].forEach(k=>{ const d=document.createElement('i'); d.className='edge '+k; fr.appendChild(d); });
 }
 function mjRender(){
-  const me=0;
+  const me=mjView();
   const foes=$('mjfoes'); foes.innerHTML='';
   for(let q=cfgJ.count-1;q>=1;q--){
     const fr=document.createElement('div');
@@ -2187,8 +2223,8 @@ function mjRender(){
   $('mjmylbl').innerHTML=`<i></i>${mjName(0)} <b>${dn0}/${MJCOLS}</b>`;
   const box=$('mjwallbox'); box.className='mjside me'; box.innerHTML='';
   for(let ci=0;ci<MJCOLS;ci++){
-    const el=mjColEl(0,ci,false,true);
-    if(mjCur===0 && mjDrawn && !mjLock && mjHum[0] && !mjFull(mjWall[0][ci]) && mjWall[0][ci][0]===mjDrawn)
+    const el=mjColEl(me,ci,false,true);
+    if(mjCur===me && mjDrawn && !mjLock && mjHum[me] && !mjFull(mjWall[me][ci]) && mjWall[me][ci][0]===mjDrawn)
       el.classList.add('hit');
     box.appendChild(el);
   }
@@ -2310,8 +2346,8 @@ function mjOffer(p){
   }
 }
 function mjPick(ci,who){
-  if(netOn()&&!myTurn('mj')){ sfx('miss'); return; }
-  if(netOn()&&!netHost()){ N().input('mjPick',{ci,p:who}); return; }
+  if(netOn()&&!myTurn('mj')){ sfx('miss'); toast(t('net.notYourTurn')); return; }
+  if(netOn()&&!netHost()){ N().input('mjPick',{ci,p:(who!==undefined?who:mjCur)}); return; }
   if(mjLock||mjOver||!mjDrawn||!mjHum[mjCur]) return;
   if(who!==undefined && who!==mjCur) return;
   const p=mjCur;
@@ -2342,7 +2378,7 @@ function makeFly(r,faceHTML,showBack){
 function mjPush(p,ci){
   mjLock=true;
   const col=mjWall[p][ci];
-  const isMine=(p===0);
+  const isMine=(p===mjView());
   const colEl = isMine ? $(`mc${ci}`) : $(`fc${p}_${ci}`);
   const liveEl = $('mjlive');
   const kind=mjDrawn;
@@ -2515,8 +2551,10 @@ const SNAP={
   dots:{
     get:()=>({h:dbH,v:dbV,o:dbOwn,c:dbCur,s:dbScore,l:dbLeft,g:cfgD}),
     set:s=>{ Object.assign(cfgD,s.g);
-      if(!dbH||dbH.length!==s.h.length){ dotsBuild(); }
+      const need = dbN!==cfgD.grid || !$('h0_0') || !dbH || dbH.length!==s.h.length;
+      dbN=cfgD.grid;
       dbH=s.h; dbV=s.v; dbOwn=s.o; dbCur=s.c; dbScore=s.s; dbLeft=s.l;
+      if(need) dotsBuild();
       dotsPaint(); dbrail(); }
   },
   ludo:{
@@ -2538,7 +2576,8 @@ function netPush(){
   if(!netOn()||!netHost()) return;
   const g=cur; if(!SNAP[g]) return;
   try{
-    const env={L:lang, C:netColors, S:JSON.parse(JSON.stringify(SNAP[g].get()))};
+    const env={L:lang, C:netColors, S:JSON.parse(JSON.stringify(SNAP[g].get())), E:netEvt};
+    netEvt=null;
     N().pushState(g, env);
   }catch(e){}
 }
@@ -2549,6 +2588,10 @@ function netApply(game,env){
   if(env.C) netColors=env.C;
   if(cur!==game) go(game);
   try{ SNAP[game].set(st); }catch(e){ console.error(e); }
+  if(env.E && env.E.type==='banner'){
+    const e2=env.E;
+    setTimeout(()=>showBannerLocal(e2.a,e2.b,e2.c),260);
+  }
   netSyncControls(); netNudge();
 }
 /* تفعيل/تعطيل الأزرار حسب صاحب الدور */
@@ -2686,7 +2729,9 @@ function netTune(){
   cfg.mode='party';  cfg.count=Math.min(4,Math.max(2,n));
   cfgJ.mode='party'; cfgJ.count=2;
 }
+let netExec=false;                 // المضيف ينفّذ حركة ضيف الآن
 function myTurn(game){
+  if(netExec) return true;
   if(!netOn()) return true;
   const s=netSeat();
   if(game==='xo')   return xoT===s;
@@ -2709,6 +2754,28 @@ function netNudge(){
     if(netOn()&&myTurn(cur)){ buzz([40,80,40]); sfx('ding'); toast(t('net.yourTurnNudge')); }
   },18000);
 }
+function closedLeave(){
+  $('ovClosed').classList.remove('on');
+  if(netOn()) N().disconnect();
+  $('netbar').style.display='none'; netColors=[];
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  $('lobby').classList.add('on'); cur='lobby';
+  document.body.classList.remove('playing'); sfx('tap');
+}
+function closedStay(){ $('ovClosed').classList.remove('on'); sfx('tap'); toast(t('cl.waiting')); }
+/* عودة بعد انقطاع: نسأل اللاعب */
+let backCode=null;
+function askRejoin(code){ backCode=code; $('ovBack').classList.add('on'); buzz([25,50,25]); }
+function rejoinYes(){
+  $('ovBack').classList.remove('on');
+  if(backCode){ if(N().you) N().rejoin(backCode); else netJoin(backCode); }
+  backCode=null;
+}
+function rejoinNo(){
+  $('ovBack').classList.remove('on'); backCode=null;
+  if(netOn()) N().disconnect();
+  $('netbar').style.display='none';
+}
 /* ---- ربط الأحداث ---- */
 function netInit(){
   const M=N(); if(!M) return;
@@ -2722,12 +2789,20 @@ function netInit(){
   M.on.game  = g=>{ if(!netHost()&&GAMEOF[g]) go(g); };
   M.on.input = m=>{ if(netHost()) netHandleInput(m); };
   M.on.quality = netQuality;
-  M.on.emote = m=>toast(`${m.name} ${m.e}`);
+  M.on.emote = m=>{
+    if(m.e==='#end'||m.e==='#out'){
+      $('clSub').textContent = (m.name||'')+' — '+t(m.e==='#end'?'cl.host':'cl.guest');
+      $('ovClosed').classList.add('on'); sfx('miss'); buzz([30,60,30]);
+      return;
+    }
+    toast(`${m.name} ${m.e}`);
+  };
   M.on.sys = m=>{
     const map={joined:'net.sysJoined',left:'net.sysLeft',disconnected:'net.sysDrop',
       reconnected:'net.sysBack',host_changed:'net.sysHost',reconnecting:'net.sysRetry',
       closed:'net.sysClosed',mic_denied:'net.micDenied',err_no_room:'net.errNoRoom',
       err_full:'net.errFull'};
+    if(m.code==='rejoin_ask'){ askRejoin(m.room); return; }
     const k=map[m.code]; if(!k) return;
     toast((m.name? m.name+' — ':'')+t(k));
     if(m.code==='disconnected'||m.code==='reconnecting') sfx('miss');
@@ -2757,6 +2832,7 @@ function netHandleInput(m){
     ludoRoll:()=>lCur===seat, ludoPick:()=>lCur===seat,
     mjDraw:()=>mjCur===seat, mjPick:()=>mjCur===seat}[a];
   if(okSeat && !okSeat()) return;        // ليس دوره
+  netExec=true;
   try{
     if(a==='xo') xoDo(g.i);
     else if(a==='mem'){ const el=document.querySelector(`.mcard[data-idx="${g.i}"]`); if(el) memFlip(g.i,el); }
@@ -2766,6 +2842,7 @@ function netHandleInput(m){
     else if(a==='mjDraw') mjDraw();
     else if(a==='mjPick') mjPick(g.ci,g.p);
   }catch(e){ console.error(e); }
+  netExec=false;
   setTimeout(netPush,90);
 }
 /* ================= تشغيل ================= */

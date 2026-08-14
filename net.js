@@ -63,7 +63,7 @@
         try {
           const code = this.room?.code || this._openCode;
           if (code && this._openCode) await this.openFor(code); else await this.connect();
-          if (code) this.send({ t: 'join', code, name: Net.myName, rejoin: this.you });
+          if (code) this.emit('sys', { code: 'rejoin_ask', room: code });
         } catch { this._retry(); }
       }, wait);
     },
@@ -116,6 +116,9 @@
       const code = await this._newCode();          // Cloudflare يعطينا رمزاً مسبقاً
       if (code) await this.openFor(code); else await this._plain();
       return this.send({ t: 'create', name, game, code });
+    },
+    rejoin(code) {
+      return this.send({ t: 'join', code, name: Net.myName, rejoin: this.you });
     },
     async join(code, name) {
       Net.myName = name;
