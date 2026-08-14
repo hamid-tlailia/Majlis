@@ -489,6 +489,9 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
 body.playing .micfab.live{display:grid;place-items:center}
 .micfab.on{border-color:var(--ok);color:var(--ok);box-shadow:0 0 0 2px rgba(79,168,138,.35),0 6px 16px rgba(0,0,0,.55)}
 .micfab.mut{border-color:var(--clay);color:var(--clay)}
+.micfab svg{width:24px;height:24px;display:block}
+.netbar .mic svg{width:17px;height:17px;display:block}
+.prow .mic svg{width:16px;height:16px;display:block}
 .micfab .dotq{position:absolute;top:5px;inset-inline-end:5px;width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .micfab.good .dotq{background:var(--ok)} .micfab.ok .dotq{background:var(--brass)}
 .micfab.weak .dotq{background:var(--clay)}
@@ -1328,6 +1331,16 @@ function toast(x){ const el=$('toast'); el.textContent=x; el.classList.add('on')
 function closeAll(){ document.querySelectorAll('.overlay').forEach(o=>{ if(o.id!=='ovExit'&&o.id!=='ovReset') o.classList.remove('on'); }); }
 let netEvt=null;
 function netEmit(type,a,b,c){ if(netOn()&&netHost()){ netEvt={type,a,b,c}; setTimeout(netPush,40); } }
+/* فوز مقعد بعينه — الاسم يُصاغ محلياً عند كل لاعب */
+function winBanner(seat,sub,cols){
+  if(netOn()&&netHost()) { netEvt={type:'win',s:seat,b:sub,c:cols}; setTimeout(netPush,40); }
+  showWinLocal(seat,sub,cols);
+}
+function showWinLocal(seat,sub,cols){
+  const mine = netOn() ? (seat===netSeat()) : (seat===0);
+  const nm = netOn() ? (seatName(seat)||'') : '';
+  showBannerLocal(mine? t('youWon') : (nm? `${t('won')} ${nm}` : t('won')), sub, cols);
+}
 function showBanner(title,text,cols){
   netEmit('banner',title,text,cols);
   showBannerLocal(title,text,cols);
@@ -1441,6 +1454,7 @@ function xoNew(auto){
 }
 function xoRail(){
   if(!xoB) return;
+  $('sxL').textContent=SYM[cfgX.sym][0]; $('soL').textContent=SYM[cfgX.sym][1];
   const r=$('xorail'), n=xoNames(), sp=r.querySelectorAll('.labels span');
   sp[0].textContent=`${n[0]} ${SYM[cfgX.sym][0]}`; sp[1].textContent=`${n[1]} ${SYM[cfgX.sym][1]}`;
   r.classList.toggle('p2',xoT===1);
@@ -1467,7 +1481,8 @@ function xoDo(i){
     tile.classList.remove('bump'); void tile.offsetWidth; tile.classList.add('bump');
     xoDrawLine(w);
     $('xores').innerHTML=`<b>${n[xoT]}</b> — ${t('nextRound')}`;
-    setTimeout(()=>showBanner(cfgX.mode==='solo'&&xoT===0?t('youWon'):`${t('won')} ${n[xoT]}`,t('threeRow')),420);
+    const ws=xoT;
+    setTimeout(()=>winBanner(ws,t('threeRow')),420);
     setTimeout(()=>{ if(cur==='xo'&&xoLock) xoNew(true); },2600);
     return;
   }
@@ -1631,8 +1646,7 @@ function memEnd(){
   const n=[memName(0),memName(1)];
   const w=mScore[0]>mScore[1]?0:1;
   $('mres').innerHTML=(tie?`<b>${t('draw')}</b>`:`<b>${n[w]}</b>`)+' — '+t('nextRound');
-  if(!tie) setTimeout(()=>showBanner(
-    cfgM.mode==='solo'&&w===0?t('youWon'):`${t('won')} ${n[w]}`,
+  if(!tie) setTimeout(()=>winBanner(w,
     `${Math.max(...mScore)} / ${Math.min(...mScore)} ${t('pairs')}`),400);
   setTimeout(()=>{ if(cur==='mem'&&mDone===cfgM.size/2) memNew(true); },tie?2100:2900);
 }
@@ -1972,7 +1986,7 @@ function land(p,i,cap){
       lOver=true; $('die').disabled=true;
       const isYou=cfg.mode==='solo'&&p===ACT[0];
       hint(`<b>${isYou?t('youWon'):t('won')+' '+cname(p)}</b>`);
-      showBanner(isYou?t('youWon'):`${t('won')} ${cname(p)}`,t('finished'),[PL[p].c,BONE,BRASS]);
+      winBanner(Math.max(0,ACT.indexOf(p)),t('finished'),[PL[p].c,BONE,BRASS]);
       return;
     }
     if(cur==='ludo'&&!lStop) toast(t('homeIn'));
@@ -2154,9 +2168,7 @@ function dbEnd(){
   }else{
     const w=winners[0];
     $('dbres').innerHTML=`<b>${dbName(w)}</b> — ${t('nextRound')}`;
-    setTimeout(()=>showBanner(
-      cfgD.mode==='solo'&&w===0?t('youWon'):`${t('won')} ${dbName(w)}`,
-      `${best} ${t('dots.boxes')}`,[DBC[w],BONE,BRASS]),400);
+    setTimeout(()=>winBanner(w,`${best} ${t('dots.boxes')}`,[DBC[w],BONE,BRASS]),400);
   }
   setTimeout(()=>{ if(cur==='dots'&&dbLeft===0) dotsNew(true); },winners.length>1?2200:3000);
 }
@@ -2446,8 +2458,8 @@ function mjPushFx(p,ci,kind){
   const colEl = isMine ? $(`mc${ci}`) : $(`fc${p}_${ci}`);
   if(!colEl) return;
   const kids=[...colEl.children]; if(!kids.length) return;
-  const headEl = isMine ? kids[0] : kids[kids.length-1];
-  const lastEl = isMine ? kids[kids.length-1] : kids[0];
+  const headEl = kids[0];                    // رأس الصف = أول بلاطة في البيانات
+  const lastEl = kids[kids.length-1];
   const hr=rectOf(headEl), lr=rectOf(lastEl);
   const liveRect=rectOf($('mjlive'))||rectOf($('mjdeck'));
   if(!hr||!liveRect) return;
@@ -2497,8 +2509,8 @@ function mjPush(p,ci){
   const kind=mjDrawn;
   const kids = colEl ? [...colEl.children] : [];
   const rects = kids.map(rectOf);
-  const headEl = isMine ? kids[0] : kids[kids.length-1];   // الرأس هو الأقرب للوسط
-  const lastEl = isMine ? kids[kids.length-1] : kids[0];   // والذيل هو الأبعد
+  const headEl = kids[0];                    // رأس الصف = أول بلاطة في البيانات
+  const lastEl = kids[kids.length-1];        // والذيل آخرها
   const hr = rectOf(headEl), lr = rectOf(lastEl);
   const liveRect = rectOf(liveEl) || rectOf($('mjdeck'));
   const gapPx = (rects.length>1 && rects[0] && rects[1])
@@ -2605,8 +2617,7 @@ function mjBot(){
 function mjWin(p){
   mjOver=true; mjRender();
   $('mjres').innerHTML=`<b>${mjName(p)}</b> — ${t('nextRound')}`;
-  showBanner(cfgJ.mode==='solo'&&p===0?t('youWon'):`${t('won')} ${mjName(p)}`,
-    t('mj.cleared'),[MJC[p],BONE,BRASS]);
+  winBanner(p,t('mj.cleared'),[MJC[p],BONE,BRASS]);
   setTimeout(()=>{ if(cur==='mj'&&mjOver) mjNew(true); },3200);
 }
 function mjEndByCount(){
@@ -2766,8 +2777,10 @@ function netApply(game,env){
   if(cur!==game) go(game);
   try{ SNAP[game].set(st); }catch(e){ console.error(e); }
   if(env.E && env.E.type==='banner'){
-    const e2=env.E;
-    setTimeout(()=>showBannerLocal(e2.a,e2.b,e2.c),260);
+    const e2=env.E; setTimeout(()=>showBannerLocal(e2.a,e2.b,e2.c),260);
+  }
+  if(env.E && env.E.type==='win'){
+    const e2=env.E; setTimeout(()=>showWinLocal(e2.s,e2.b,e2.c),260);
   }
   netSyncControls(); netNudge();
 }
@@ -2805,7 +2818,14 @@ function netRenderPresence(){
   $('netLeaveBtn').style.display = inRoom?'':'none';
   const box=$('plist'); box.innerHTML='';
   if(inRoom) N().room.players.forEach(p=>box.appendChild(prow(p)));
-  const L=N().Lobby, others=L?L.others():[];
+  let others=N().Lobby? N().Lobby.others():[];
+  const seen=new Set();
+  others=others.filter(p=>{                       // اطرح الجلسات المكرّرة والقديمة
+    if(!p.online) return false;
+    const k=(p.name||'')+'|'+(p.status||'');
+    if(seen.has(p.name)) return false;
+    seen.add(p.name); return true;
+  });
   if(others.length){
     const hd=document.createElement('p'); hd.className='note';
     hd.textContent=t('inv.onlineNow')+' ('+others.length+')';
@@ -2823,7 +2843,8 @@ function prow(p,invitable){
       <span class="st">${invitable? t(p.status==='busy'?'inv.busy':'inv.free') : (p.isHost?t('net.host'):'')}</span></div>`;
   if(invitable){
     const b=document.createElement('button'); b.className='inv';
-    b.textContent=t('inv.btn'); b.disabled = p.status==='busy' || cur==='lobby';
+    b.textContent=t('inv.btn'); b.disabled = (cur==='lobby');
+    if(cur==='lobby') b.title=t('net.tipNone');
     b.onclick=()=>invitePerson(p.id);
     d.appendChild(b);
   }else{
@@ -2841,8 +2862,12 @@ async function netJoin(code){
   try{ await N().join(c, profile.name); netDone(); }
   catch(e){ netDone(); sfx('miss'); toast(t('net.failed')); }
 }
+function closeAllSheets(){
+  document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('on'));
+  $('micMenu').classList.remove('on');
+}
 function netLeave(){
-  closeAll(); N().disconnect();
+  closeAll(); N().disconnect(); netJoinedOnce=false;
   $('netbar').style.display='none'; micPaint(); lobbyBusy(false);
   netCfg.code=''; netSave(); netColors=[];
   if(location.hash) history.replaceState(null,'',location.pathname+location.search);
@@ -2959,7 +2984,7 @@ async function micSet(mode){
   micPaint();
 }
 /* ---- الردهة: من متاح الآن ---- */
-let lobbyList=[], pendingInvite=null;
+let lobbyList=[], pendingInvite=null, netJoinedOnce=false;
 function lobbyStart(){
   const L=N().Lobby; if(!L) return;
   N().url=serverUrl();
@@ -2976,7 +3001,7 @@ function showInvitePrompt(m){
   sfx('ding'); buzz([40,70,40]);
 }
 function inviteAccept(){
-  $('ovInvitePrompt').classList.remove('on');
+  closeAllSheets();
   const m=pendingInvite; pendingInvite=null; if(!m) return;
   try{ N().Lobby.reply(m.from,true); }catch(e){}
   netJoin(m.code);
@@ -3098,6 +3123,7 @@ function netInit(){
   const M=N(); if(!M) return;
   M.url=serverUrl();
   M.on.room = room=>{
+    if(!netJoinedOnce){ netJoinedOnce=true; closeAllSheets(); }
     netRenderRoom(room); netCfg.code=room.code; netCfg.you=N().you; netSave(); netTune(); prevSave(); lobbyBusy(true);
     if(!netHost() && GAMEOF[room.game] && cur!==room.game) go(room.game);
     if(netHost() && cur!=='lobby') setTimeout(netPush,120);
