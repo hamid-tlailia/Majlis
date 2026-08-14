@@ -1276,6 +1276,7 @@ function go(id){
   if(netOn()&&netHost()&&GAMEOF[id]){ N().setGame(id); setTimeout(netPush,200); }
   if(id==='mj'){
     if(!mjWall.length) mjNew(true);
+    if(!$('mjlot') && !document.querySelector('#mjfoes .mjframe')){ mjLotting=false; mjRender(); }
     requestAnimationFrame(mjSize);
   }
   if(GAMEOF[id]) setTimeout(()=>prevAsk(id),500);
@@ -1417,7 +1418,10 @@ function openXoSetup(){ sfx('tap'); buildSyms();
   document.querySelectorAll('[data-g="xoFirst"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgX.first));
   $('ovXo').classList.add('on');
 }
-function xoNames(){ return cfgX.mode==='solo'?[t('you'),t('cpu')]:[t('p1'),t('p2')]; }
+function xoNames(){
+  if(netOn()) return [seatName(0)||t('p1'), seatName(1)||t('p2')];
+  return cfgX.mode==='solo'?[t('you'),t('cpu')]:[t('p1'),t('p2')];
+}
 function xoZero(){
   xoS={a:0,b:0,d:0};
   ['sx','sd','so'].forEach(id=>$(id).querySelector('b').textContent='0');
@@ -1546,15 +1550,17 @@ function memNew(auto){
   mOpen=[]; mLock=false; mTurn=0; mScore=[0,0]; mSeen={}; mDone=0;
   memBuild();
   $('m1').querySelector('b').textContent='0'; $('m2').querySelector('b').textContent='0';
-  $('m1L').textContent=cfgM.mode==='solo'?t('you'):t('p1');
-  $('m2L').textContent=cfgM.mode==='solo'?t('cpu'):t('p2');
+  $('m1L').textContent=memName(0); $('m2L').textContent=memName(1);
   $('mres').textContent=''; memRail(); netPush();
+}
+function memName(s){
+  return seatName(s) || (cfgM.mode==='solo' ? (s?t('cpu'):t('you')) : t(s?'p2':'p1'));
 }
 function memRail(){
   if(!mDeck) return;
   const r=$('mrail'), sp=r.querySelectorAll('.labels span');
-  sp[0].textContent=cfgM.mode==='solo'?t('you'):t('p1');
-  sp[1].textContent=cfgM.mode==='solo'?t('cpu'):t('p2');
+  sp[0].textContent=memName(0); sp[1].textContent=memName(1);
+  $('m1L').textContent=memName(0); $('m2L').textContent=memName(1);
   r.classList.toggle('p2',mTurn===1);
   sp[0].classList.toggle('act',mTurn===0); sp[1].classList.toggle('act',mTurn===1);
   $('m1').classList.toggle('live',mTurn===0); $('m2').classList.toggle('live',mTurn===1);
@@ -1573,19 +1579,22 @@ function memFlip(i,el){
     setTimeout(()=>{
       a.el.classList.add('done'); b.el.classList.add('done');
       sfx('match'); buzz([15,40,15]); burstAt(a.el,20); burstAt(b.el,20);
+      netFx('memdone',{a:[a.i,b.i]});
       delete mSeen[a.i]; delete mSeen[b.i];
       mScore[mTurn]++; mDone++;
       const tile=$(mTurn?'m2':'m1'); tile.querySelector('b').textContent=mScore[mTurn];
       tile.classList.remove('bump'); void tile.offsetWidth; tile.classList.add('bump');
       mOpen=[]; mLock=false;
-      if(mDone===cfgM.size/2) memEnd(); else if(cfgM.mode==='solo'&&mTurn===1) setTimeout(memBot,600);
+      if(netOn()&&netHost()) netPush();
+      if(mDone===cfgM.size/2) memEnd(); else if(!netOn()&&cfgM.mode==='solo'&&mTurn===1) setTimeout(memBot,600);
     },380);
   } else {
     setTimeout(()=>{
       a.el.classList.add('miss'); b.el.classList.add('miss'); sfx('miss');
+      netFx('memclose',{a:[a.i,b.i]});
       setTimeout(()=>{
         a.el.classList.remove('flip','miss'); b.el.classList.remove('flip','miss');
-        mOpen=[]; mLock=false; mTurn=mTurn?0:1; memRail();
+        mOpen=[]; mLock=false; mTurn=mTurn?0:1; memRail(); if(netOn()&&netHost()) netPush();
         if(cfgM.mode==='solo'&&mTurn===1) setTimeout(memBot,600);
       },300);
     },720);
@@ -1619,7 +1628,7 @@ function memBot(){
 }
 function memEnd(){
   const tie=mScore[0]===mScore[1];
-  const n=cfgM.mode==='solo'?[t('you'),t('cpu')]:[t('p1'),t('p2')];
+  const n=[memName(0),memName(1)];
   const w=mScore[0]>mScore[1]?0:1;
   $('mres').innerHTML=(tie?`<b>${t('draw')}</b>`:`<b>${n[w]}</b>`)+' — '+t('nextRound');
   if(!tie) setTimeout(()=>showBanner(
@@ -1648,7 +1657,7 @@ let LT=[[],[],[],[]],ACT=[],HUM=[],lCur=0,lBusy=false,lDie=0,lOver=false;
 let stuck=[0,0,0,0],drought=[0,0,0,0],lStop=false,moveIV=null;
 const CP=()=>ACT[lCur];
 const cname=p=>COLNAME[lang][p];
-const nameOf=p=>(cfg.mode==='solo'&&p===ACT[0])?t('you'):cname(p);
+const nameOf=p=>{ const s=ACT.indexOf(p); const nm=s>=0?seatName(s):null; return nm || ((cfg.mode==='solo'&&p===ACT[0])?t('you'):cname(p)); };
 const PAWN_D='M4.4 26.4c-.6 0-1-.5-.9-1.1.7-4.4 2.9-7.6 5.3-9.4a5.6 5.6 0 1 1 6.4 0c2.4 1.8 4.6 5 5.3 9.4.1.6-.3 1.1-.9 1.1H4.4z';
 function pawn(c){
   const id='g'+c.slice(1), light=mix(c,'#FFFFFF',.42);
@@ -1897,6 +1906,7 @@ function roll(){
     if(mv.length===1||spots.length===1){ setTimeout(()=>move(p,mv[0]),300); return; }
     hint(`${t('pick')}`,true);
     mv.forEach(i=>$(`t${p}_${i}`).classList.add('can'));
+    netFx('can',{p,a:mv});
     lBusy=false;   // النرد يبقى معطّلاً حتى يُختار الحجر
   },880);
 }
@@ -1956,7 +1966,7 @@ function land(p,i,cap){
     }
   }
   if(v===56){
-    extra=true; sfx('home'); burstAt($(`t${p}_${i}`),40);
+    extra=true; sfx('home'); burstAt($(`t${p}_${i}`),40); netFx('home',{p,i});
     const done=LT[p].filter(x=>x===56).length; lrail();
     if(done===4){
       lOver=true; $('die').disabled=true;
@@ -1990,7 +2000,7 @@ function nextTurn(){
 /* ================= خطوط ومربّعات ================= */
 const DBC=[INDIGO,BRASS,CLAY,FELT];
 let dbN=5,dbH=[],dbV=[],dbOwn=[],dbCur=0,dbHum=[],dbScore=[],dbLock=false,dbLeft=0;
-const dbName=i=>cfgD.mode==='solo'
+const dbName=i=>seatName(i) || cfgD.mode==='solo'
   ? (i===0?t('you'):(cfgD.count===2?t('cpu'):COLNAME[lang][i]))
   : COLNAME[lang][i];
 
@@ -2202,9 +2212,9 @@ const mjKinds=()=>mjRound.length?mjRound:Object.keys(mjSet()).slice(0,8);
 function mjPickKinds(){
   mjRound=Object.keys(mjSet()).sort(()=>Math.random()-.5).slice(0,8);
 }
-let mjWall=[],mjPile=[],mjDisc=[],mjDrawn=null,mjCur=0,mjHum=[],mjLock=false,mjOver=false,mjIdle=0;
+let mjWall=[],mjPile=[],mjDisc=[],mjDrawn=null,mjCur=0,mjHum=[],mjLock=false,mjOver=false,mjIdle=0,mjLotting=false;
 const mjView=()=>netOn()?Math.min(netSeat(),cfgJ.count-1):0;   // لوحتي أنا في الأسفل
-const mjName=i=>cfgJ.mode==='solo'
+const mjName=i=>seatName(i) || cfgJ.mode==='solo'
   ? (i===0?t('you'):(cfgJ.count===2?t('cpu'):COLNAME[lang][i]))
   : COLNAME[lang][i];
 
@@ -2286,6 +2296,7 @@ function mjRender(){
     foes.appendChild(fr);
   }
   const fr=$('mjmine');
+  if(!mjLotting || (netOn()&&!netHost())) fr.style.display='';   // لا تُخفَ إلا أثناء قرعة محلية
   if(!fr.querySelector('.orn')) mjOrn(fr);
   fr.style.setProperty('--pc',MJC[0]);
   fr.classList.toggle('turn',mjCur===0);
@@ -2331,11 +2342,12 @@ function mjNew(auto){
 }
 /* ---- القرعة ---- */
 function mjLots(){
+  if(netOn()&&!netHost()){ mjLotting=false; mjRender(); return; }   // الضيف لا يجري قرعة
   const n=cfgJ.count;
   const rolls=Array.from({length:n},()=>1+Math.floor(Math.random()*6));
   let best=0; for(let i=1;i<n;i++) if(rolls[i]>rolls[best]) best=i;
   $('mjfoes').innerHTML='';
-  $('mjmine').style.display='none';
+  mjLotting=true; $('mjmine').style.display='none';
   const box=$('mjfoes'); box.innerHTML='<div class="mjlot" id="mjlot"></div>';
   const lot=$('mjlot');
   for(let i=0;i<n;i++){
@@ -2346,7 +2358,7 @@ function mjLots(){
   $('mjres').textContent=t('mj.lotT');
   let i=0;
   const iv=setInterval(()=>{
-    if(cur!=='mj'){ clearInterval(iv); return; }
+    if(cur!=='mj'){ clearInterval(iv); mjLotting=false; $('mjmine').style.display=''; mjRender(); return; }
     lot.children[i].querySelector('.v').textContent=rolls[i];
     sfx('place'); buzz(12); i++;
     if(i===n){
@@ -2355,7 +2367,7 @@ function mjLots(){
       $('mjres').innerHTML=`<b>${mjName(best)}</b> ${t('mj.lotW')}`;
       setTimeout(()=>{
         if(cur!=='mj') return;
-        $('mjmine').style.display=''; mjCur=best; mjLock=false; mjRender();
+        mjLotting=false; $('mjmine').style.display=''; mjCur=best; mjLock=false; mjRender();
         $('mjres').textContent = mjHum[mjCur]?t('mj.draw'):'';
         if(!mjHum[mjCur]) setTimeout(mjBot,700);
       },1200);
@@ -2428,6 +2440,36 @@ function mjAuto(p){
   const ci=mjWall[p].findIndex(c=>!mjFull(c)&&c[0]===mjDrawn);
   if(ci>=0) mjPush(p,ci);
 }
+/* حركة الدفع كما يراها الضيف (بلا تغيير الحالة) */
+function mjPushFx(p,ci,kind){
+  const isMine=(p===mjView());
+  const colEl = isMine ? $(`mc${ci}`) : $(`fc${p}_${ci}`);
+  if(!colEl) return;
+  const kids=[...colEl.children]; if(!kids.length) return;
+  const headEl = isMine ? kids[0] : kids[kids.length-1];
+  const lastEl = isMine ? kids[kids.length-1] : kids[0];
+  const hr=rectOf(headEl), lr=rectOf(lastEl);
+  const liveRect=rectOf($('mjlive'))||rectOf($('mjdeck'));
+  if(!hr||!liveRect) return;
+  const step=hr.h+3, away=isMine?1:-1;
+  const ghost=makeFly(hr, mjFace(kind), false);
+  const s0=clampSc(liveRect.w/hr.w);
+  $('mjlive').classList.add('empty');
+  if(ghost) ghost.animate([
+    {transform:`translate(${liveRect.x-hr.x}px,${liveRect.y-hr.y}px) scale(${s0})`},
+    {transform:'translate(0,0) scale(1)'}],{duration:340,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
+  sfx('step');
+  setTimeout(()=>{
+    kids.forEach((k,i)=>{
+      const tail=(k===lastEl);
+      k.animate([{transform:'translateY(0)',opacity:1},
+        {transform:`translateY(${away*step*(tail?1.45:1)}px)`,opacity:tail?.55:1}],
+        {duration:340,delay:tail?0:i*12,easing:'cubic-bezier(.34,1.1,.42,1)',fill:'forwards'});
+    });
+    sfx('match'); buzz([12,30,12]); burstAt(colEl,16);
+    setTimeout(()=>{ if(ghost) ghost.remove(); },420);
+  },350);
+}
 /* ---- الدفع: تدخل أمام مثيلتها، ثم تُطرد الأخيرة وتُقلب ---- */
 function rectOf(el){
   if(!el) return null;
@@ -2447,6 +2489,7 @@ function makeFly(r,faceHTML,showBack){
 }
 function mjPush(p,ci){
   mjLock=true;
+  netFx('mjpush',{p,ci,k:mjDrawn});
   const col=mjWall[p][ci];
   const isMine=(p===mjView());
   const colEl = isMine ? $(`mc${ci}`) : $(`fc${p}_${ci}`);
@@ -2641,7 +2684,7 @@ const SNAP={
   },
   mj:{
     get:()=>({w:mjWall,p:mjPile,d:mjDisc,k:mjDrawn,c:mjCur,o:mjOver,h:mjHum,r:mjRound,g:cfgJ}),
-    set:s=>{ Object.assign(cfgJ,s.g); mjRound=s.r; mjWall=s.w; mjPile=s.p; mjDisc=s.d;
+    set:s=>{ Object.assign(cfgJ,s.g); mjLotting=false; mjRound=s.r; mjWall=s.w; mjPile=s.p; mjDisc=s.d;
       mjDrawn=s.k; mjCur=s.c; mjOver=s.o; mjHum=s.h; mjLock=false; mjRender(); }
   }
 };
@@ -2669,6 +2712,31 @@ function netPlayFx(f){
       if(cur!=='ludo'||!LT[f.p]) return;
       LT[f.p][f.i]=f.v; ludoPlace(); sfx('step');
       const el=$(`t${f.p}_${f.i}`); if(el) hop(el);
+    }else if(f.type==='can'){                 // إبراز الأحجار القابلة للتحريك
+      if(cur!=='ludo') return;
+      clearCan();
+      (f.a||[]).forEach(i=>{ const el=$(`t${f.p}_${i}`); if(el) el.classList.add('can'); });
+    }else if(f.type==='home'){                // حجر وصل البيت
+      if(cur!=='ludo') return;
+      const el=$(`t${f.p}_${f.i}`); if(el) burstAt(el,40);
+      sfx('home'); buzz([20,50,20]);
+    }else if(f.type==='mjpush'){              // حركة الدفع في ماهجونج
+      if(cur!=='mj') return;
+      mjPushFx(f.p,f.ci,f.k);
+    }else if(f.type==='memclose'){            // بطاقتان تُغلقان
+      if(cur!=='mem') return;
+      (f.a||[]).forEach(i=>{
+        const el=document.querySelector(`.mcard[data-idx="${i}"]`);
+        if(el){ el.classList.add('miss'); setTimeout(()=>el.classList.remove('flip','miss'),300); }
+      });
+      sfx('miss'); buzz(12);
+    }else if(f.type==='memdone'){             // بطاقتان تطابقتا
+      if(cur!=='mem') return;
+      (f.a||[]).forEach(i=>{
+        const el=document.querySelector(`.mcard[data-idx="${i}"]`);
+        if(el){ el.classList.add('flip','done'); burstAt(el,18); }
+      });
+      sfx('match'); buzz([15,40,15]);
     }else if(f.type==='eat'){                 // ضربة: الحجر يعود للصندوق
       if(cur!=='ludo'||!LT[f.q]) return;
       const dead=$(`t${f.q}_${f.j}`);
@@ -2846,10 +2914,11 @@ function micState(){ const V=N().Voice; return !V.on?'off':(V.muted?'mute':'on')
 function micPaint(){
   const st=micState();
   const b=$('micBtn'), f=$('micFab');
-  if(b){ b.className='mic '+(st==='on'?'on':st==='mute'?'mut':''); b.innerHTML=ICO[st==='off'?'mic':st]; }
+  const key = st==='mute' ? 'mute' : 'mic';
+  if(b){ b.className='mic '+(st==='on'?'on':st==='mute'?'mut':''); b.innerHTML=ICO[key]; }
   if(f){
     f.className='micfab '+(st==='on'?'on':st==='mute'?'mut':'')+' '+(netOn()?'live ':'')+(N().quality||'');
-    $('micIco').innerHTML=ICO[st==='off'?'mic':st];
+    const ic=$('micIco'); if(ic) ic.innerHTML=ICO[key];
   }
   const M=$('micMenu');
   if(M){
@@ -2939,6 +3008,13 @@ function netTune(){
   cfgJ.mode='party'; cfgJ.count=2;
 }
 let netExec=false;                 // المضيف ينفّذ حركة ضيف الآن
+/* اسم صاحب المقعد: أنت / اسمه في الغرفة */
+function seatName(s){
+  if(!netOn()) return null;
+  const p=(N().room.players||[]).find(x=>x.seat===s);
+  if(!p) return null;
+  return p.id===N().you ? t('you') : p.name;
+}
 function myTurn(game){
   if(netExec) return true;
   if(!netOn()) return true;
