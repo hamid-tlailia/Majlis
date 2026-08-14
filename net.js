@@ -159,7 +159,7 @@
           if (m.state) this.emit('state', { state: m.state, seq: m.seq, game: m.room.game });
           break;
         case 'room':
-          this.room = m.room; this.emit('room', m.room); break;
+          this.room = m.room; this.emit('room', m.room); Voice.reconcile(); break;
         case 'state':
           if (m.seq && m.seq <= this.seq) break;         // تجاهل اللقطات القديمة
           this.seq = m.seq || this.seq + 1;
@@ -187,17 +187,18 @@
      الصوت — WebRTC نظير لنظير بجودة عالية
      ============================================================ */
   const Voice = {
-    on: false, stream: null, peers: new Map(), ice: null, muted: false,
+    on: false, stream: null, peers: new Map(), ice: null, muted: false, _tick: null,
 
     async iceConfig() {
       if (this.ice) return this.ice;
       try {
-        const base = Net.url.replace(/^ws/, 'http').replace(/\/ws$/, '');
-        const r = await fetch(base + '/ice');
+        const base = (Net.url || '').replace(/\/(ws)?$/, '').replace(/^wss:/, 'https:').replace(/^ws:/, 'http:');
+        const r = await fetch(base + '/ice', { cache: 'no-store' });
         this.ice = await r.json();
       } catch {
-        this.ice = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        this.ice = { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] }] };
       }
+      if (!this.ice.iceServers) this.ice = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
       return this.ice;
     },
 
@@ -206,32 +207,24 @@
       try {
         this.stream = await navigator.mediaDevices.getUserMedia({
           audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-            channelCount: 1,
-            sampleRate: 48000,
-            sampleSize: 16,
-            latency: 0.01
-          },
-          video: false
+            echoCancellation: true, noiseSuppression: true, autoGainControl: true,
+            channelCount: 1, sampleRate: 48000
+          }, video: false
         });
-      } catch (e) {
-        Net.emit('sys', { code: 'mic_denied' });
-        return false;
-      }
+      } catch (e) { Net.emit('sys', { code: 'mic_denied' }); return false; }
       this.on = true;
+      await this.iceConfig();
       Net.send({ t: 'voice', on: true });
-      /* المضيف يبدأ الاتصال بمن هم أقدم منه لتفادي التصادم */
-      for (const p of Net.others()) {
-        if (p.voice && Net.you < p.id) this.call(p.id);
-      }
+      this.reconcile();
+      /* مصالحة دورية: تعالج فوارق التوقيت وفشل أول محاولة */
+      clearInterval(this._tick);
+      this._tick = setInterval(() => this.reconcile(), 3000);
       return true;
     },
 
     stop() {
-      this.on = false;
       Net.send({ t: 'voice', on: false });
+      clearInterval(this._tick); this._tick = null;
       this.stopAll();
     },
 
@@ -240,6 +233,7 @@
       this.peers.clear();
       if (this.stream) { this.stream.getTracks().forEach(t => t.stop()); this.stream = null; }
       this.on = false;
+      clearInterval(this._tick); this._tick = null;
     },
 
     setMuted(v) {
@@ -247,12 +241,32 @@
       if (this.stream) this.stream.getAudioTracks().forEach(t => (t.enabled = !v));
     },
 
+    /* تأكّد من وجود اتصال مع كل من فتح صوته — البادئ هو صاحب المعرّف الأصغر */
+    reconcile() {
+      if (!this.on || !Net.room) return;
+      const live = new Set();
+      for (const p of Net.others()) {
+        if (!p.online || !p.voice) continue;
+        live.add(p.id);
+        const pc = this.peers.get(p.id);
+        const dead = pc && ['failed', 'closed', 'disconnected'].includes(pc.connectionState);
+        if (dead) { try { pc.close(); } catch {} this.peers.delete(p.id); this._removeAudio(p.id); }
+        if (!this.peers.has(p.id) && Net.you < p.id) this.call(p.id);
+      }
+      for (const [id, pc] of [...this.peers]) {
+        if (!live.has(id)) { try { pc.close(); } catch {} this.peers.delete(id); this._removeAudio(id); }
+      }
+    },
+
     async pc(id) {
       if (this.peers.has(id)) return this.peers.get(id);
       const cfg = await this.iceConfig();
       const pc = new RTCPeerConnection(cfg);
       this.peers.set(id, pc);
+      pc._pending = [];
+      /* أرسل صوتي إن كان الميكروفون مفتوحاً */
       if (this.stream) this.stream.getTracks().forEach(t => pc.addTrack(t, this.stream));
+      else pc.addTransceiver('audio', { direction: 'recvonly' });
       pc.onicecandidate = e => { if (e.candidate) Net.send({ t: 'signal', to: id, data: { candidate: e.candidate } }); };
       pc.ontrack = e => this._attachAudio(id, e.streams[0]);
       pc.onconnectionstatechange = () => {
@@ -263,39 +277,47 @@
 
     async call(id) {
       const pc = await this.pc(id);
-      /* جودة عالية: نفضّل Opus استريو بمعدّل بت مرتفع */
-      const offer = await pc.createOffer({ offerToReceiveAudio: true });
-      offer.sdp = this._tuneSdp(offer.sdp);
-      await pc.setLocalDescription(offer);
-      Net.send({ t: 'signal', to: id, data: { sdp: pc.localDescription } });
+      if (pc._making || pc.signalingState !== 'stable') return;
+      pc._making = true;
+      try {
+        const offer = await pc.createOffer({ offerToReceiveAudio: true });
+        offer.sdp = this._tuneSdp(offer.sdp);
+        await pc.setLocalDescription(offer);
+        Net.send({ t: 'signal', to: id, data: { sdp: pc.localDescription } });
+      } catch (e) { console.warn('voice offer', e); }
+      pc._making = false;
     },
 
     async onSignal(from, data) {
-      if (!this.on && data.sdp?.type === 'offer') { /* استقبال حتى لو الميكروفون مغلق */ }
       const pc = await this.pc(from);
-      if (data.sdp) {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        if (data.sdp.type === 'offer') {
-          const ans = await pc.createAnswer();
-          ans.sdp = this._tuneSdp(ans.sdp);
-          await pc.setLocalDescription(ans);
-          Net.send({ t: 'signal', to: from, data: { sdp: pc.localDescription } });
+      try {
+        if (data.sdp) {
+          const polite = Net.you > from;               // الأدب: الأكبر معرّفاً يتنازل
+          const offerCollision = data.sdp.type === 'offer' &&
+            (pc._making || pc.signalingState !== 'stable');
+          if (offerCollision && !polite) return;
+          if (offerCollision) await pc.setLocalDescription({ type: 'rollback' }).catch(() => {});
+          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          for (const c of pc._pending.splice(0)) { try { await pc.addIceCandidate(c); } catch {} }
+          if (data.sdp.type === 'offer') {
+            const ans = await pc.createAnswer();
+            ans.sdp = this._tuneSdp(ans.sdp);
+            await pc.setLocalDescription(ans);
+            Net.send({ t: 'signal', to: from, data: { sdp: pc.localDescription } });
+          }
+        } else if (data.candidate) {
+          const c = new RTCIceCandidate(data.candidate);
+          if (pc.remoteDescription && pc.remoteDescription.type) { try { await pc.addIceCandidate(c); } catch {} }
+          else pc._pending.push(c);
         }
-      } else if (data.candidate) {
-        try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch {}
-      }
+      } catch (e) { console.warn('voice signal', e); }
     },
 
-    onPeerVoice(id, on) {
-      if (!this.on) return;
-      if (on && Net.you < id) this.call(id);
-      if (!on) { const pc = this.peers.get(id); if (pc) { pc.close(); this.peers.delete(id); } this._removeAudio(id); }
-    },
+    onPeerVoice(id, on) { this.reconcile(); },
 
-    /* ضبط Opus: استريو، معدّل بت مرتفع، تحمّل فقدان الحزم */
     _tuneSdp(sdp) {
       return sdp.replace(/a=fmtp:(\d+) (.*useinbandfec=1.*)/g,
-        'a=fmtp:$1 $2;stereo=1;sprop-stereo=1;maxaveragebitrate=64000;maxplaybackrate=48000;cbr=0;usedtx=0');
+        'a=fmtp:$1 $2;stereo=0;maxaveragebitrate=48000;maxplaybackrate=48000;cbr=0;usedtx=0');
     },
 
     _attachAudio(id, stream) {
@@ -303,10 +325,13 @@
       if (!a) {
         a = document.createElement('audio');
         a.id = 'va_' + id; a.autoplay = true; a.playsInline = true;
+        a.setAttribute('playsinline', ''); a.style.display = 'none';
         document.body.appendChild(a);
       }
       a.srcObject = stream;
-      a.play?.().catch(() => {});
+      const go = () => a.play().catch(() => {});
+      go();
+      document.addEventListener('click', go, { once: true });   // بعض المتصفحات تحتاج لمسة
     },
     _removeAudio(id) { document.getElementById('va_' + id)?.remove(); }
   };

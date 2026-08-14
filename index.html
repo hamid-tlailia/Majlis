@@ -292,6 +292,7 @@ input.txt:focus{outline:none;border-color:var(--brass)}
 .col.sel{border-color:var(--bone);transform:translateY(-4px);box-shadow:0 8px 16px rgba(0,0,0,.45)}
 .col b{position:absolute;inset-inline-start:7px;bottom:5px;font-size:11px;color:rgba(255,255,255,.95);
   font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.col.off{opacity:.32;filter:grayscale(.5)}
 .col.sel::after{content:"✓";position:absolute;inset-inline-end:6px;top:2px;color:#fff;font-size:13px}
 .note{color:var(--muted);font-size:12.5px;margin:14px 0 0;line-height:1.7}
 .note b{color:var(--bone2);font-weight:500}
@@ -601,6 +602,7 @@ html[data-theme="sand"]{
   <div class="gbar">
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.xo"></div>
+    <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
     <button class="icon" onclick="sfx('tap');openXoSetup()">⚙</button>
     <button class="icon" onclick="askReset(()=>xoNew())">↺</button>
   </div>
@@ -621,6 +623,7 @@ html[data-theme="sand"]{
   <div class="gbar">
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.ludo"></div>
+    <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
     <button class="icon" onclick="sfx('tap');openLudoSetup()">⚙</button>
     <button class="icon" onclick="askReset(()=>ludoStart())">↺</button>
   </div>
@@ -637,6 +640,7 @@ html[data-theme="sand"]{
   <div class="gbar">
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.dots"></div>
+    <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
     <button class="icon" onclick="sfx('tap');openDotsSetup()">⚙</button>
     <button class="icon" onclick="askReset(()=>dotsNew())">↺</button>
   </div>
@@ -652,6 +656,7 @@ html[data-theme="sand"]{
   <div class="gbar">
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.mj"></div>
+    <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
     <button class="icon" onclick="sfx('tap');openMjSetup()">⚙</button>
     <button class="icon" onclick="askReset(()=>mjNew())">↺</button>
   </div>
@@ -676,6 +681,7 @@ html[data-theme="sand"]{
   <div class="gbar">
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.mem"></div>
+    <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
     <button class="icon" onclick="sfx('tap');openMemSetup()">⚙</button>
     <button class="icon" onclick="askReset(()=>memNew())">↺</button>
   </div>
@@ -854,28 +860,35 @@ html[data-theme="sand"]{
   </div>
 </div>
 
-<!-- ===== أونلاين ===== -->
+<!-- ===== أونلاين: من متصل الآن ===== -->
 <div class="overlay" id="ovOnline" onclick="if(event.target===this)closeAll()">
   <div class="sheet">
     <div class="grab"></div>
-    <h2 data-i="net.t"></h2><p class="sub" data-i="net.s"></p>
+    <h2 data-i="net.t"></h2><p class="sub" id="netSub"></p>
+    <div class="plist" id="plist"></div>
+    <p class="note" id="netTip"></p>
+    <label class="fl" id="netCodeLbl" data-i="net.code"></label>
+    <input class="txt codein" id="netJoinCode" maxlength="5" autocomplete="off" placeholder="ABCDE">
+    <button class="secondary" id="netJoinBtn" onclick="netJoin()" data-i="net.join"></button>
+    <button class="secondary" id="netLeaveBtn" onclick="netLeave()" data-i="net.leave" style="display:none"></button>
+  </div>
+</div>
 
-    <div id="netLobby">
-      <button class="primary" onclick="netCreate()" data-i="net.create"></button>
-      <p class="note" data-i="net.note"></p>
-      <label class="fl" data-i="net.code"></label>
-      <input class="txt codein" id="netJoinCode" maxlength="5" autocomplete="off" placeholder="ABCDE">
-      <button class="secondary" onclick="netJoin()" data-i="net.join"></button>
+<!-- ===== دعوة إلى هذه اللعبة ===== -->
+<div class="overlay" id="ovInviteGame" onclick="if(event.target===this)closeAll()">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 data-i="inv.t"></h2><p class="sub" id="invSub"></p>
+    <div id="invMake">
+      <button class="primary" onclick="inviteHere()" data-i="inv.make"></button>
+      <p class="note" data-i="inv.note"></p>
     </div>
-
-    <div id="netRoom" style="display:none">
-      <div class="roomcode" id="roomCode">-----</div>
-      <p class="roomhint" data-i="net.share"></p>
+    <div id="invReady" style="display:none">
+      <div class="roomcode" id="invCode">-----</div>
+      <p class="roomhint" data-i="inv.share"></p>
       <button class="primary" onclick="netShare()" data-i="net.shareBtn"></button>
       <button class="secondary" onclick="netCopy()" data-i="net.copy"></button>
-      <div class="plist" id="plist"></div>
-      <p class="note" id="netTip"></p>
-      <button class="secondary" onclick="netLeave()" data-i="net.leave"></button>
+      <div class="plist" id="invList"></div>
     </div>
   </div>
 </div>
@@ -919,22 +932,25 @@ ar:{
  localOnly:'العب محلياً أو عبر الشبكة',
  inviteBtn:'دعوة',
  onlineBtn:'أونلاين',
- 'net.t':'اللعب عبر الشبكة','net.s':'أنشئ غرفة وأرسل الرابط لمن تلعب معه.',
- 'net.create':'أنشئ غرفة','net.join':'انضم بالرمز','net.code':'أو ادخل برمز غرفة',
- 'net.note':'يُنشأ رابط دعوة ترسله لصديقك — يفتحه فيدخل معك مباشرة.',
- 'net.share':'أرسل هذا الرابط لمن تلعب معه','net.shareBtn':'أرسل الرابط','net.copy':'انسخ الرابط',
- 'net.copied':'نُسخ الرابط','net.inviteMsg':'العب معي في المجلس',
- 'net.tipHost':'أنت المضيف — اختر لعبة من الصالة وستفتح عند الجميع.',
- 'net.tipGuest':'انتظر المضيف ليختار اللعبة.',
- 'net.joining':'جارٍ الدخول إلى الغرفة…','net.notYourTurn':'ليس دورك الآن',
- 'net.leave':'خروج','net.room':'غرفة','net.host':'المضيف',
- 'net.connecting':'جارٍ الاتصال…','net.failed':'تعذّر الاتصال بالخادم',
- 'net.needCode':'أدخل رمز الغرفة','net.slow':'الاتصال يستغرق وقتاً…',
- 'net.left':'غادرت الغرفة','net.weak':'الاتصال ضعيف — قد تتأخر الحركات',
+ 'net.t':'من متصل الآن','net.inRoom':'أنت في غرفة','net.noRoom':'لست في غرفة',
+ 'net.tipNone':'ادخل أي لعبة واضغط 👥 لإنشاء دعوة خاصة بها.',
+ 'net.tipHost':'أنت المضيف — اضغط 👥 داخل اللعبة لإرسال الرابط.',
+ 'net.tipGuest':'تتبع المضيف في اللعبة نفسها.',
+ 'net.code':'ادخل برمز غرفة','net.join':'انضم','net.leave':'غادر الغرفة',
+ 'net.shareBtn':'أرسل الرابط','net.copy':'انسخ الرابط','net.copied':'نُسخ الرابط',
+ 'net.inviteMsg':'العب معي في المجلس','net.room':'غرفة','net.host':'المضيف',
+ 'net.connecting':'جارٍ الاتصال…','net.failed':'تعذّر الاتصال بالخادم','net.slow':'الاتصال يستغرق وقتاً…',
+ 'net.needCode':'أدخل رمز الغرفة','net.left':'غادرت الغرفة','net.joining':'جارٍ الدخول…',
+ 'net.weak':'الاتصال ضعيف — قد تتأخر الحركات','net.notYourTurn':'ليس دورك الآن',
+ 'net.yourTurnNudge':'دورك — الجميع بانتظارك','net.colorTaken':'هذا اللون محجوز',
+ 'net.micOn':'الميكروفون مفتوح','net.micMuted':'الميكروفون مكتوم','net.micOff':'أُغلق الصوت',
+ 'net.micDenied':'لم يُسمح باستخدام الميكروفون',
  'net.sysJoined':'انضم إلى الغرفة','net.sysLeft':'غادر الغرفة','net.sysDrop':'انقطع اتصاله',
  'net.sysBack':'عاد إلى الغرفة','net.sysHost':'صار المضيف','net.sysRetry':'انقطع الاتصال — نحاول العودة…',
  'net.sysClosed':'أُغلقت الغرفة','net.errNoRoom':'لا توجد غرفة بهذا الرمز','net.errFull':'الغرفة ممتلئة',
- 'net.micOn':'الميكروفون مفتوح','net.micMuted':'الميكروفون مكتوم','net.micOff':'أُغلق الصوت','net.micDenied':'لم يُسمح باستخدام الميكروفون',
+ 'inv.t':'ادعُ إلى هذه اللعبة','inv.s':'غرفة خاصة بهذه اللعبة وحدها',
+ 'inv.make':'أنشئ دعوة','inv.share':'أرسل هذا الرابط — يفتحه صديقك فيدخل معك مباشرة',
+ 'inv.note':'تُنشأ غرفة مقفلة على اللعبة الحالية، ولا يدخلها إلا من معه الرابط.',
  'g.xo':'إكس أو','g.ludo':'لودو','g.mem':'الذاكرة','g.dots':'خطوط ومربّعات','g.mj':'ماهجونج',
  'm.xo':'لاعبان','m.ludo':'٢-٤ لاعبين · ١٥ دقيقة','m.mem':'لاعبان · ٥ دقائق',
  'm.dots':'٢-٤ لاعبين',
@@ -982,22 +998,25 @@ en:{
  localOnly:'Play locally or online',
  inviteBtn:'Invite',
  onlineBtn:'Online',
- 'net.t':'Play online','net.s':'Create a room and send the link to your friend.',
- 'net.create':'Create a room','net.join':'Join with code','net.code':'Or enter a room code',
- 'net.note':'An invite link is created — send it and your friend joins you directly.',
- 'net.share':'Send this link to the person you are playing','net.shareBtn':'Send link','net.copy':'Copy link',
- 'net.copied':'Link copied','net.inviteMsg':'Play with me on Majlis',
- 'net.tipHost':'You are the host — pick a game in the lobby and it opens for everyone.',
- 'net.tipGuest':'Waiting for the host to pick a game.',
- 'net.joining':'Joining the room…','net.notYourTurn':'Not your turn',
- 'net.leave':'Leave','net.room':'Room','net.host':'host',
- 'net.connecting':'Connecting…','net.failed':'Could not reach the server',
- 'net.needCode':'Enter the room code','net.slow':'Taking a while…',
- 'net.left':'You left the room','net.weak':'Weak connection — moves may lag',
+ 'net.t':'Who is online','net.inRoom':'You are in room','net.noRoom':'Not in a room',
+ 'net.tipNone':'Open any game and press 👥 to create an invite for it.',
+ 'net.tipHost':'You are the host — press 👥 inside the game to send the link.',
+ 'net.tipGuest':'You follow the host into the same game.',
+ 'net.code':'Or enter a room code','net.join':'Join','net.leave':'Leave room',
+ 'net.shareBtn':'Send link','net.copy':'Copy link','net.copied':'Link copied',
+ 'net.inviteMsg':'Play with me on Majlis','net.room':'Room','net.host':'host',
+ 'net.connecting':'Connecting…','net.failed':'Could not reach the server','net.slow':'Taking a while…',
+ 'net.needCode':'Enter the room code','net.left':'You left the room','net.joining':'Joining…',
+ 'net.weak':'Weak connection — moves may lag','net.notYourTurn':'Not your turn',
+ 'net.yourTurnNudge':'Your turn — everyone is waiting','net.colorTaken':'That colour is taken',
+ 'net.micOn':'Microphone on','net.micMuted':'Microphone muted','net.micOff':'Voice off',
+ 'net.micDenied':'Microphone permission denied',
  'net.sysJoined':'joined the room','net.sysLeft':'left the room','net.sysDrop':'lost connection',
  'net.sysBack':'is back','net.sysHost':'is now the host','net.sysRetry':'Disconnected — reconnecting…',
  'net.sysClosed':'Room closed','net.errNoRoom':'No room with that code','net.errFull':'Room is full',
- 'net.micOn':'Microphone on','net.micMuted':'Microphone muted','net.micOff':'Voice off','net.micDenied':'Microphone permission denied',
+ 'inv.t':'Invite to this game','inv.s':'A private room for this game only',
+ 'inv.make':'Create invite','inv.share':'Send this link — your friend joins you directly',
+ 'inv.note':'Creates a room locked to the current game; only people with the link can enter.',
  'g.xo':'Tic-Tac-Toe','g.ludo':'Ludo','g.mem':'Memory','g.dots':'Dots & Boxes','g.mj':'Mahjong',
  'm.xo':'2 players','m.ludo':'2–4 players · 15 min','m.mem':'2 players · 5 min',
  'm.dots':'2–4 players',
@@ -1540,14 +1559,43 @@ function pawn(c){
 }
 function buildColors(){
   const box=$('colors'); if(!box) return; box.innerHTML='';
+  const online=netOn(), seat=netSeat();
+  const taken=new Set(); if(online) netColors.forEach((c,s)=>{ if(s!==seat&&c!==undefined) taken.add(c); });
+  const mine = online ? (netColors[seat]!==undefined?netColors[seat]:activeList()[seat]) : cfg.color;
   PL.forEach((p,i)=>{
     const b=document.createElement('button');
-    b.className='col'+(i===cfg.color?' sel':''); b.style.background=p.c;
-    b.dataset.g='color'; b.dataset.v=i; b.innerHTML=`<b>${cname(i)}</b>`;
-    b.onclick=()=>setOpt(b); box.appendChild(b);
+    const off = online && taken.has(i);
+    b.className='col'+(i===mine?' sel':'')+(off?' off':'');
+    b.style.background=p.c; b.dataset.g='color'; b.dataset.v=i;
+    b.innerHTML=`<b>${cname(i)}${off?' ✕':''}</b>`;
+    b.onclick=()=>{
+      if(off){ sfx('miss'); toast(t('net.colorTaken')); return; }
+      if(online){ pickColor(i); return; }
+      setOpt(b);
+    };
+    box.appendChild(b);
   });
 }
+function pickColor(c){
+  sfx('tap');
+  if(netHost()){ netColors[netSeat()]=c; cfg.color=c; buildColors(); setNote(); }
+  else N().input('color',{c});
+}
 function activeList(){
+  if(netOn()){
+    const n=Math.min(4,Math.max(2,netCount()));
+    const out=[]; const used=new Set();
+    for(let s=0;s<n;s++){
+      let c=netColors[s];
+      if(c===undefined||used.has(c)) c=undefined;
+      if(c!==undefined){ out[s]=c; used.add(c); }
+    }
+    for(let s=0;s<n;s++){
+      if(out[s]!==undefined) continue;
+      for(let c=0;c<4;c++) if(!used.has(c)){ out[s]=c; used.add(c); break; }
+    }
+    return out;
+  }
   const c=cfg.color,n=cfg.count;
   if(n===2) return [c,(c+2)%4];
   if(n===3) return [c,(c+1)%4,(c+2)%4];
@@ -1723,7 +1771,7 @@ function ludoStart(){
   if(moveIV){ clearInterval(moveIV); moveIV=null; }
   spinX=0; spinY=0;
   ludoBuild(); ludoPlace(); lrail(); setDie(CP()); showFace(1,false,true);
-  $('die').disabled=false;
+  $('die').disabled=false; netSyncControls();
   hint(HUM[0]?t('yourTurn'):`${t('turnOf')} <b>${cname(CP())}</b>`);
   netPush();
   if(!HUM[lCur]) setTimeout(roll,700);
@@ -1825,6 +1873,7 @@ function land(p,i,cap){
 function nextTurn(){
   if(lStop) return;
   if(netOn()&&netHost()) setTimeout(netPush,60);
+  setTimeout(()=>{netSyncControls();netNudge();},80);
   lCur=(lCur+1)%ACT.length; lDie=0; lBusy=false; lrail(); setDie(CP());
   const d=$('die');
   if(HUM[lCur]){ d.disabled=false; hint(cfg.mode==='solo'?t('yourTurn'):`${t('turnOf')} <b>${cname(CP())}</b> — ${t('pressDie')}`); }
@@ -2152,7 +2201,7 @@ function mjRender(){
   lv.classList.toggle('empty',!mjDrawn);
   lv.querySelector('.front').innerHTML = mjDrawn?mjFace(mjDrawn):'';
   lv.style.visibility = mjDrawn?'visible':'hidden';
-  mjrail(); mjSize();
+  mjrail(); mjSize(); netSyncControls();
 }
 function mjNew(auto){
   closeAll(); if(!auto) sfx('tap');
@@ -2488,23 +2537,31 @@ const SNAP={
 function netPush(){
   if(!netOn()||!netHost()) return;
   const g=cur; if(!SNAP[g]) return;
-  try{ N().pushState(g, JSON.parse(JSON.stringify(SNAP[g].get()))); }catch(e){}
+  try{
+    const env={L:lang, C:netColors, S:JSON.parse(JSON.stringify(SNAP[g].get()))};
+    N().pushState(g, env);
+  }catch(e){}
 }
-function netApply(game,state){
-  if(!SNAP[game]) return;
+function netApply(game,env){
+  if(!SNAP[game]||!env) return;
+  const st = env.S!==undefined ? env.S : env;
+  if(env.L && env.L!==lang){ lang=env.L; applyLang(); }   // توحيد اللغة مع المضيف
+  if(env.C) netColors=env.C;
   if(cur!==game) go(game);
-  try{ SNAP[game].set(state); }catch(e){ console.error(e); }
+  try{ SNAP[game].set(st); }catch(e){ console.error(e); }
+  netSyncControls(); netNudge();
+}
+/* تفعيل/تعطيل الأزرار حسب صاحب الدور */
+function netSyncControls(){
+  if(!netOn()) return;
+  const d=$('die');
+  if(d && ACT.length) d.disabled = !(myTurn('ludo') && !lOver && !lBusy && !lDie);
+  const dk=$('mjdeck');
+  if(dk && mjWall.length) dk.disabled = !(myTurn('mj') && !mjDrawn && !mjLock && !mjOver);
+  if(dk) dk.classList.toggle('ready', dk && !dk.disabled);
 }
 
 /* ---- واجهة الغرفة ---- */
-function openOnline(){
-  sfx('tap');
-  $('netJoinCode').value='';
-  $('netLobby').style.display = netOn()?'none':'block';
-  $('netRoom').style.display  = netOn()?'block':'none';
-  if(netOn()) netRenderRoom(N().room);
-  $('ovOnline').classList.add('on');
-}
 let netTimer=null;
 function netEnsure(){
   N().url=serverUrl();
@@ -2514,10 +2571,29 @@ function netEnsure(){
   return true;
 }
 function netDone(){ clearTimeout(netTimer); }
-async function netCreate(){
-  netEnsure();
-  try{ await N().create(profile.name, 'lobby'); netDone(); }
-  catch(e){ netDone(); sfx('miss'); toast(t('net.failed')); }
+
+/* نافذة «من متصل الآن» */
+function openOnline(){
+  sfx('tap'); netRenderPresence();
+  $('ovOnline').classList.add('on');
+}
+function netRenderPresence(){
+  const inRoom=netOn();
+  $('netSub').textContent = inRoom? t('net.inRoom')+' '+N().room.code : t('net.noRoom');
+  $('netTip').textContent = inRoom? (netHost()?t('net.tipHost'):t('net.tipGuest')) : t('net.tipNone');
+  ['netCodeLbl','netJoinCode','netJoinBtn'].forEach(id=>$(id).style.display = inRoom?'none':'');
+  $('netLeaveBtn').style.display = inRoom?'':'none';
+  const box=$('plist'); box.innerHTML='';
+  if(!inRoom) return;
+  N().room.players.forEach(p=>box.appendChild(prow(p)));
+}
+function prow(p){
+  const d=document.createElement('div'); d.className='prow'+(p.online?'':' off');
+  d.innerHTML=`<div class="av">${[...(p.name||'?')][0]}</div>
+    <div class="nm">${p.name}${p.id===N().you?' •':''}</div>
+    <span class="mic${p.voice?' on':''}">${p.voice?'🎙':'🔇'}</span>
+    <span class="tag">${p.isHost?t('net.host'):''} ${p.ping!=null?p.ping+'ms':''}</span>`;
+  return d;
 }
 async function netJoin(code){
   const c=(typeof code==='string'?code:$('netJoinCode').value).trim().toUpperCase();
@@ -2528,19 +2604,50 @@ async function netJoin(code){
 }
 function netLeave(){
   closeAll(); N().disconnect();
-  $('netLobby').style.display='block';
-  $('netRoom').style.display='none';
   $('netbar').style.display='none';
-  netCfg.code=''; netSave();
+  netCfg.code=''; netSave(); netColors=[];
   if(location.hash) history.replaceState(null,'',location.pathname+location.search);
   toast(t('net.left'));
 }
+
+/* دعوة إلى اللعبة الحالية — الغرفة مقفلة على هذه اللعبة */
+function openInviteGame(){
+  sfx('tap');
+  const named={xo:'g.xo',ludo:'g.ludo',mem:'g.mem',dots:'g.dots',mj:'g.mj'}[cur];
+  $('invSub').textContent = t('inv.s')+' — '+t(named||'g.xo');
+  const ready = netOn() && netHost();
+  $('invMake').style.display  = ready?'none':'block';
+  $('invReady').style.display = ready?'block':'none';
+  if(ready) netRenderInvite();
+  $('ovInviteGame').classList.add('on');
+}
+async function inviteHere(){
+  netEnsure();
+  try{
+    await N().create(profile.name, cur);
+    netDone();
+    $('invMake').style.display='none';
+    $('invReady').style.display='block';
+  }catch(e){ netDone(); sfx('miss'); toast(t('net.failed')); }
+}
+function netRenderInvite(){
+  if(!netOn()) return;
+  $('invCode').textContent=N().room.code;
+  const box=$('invList'); box.innerHTML='';
+  N().room.players.forEach(p=>box.appendChild(prow(p)));
+}
+function netRenderRoom(room){
+  if(!room) return;
+  netDone();
+  $('netcode').textContent=room.code;
+  $('netbar').style.display='flex';
+  if($('ovOnline').classList.contains('on')) netRenderPresence();
+  if($('ovInviteGame').classList.contains('on')) netRenderInvite();
+}
 async function netShare(){
   const link=roomLink(N().room.code);
-  const data={title:'المجلس · Majlis', text:t('net.inviteMsg'), url:link};
-  try{
-    if(navigator.share){ await navigator.share(data); return; }
-  }catch(e){ return; }
+  try{ if(navigator.share){ await navigator.share({title:'المجلس · Majlis',text:t('net.inviteMsg'),url:link}); return; } }
+  catch(e){ return; }
   netCopy();
 }
 async function netCopy(){
@@ -2551,25 +2658,6 @@ async function netCopy(){
     ta.select(); try{ document.execCommand('copy'); toast(t('net.copied')); }catch(_){ toast(link); }
     ta.remove();
   }
-}
-function netRenderRoom(room){
-  if(!room) return;
-  netDone();
-  $('netLobby').style.display='none';
-  $('netRoom').style.display='block';
-  $('roomCode').textContent=room.code;
-  $('netcode').textContent=room.code;
-  $('netbar').style.display='flex';
-  $('netTip').textContent = netHost()? t('net.tipHost') : t('net.tipGuest');
-  const box=$('plist'); box.innerHTML='';
-  room.players.forEach(p=>{
-    const d=document.createElement('div'); d.className='prow'+(p.online?'':' off');
-    d.innerHTML=`<div class="av">${[...(p.name||'?')][0]}</div>
-      <div class="nm">${p.name}${p.id===N().you?' •':''}</div>
-      <span class="mic${p.voice?' on':''}">${p.voice?'🎙':'🔇'}</span>
-      <span class="tag">${p.isHost?t('net.host'):''} ${p.ping!=null?p.ping+'ms':''}</span>`;
-    box.appendChild(d);
-  });
 }
 function netQuality(q){
   const bar=$('netbar');
@@ -2588,7 +2676,8 @@ async function toggleMic(){
     V.setMuted(false); V.stop(); btn.className='mic'; btn.textContent='🎙'; toast(t('net.micOff'));
   }
 }
-/* ---- ضبط الألعاب لوضع الشبكة: كل اللاعبين بشر ---- */
+/* ---- ضبط الألعاب لوضع الشبكة ---- */
+let netColors=[];                 // لون كل مقعد في لودو
 function netTune(){
   if(!netOn()) return;
   const n=Math.max(2,netCount());
@@ -2597,7 +2686,6 @@ function netTune(){
   cfg.mode='party';  cfg.count=Math.min(4,Math.max(2,n));
   cfgJ.mode='party'; cfgJ.count=2;
 }
-/* دوري؟ يعتمد على مقعدي في الغرفة */
 function myTurn(game){
   if(!netOn()) return true;
   const s=netSeat();
@@ -2608,12 +2696,26 @@ function myTurn(game){
   if(game==='mj')   return mjCur===s;
   return true;
 }
+/* تنبيه لطيف إن تأخّر صاحب الدور */
+let nudgeTimer=null, lastTurnKey='';
+function netNudge(){
+  if(!netOn()){ clearTimeout(nudgeTimer); return; }
+  const key=cur+':'+netSeat()+':'+(myTurn(cur)?'me':'x');
+  if(key===lastTurnKey) return;
+  lastTurnKey=key;
+  clearTimeout(nudgeTimer);
+  if(!myTurn(cur)) return;
+  nudgeTimer=setTimeout(()=>{
+    if(netOn()&&myTurn(cur)){ buzz([40,80,40]); sfx('ding'); toast(t('net.yourTurnNudge')); }
+  },18000);
+}
 /* ---- ربط الأحداث ---- */
 function netInit(){
   const M=N(); if(!M) return;
   M.url=serverUrl();
   M.on.room = room=>{
     netRenderRoom(room); netCfg.code=room.code; netSave(); netTune();
+    if(!netHost() && GAMEOF[room.game] && cur!==room.game) go(room.game);
     if(netHost() && cur!=='lobby') setTimeout(netPush,120);
   };
   M.on.state = ({state,game})=>{ if(!netHost()) netApply(game,state); };
@@ -2631,16 +2733,26 @@ function netInit(){
     if(m.code==='disconnected'||m.code==='reconnecting') sfx('miss');
     if(m.code==='reconnected'||m.code==='joined') sfx('ding');
   };
-  /* الدخول عبر رابط دعوة */
-  const m=location.hash.match(/r=([A-Za-z0-9]{4,6})/);
-  if(m){
+  /* الدخول عبر رابط دعوة — عند الفتح وعند تغيّر الرابط */
+  const tryHash=()=>{
+    const m=location.hash.match(/r=([A-Za-z0-9]{4,6})/);
+    if(!m) return;
+    const code=m[1].toUpperCase();
     history.replaceState(null,'',location.pathname+location.search);
-    setTimeout(()=>{ toast(t('net.joining')); netJoin(m[1].toUpperCase()); },600);
-  }
+    if(netOn() && N().room.code===code) return;
+    toast(t('net.joining')); netJoin(code);
+  };
+  addEventListener('hashchange',tryHash);
+  setTimeout(tryHash,600);
 }
 /* المضيف ينفّذ نيّات الضيوف بعد التحقق من صاحب الدور */
 function netHandleInput(m){
   const a=m.action, g=m.args||{}, seat=m.seat;
+  if(a==='color'){
+    const c=+g.c;
+    if(netColors.some((x,s)=>s!==seat&&x===c)) return;    // اللون محجوز
+    netColors[seat]=c; ludoStart(); return;
+  }
   const okSeat = {xo:()=>xoT===seat, mem:()=>mTurn===seat, dots:()=>dbCur===seat,
     ludoRoll:()=>lCur===seat, ludoPick:()=>lCur===seat,
     mjDraw:()=>mjCur===seat, mjPick:()=>mjCur===seat}[a];
