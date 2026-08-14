@@ -482,6 +482,16 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
 .prow.off{opacity:.45}
 .prow .mic{font-size:13px;color:var(--muted)}
 .prow .mic.on{color:var(--ok)}
+.micfab{position:fixed;z-index:60;inset-inline-end:14px;bottom:calc(16px + env(safe-area-inset-bottom));
+  width:52px;height:52px;border-radius:50%;border:1px solid var(--line);display:none;
+  background:var(--ink2);color:var(--bone2);font-size:21px;cursor:pointer;
+  box-shadow:0 6px 16px rgba(0,0,0,.55)}
+body.playing .micfab.live{display:grid;place-items:center}
+.micfab.on{border-color:var(--ok);color:var(--ok);box-shadow:0 0 0 2px rgba(79,168,138,.35),0 6px 16px rgba(0,0,0,.55)}
+.micfab.mut{border-color:var(--clay);color:var(--clay)}
+.micfab .dotq{position:absolute;top:5px;inset-inline-end:5px;width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.micfab.good .dotq{background:var(--ok)} .micfab.ok .dotq{background:var(--brass)}
+.micfab.weak .dotq{background:var(--clay)}
 .codein{text-align:center;font-family:"IBM Plex Mono",monospace;letter-spacing:.28em;font-size:20px;text-transform:uppercase}
 /* ===== ثيمات ===== */
 html[data-theme="night"]{
@@ -522,6 +532,7 @@ html[data-theme="sand"]{
 <body>
 <script src="./net.js"></script>
 <canvas id="fx"></canvas>
+<button class="micfab" id="micFab" onclick="toggleMic()" aria-label="mic"><i class="dotq"></i>🎙</button>
 <div class="app" id="app">
 
 <!-- ===== الصالة ===== -->
@@ -913,6 +924,17 @@ html[data-theme="sand"]{
   </div>
 </div>
 
+<!-- ===== غرفة سابقة ===== -->
+<div class="overlay" id="ovPrev">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 data-i="pv.t"></h2><p class="sub" id="pvSub"></p>
+    <div class="roomcode" id="pvCode">-----</div>
+    <button class="primary" onclick="prevJoin()" data-i="pv.join"></button>
+    <button class="secondary" onclick="prevDrop()" data-i="pv.drop"></button>
+  </div>
+</div>
+
 <!-- ===== الغرفة أُغلقت ===== -->
 <div class="overlay" id="ovClosed">
   <div class="sheet">
@@ -968,6 +990,8 @@ ar:{
  'net.sysJoined':'انضم إلى الغرفة','net.sysLeft':'غادر الغرفة','net.sysDrop':'انقطع اتصاله',
  'net.sysBack':'عاد إلى الغرفة','net.sysHost':'صار المضيف','net.sysRetry':'انقطع الاتصال — نحاول العودة…',
  'net.sysClosed':'أُغلقت الغرفة','net.errNoRoom':'لا توجد غرفة بهذا الرمز','net.errFull':'الغرفة ممتلئة',
+ 'pv.t':'غرفة سابقة','pv.s':'لك غرفة مفتوحة في هذه اللعبة — هل تعود إليها؟',
+ 'pv.join':'عُد إلى الغرفة','pv.drop':'لا، اتركها','pv.dropped':'أُبلغ اللاعب الآخر',
  'cl.t':'انتهت الجولة','cl.host':'المضيف غادر اللعبة','cl.guest':'اللاعب الآخر غادر اللعبة',
  'cl.leave':'العودة إلى الصالة','cl.stay':'ابقَ في الغرفة','cl.waiting':'في انتظار اللاعب الآخر…',
  'rc.t':'عاد الاتصال','rc.s':'هل تعود إلى الغرفة وتكمل الجولة؟','rc.yes':'نعم، عُد','rc.no':'لا، اخرج',
@@ -1037,6 +1061,8 @@ en:{
  'net.sysJoined':'joined the room','net.sysLeft':'left the room','net.sysDrop':'lost connection',
  'net.sysBack':'is back','net.sysHost':'is now the host','net.sysRetry':'Disconnected — reconnecting…',
  'net.sysClosed':'Room closed','net.errNoRoom':'No room with that code','net.errFull':'Room is full',
+ 'pv.t':'Previous room','pv.s':'You have an open room in this game — rejoin it?',
+ 'pv.join':'Rejoin the room','pv.drop':'No, drop it','pv.dropped':'The other player was notified',
  'cl.t':'Round ended','cl.host':'the host left the game','cl.guest':'the other player left',
  'cl.leave':'Back to lobby','cl.stay':'Stay in the room','cl.waiting':'Waiting for the other player…',
  'rc.t':'Connection restored','rc.s':'Rejoin the room and continue the round?','rc.yes':'Yes, rejoin','rc.no':'No, leave',
@@ -1212,6 +1238,7 @@ function go(id){
     if(!mjWall.length) mjNew(true);
     requestAnimationFrame(mjSize);
   }
+  if(GAMEOF[id]) setTimeout(()=>prevAsk(id),500);
   if(id==='ludo'){
     requestAnimationFrame(()=>{ sizeDie(); ludoPlace(); });
     if(lStop) setTimeout(openLudoSetup,120);
@@ -1494,7 +1521,7 @@ function memRail(){
 }
 function memFlip(i,el){
   if(mLock||el.classList.contains('flip')||el.classList.contains('done')) return;
-  if(netOn()&&netHost()) setTimeout(netPush,420);
+  if(netOn()&&netHost()){ netFx('memflip',{i}); setTimeout(netPush,420); }
   el.classList.add('flip'); sfx('flip'); buzz(10);
   const keep = cfgM.lvl==='hard'?1:(cfgM.lvl==='mid'?.8:.5);
   if(Math.random()<keep) mSeen[i]=mDeck[i];
@@ -1820,7 +1847,7 @@ function roll(){
   $('die').disabled=true;
   const p=CP(), d=$('die');
   sfx('roll'); buzz(20);
-  lDie=rollDie(p); showFace(lDie,true);
+  lDie=rollDie(p); showFace(lDie,true); netFx('roll',{p:lCur,d:lDie});
   setTimeout(()=>{
     sfx('place');
     const mv=legal(p,lDie);
@@ -1859,10 +1886,11 @@ function botPick(p,mv,d){
 function move(p,i){
   if(lStop) return;
   const steps=lDie; let k=0; const el=$(`t${p}_${i}`);
-  if(LT[p][i]<0){ LT[p][i]=0; ludoPlace(); sfx('step'); hop(el); setTimeout(()=>land(p,i,false),280); return; }
+  if(LT[p][i]<0){ LT[p][i]=0; ludoPlace(); sfx('step'); hop(el); netFx('step',{p,i,v:0}); setTimeout(()=>land(p,i,false),280); return; }
   moveIV=setInterval(()=>{
     if(lStop){ clearInterval(moveIV); moveIV=null; return; }
     LT[p][i]++; k++; ludoPlace(); sfx('step'); hop(el); buzz(6);
+    netFx('step',{p,i,v:LT[p][i]});
     if(k===steps){ clearInterval(moveIV); moveIV=null; setTimeout(()=>land(p,i,true),200); }
   },165);
 }
@@ -2027,7 +2055,7 @@ function dbPlay(k,r,c){
 function dbDo(k,r,c){
   const arr = k==='h'?dbH:dbV;
   if(arr[r][c]>=0) { sfx('miss'); return; }
-  dbLock=true; arr[r][c]=dbCur;
+  dbLock=true; arr[r][c]=dbCur; netFx('dbline',{k,r,c,p:dbCur});
   const el=$(`${k}${r}${'_'}${c}`);
   el.classList.add('on','pop'); el.style.background=DBC[dbCur];
   sfx('place'); buzz(10);
@@ -2330,7 +2358,7 @@ function mjDraw(){
     mjPile=mjDisc.sort(()=>Math.random()-.5); mjDisc=[]; toast(t('mj.reshuffle'));
   }
   if(++mjIdle>70){ mjEndByCount(); return; }
-  mjDrawn=mjPullWeighted(); sfx('flip'); buzz(10);
+  mjDrawn=mjPullWeighted(); sfx('flip'); buzz(10); netFx('mjdraw',{k:mjDrawn});
   mjRender(); mjSpin();
   mjOffer(mjCur);
 }
@@ -2453,7 +2481,7 @@ function mjPush(p,ci){
       const target=rectOf($('mjlive'))||rectOf($('mjdeck'));
       const from=outRect||target;
       const f2=(from&&target)?makeFly(target, mjFace(popped), true):null;
-      if(!f2){ mjDrawn=popped; mjLock=false; mjRender(); mjOffer(p); return; }
+      if(!f2){ mjDrawn=popped; mjLock=false; mjRender(); netFx('mjdraw',{k:popped}); mjOffer(p); return; }
       sfx('flip');
       const dx=from.x-target.x, dy=from.y-target.y, sc=clampSc(from.w/target.w);
       f2.animate([
@@ -2466,7 +2494,7 @@ function mjPush(p,ci){
       setTimeout(()=>{
         f2.remove();
         if(cur!=='mj') return;
-        mjDrawn=popped; mjLock=false; mjRender();
+        mjDrawn=popped; mjLock=false; mjRender(); netFx('mjdraw',{k:popped});
         mjOffer(p);
       },740);
     },370);
@@ -2581,8 +2609,39 @@ function netPush(){
     N().pushState(g, env);
   }catch(e){}
 }
+/* مؤثر لحظي بلا حالة — يصل قبل انتهاء الحركة فيرى الضيف ما يجري */
+function netFx(type,d){
+  if(!netOn()||!netHost()) return;
+  try{ N().pushState(cur, {L:lang, F:Object.assign({type},d||{})}); }catch(e){}
+}
+function netPlayFx(f){
+  try{
+    if(f.type==='roll'){                      // النرد يدور بنفس النتيجة
+      if(cur!=='ludo') return;
+      lCur=f.p!==undefined?f.p:lCur; lDie=f.d; setDie(CP()); lrail(); showFace(f.d,true); sfx('roll'); buzz(15);
+      $('die').disabled=true;
+    }else if(f.type==='step'){                // حجر يتحرك خطوة
+      if(cur!=='ludo'||!LT[f.p]) return;
+      LT[f.p][f.i]=f.v; ludoPlace(); sfx('step');
+      const el=$(`t${f.p}_${f.i}`); if(el) hop(el);
+    }else if(f.type==='mjdraw'){              // بلاطة سُحبت
+      if(cur!=='mj') return;
+      mjDrawn=f.k; mjRender(); sfx('flip');
+      const lv=$('mjlive'); lv.classList.remove('out'); void lv.offsetWidth; lv.classList.add('out');
+    }else if(f.type==='memflip'){
+      if(cur!=='mem') return;
+      const el=document.querySelector(`.mcard[data-idx="${f.i}"]`);
+      if(el&&!el.classList.contains('flip')){ el.classList.add('flip'); sfx('flip'); }
+    }else if(f.type==='dbline'){
+      if(cur!=='dots') return;
+      const el=$(`${f.k}${f.r}_${f.c}`);
+      if(el){ el.classList.add('on','pop'); el.style.background=DBC[f.p]; sfx('place'); }
+    }
+  }catch(e){}
+}
 function netApply(game,env){
   if(!SNAP[game]||!env) return;
+  if(env.F){ if(cur!==game) go(game); netPlayFx(env.F); return; }   // مؤثر فقط
   const st = env.S!==undefined ? env.S : env;
   if(env.L && env.L!==lang){ lang=env.L; applyLang(); }   // توحيد اللغة مع المضيف
   if(env.C) netColors=env.C;
@@ -2647,7 +2706,7 @@ async function netJoin(code){
 }
 function netLeave(){
   closeAll(); N().disconnect();
-  $('netbar').style.display='none';
+  $('netbar').style.display='none'; micPaint();
   netCfg.code=''; netSave(); netColors=[];
   if(location.hash) history.replaceState(null,'',location.pathname+location.search);
   toast(t('net.left'));
@@ -2683,7 +2742,7 @@ function netRenderRoom(room){
   if(!room) return;
   netDone();
   $('netcode').textContent=room.code;
-  $('netbar').style.display='flex';
+  $('netbar').style.display='flex'; micPaint();
   if($('ovOnline').classList.contains('on')) netRenderPresence();
   if($('ovInviteGame').classList.contains('on')) netRenderInvite();
 }
@@ -2704,20 +2763,27 @@ async function netCopy(){
 }
 function netQuality(q){
   const bar=$('netbar');
-  bar.className='netbar '+q.quality;
+  bar.className='netbar '+q.quality; micPaint();
   $('netrtt').textContent = q.rtt!=null? q.rtt+'ms' : '';
   if(q.quality==='weak') toast(t('net.weak'));
 }
-async function toggleMic(){
-  const V=N().Voice, btn=$('micBtn');
-  if(!V.on){
-    const ok=await V.start();
-    if(ok){ btn.className='mic on'; btn.textContent='🎙'; toast(t('net.micOn')); }
-  }else if(!V.muted){
-    V.setMuted(true); btn.className='mic mut'; btn.textContent='🔇'; toast(t('net.micMuted'));
-  }else{
-    V.setMuted(false); V.stop(); btn.className='mic'; btn.textContent='🎙'; toast(t('net.micOff'));
+function micPaint(){
+  const V=N().Voice, b=$('micBtn'), f=$('micFab');
+  const st = !V.on ? '' : (V.muted?'mut':'on');
+  const icon = (!V.on||V.muted) ? (V.on?'🔇':'🎙') : '🎙';
+  if(b){ b.className='mic '+st; b.textContent=icon; }
+  if(f){
+    f.className='micfab '+st+' '+(netOn()?'live ':'')+(N().quality||'');
+    f.innerHTML='<i class="dotq"></i>'+icon;
   }
+}
+async function toggleMic(){
+  const V=N().Voice;
+  if(!netOn()){ toast(t('net.noRoom')); return; }
+  if(!V.on){ const ok=await V.start(); if(ok) toast(t('net.micOn')); }
+  else if(!V.muted){ V.setMuted(true); toast(t('net.micMuted')); }
+  else { V.setMuted(false); V.stop(); toast(t('net.micOff')); }
+  micPaint();
 }
 /* ---- ضبط الألعاب لوضع الشبكة ---- */
 let netColors=[];                 // لون كل مقعد في لودو
@@ -2754,6 +2820,35 @@ function netNudge(){
     if(netOn()&&myTurn(cur)){ buzz([40,80,40]); sfx('ding'); toast(t('net.yourTurnNudge')); }
   },18000);
 }
+/* ---- الغرفة السابقة ---- */
+function prevSave(){
+  if(!netOn()) return;
+  netCfg.code=N().room.code; netCfg.game=cur; netCfg.you=N().you; netCfg.at=Date.now(); netSave();
+}
+function prevAsk(game){
+  if(netOn()) return;
+  if(!netCfg.code || netCfg.game!==game) return;
+  if(Date.now()-(netCfg.at||0) > 1000*60*30){ netCfg.code=''; netSave(); return; }
+  $('pvCode').textContent=netCfg.code;
+  $('pvSub').textContent=t('pv.s');
+  $('ovPrev').classList.add('on'); buzz(20);
+}
+function prevJoin(){
+  $('ovPrev').classList.remove('on'); sfx('tap');
+  netJoin(netCfg.code);
+}
+/* أخبر الطرف الآخر أنني لن أعود، ثم انسَ الغرفة */
+async function prevDrop(){
+  $('ovPrev').classList.remove('on'); sfx('tap');
+  const code=netCfg.code; netCfg.code=''; netSave();
+  if(!code) return;
+  try{
+    N().url=serverUrl();
+    await N().join(code, profile.name);
+    setTimeout(()=>{ try{ N().emote('#out'); }catch(e){} setTimeout(()=>N().disconnect(),300); },400);
+  }catch(e){}
+  toast(t('pv.dropped'));
+}
 function closedLeave(){
   $('ovClosed').classList.remove('on');
   if(netOn()) N().disconnect();
@@ -2762,7 +2857,10 @@ function closedLeave(){
   $('lobby').classList.add('on'); cur='lobby';
   document.body.classList.remove('playing'); sfx('tap');
 }
-function closedStay(){ $('ovClosed').classList.remove('on'); sfx('tap'); toast(t('cl.waiting')); }
+function closedStay(){
+  $('ovClosed').classList.remove('on'); sfx('tap'); toast(t('cl.waiting'));
+  /* ابقَ حيث أنت: لا مغادرة للغرفة ولا رجوع للصالة */
+}
 /* عودة بعد انقطاع: نسأل اللاعب */
 let backCode=null;
 function askRejoin(code){ backCode=code; $('ovBack').classList.add('on'); buzz([25,50,25]); }
@@ -2781,7 +2879,7 @@ function netInit(){
   const M=N(); if(!M) return;
   M.url=serverUrl();
   M.on.room = room=>{
-    netRenderRoom(room); netCfg.code=room.code; netSave(); netTune();
+    netRenderRoom(room); netCfg.code=room.code; netCfg.you=N().you; netSave(); netTune(); prevSave();
     if(!netHost() && GAMEOF[room.game] && cur!==room.game) go(room.game);
     if(netHost() && cur!=='lobby') setTimeout(netPush,120);
   };
