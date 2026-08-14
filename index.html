@@ -861,20 +861,20 @@ html[data-theme="sand"]{
     <h2 data-i="net.t"></h2><p class="sub" data-i="net.s"></p>
 
     <div id="netLobby">
-      <label class="fl" data-i="net.server"></label>
-      <input class="txt" id="netUrl" autocomplete="off" spellcheck="false" placeholder="wss://example.com">
+      <button class="primary" onclick="netCreate()" data-i="net.create"></button>
+      <p class="note" data-i="net.note"></p>
       <label class="fl" data-i="net.code"></label>
       <input class="txt codein" id="netJoinCode" maxlength="5" autocomplete="off" placeholder="ABCDE">
-      <button class="primary" onclick="netJoin()" data-i="net.join"></button>
-      <button class="secondary" onclick="netCreate()" data-i="net.create"></button>
-      <p class="note" data-i="net.note"></p>
+      <button class="secondary" onclick="netJoin()" data-i="net.join"></button>
     </div>
 
     <div id="netRoom" style="display:none">
       <div class="roomcode" id="roomCode">-----</div>
       <p class="roomhint" data-i="net.share"></p>
+      <button class="primary" onclick="netShare()" data-i="net.shareBtn"></button>
+      <button class="secondary" onclick="netCopy()" data-i="net.copy"></button>
       <div class="plist" id="plist"></div>
-      <button class="primary" onclick="netStart()" id="netStartBtn" data-i="net.start"></button>
+      <p class="note" id="netTip"></p>
       <button class="secondary" onclick="netLeave()" data-i="net.leave"></button>
     </div>
   </div>
@@ -919,19 +919,22 @@ ar:{
  localOnly:'العب محلياً أو عبر الشبكة',
  inviteBtn:'دعوة',
  onlineBtn:'أونلاين',
- 'net.t':'اللعب عبر الشبكة','net.s':'أنشئ غرفة وشارك رمزها، أو ادخل برمز صديقك.',
- 'net.server':'عنوان الخادم','net.code':'رمز الغرفة','net.join':'انضم','net.create':'أنشئ غرفة جديدة',
- 'net.note':'الخادم مفتوح المصدر داخل مجلد server — ارفعه على أي استضافة مجانية وضع عنوانه هنا مرة واحدة.',
- 'net.share':'شارك هذا الرمز مع من تلعب معه','net.start':'ابدأ الجولة','net.leave':'خروج',
- 'net.room':'غرفة','net.host':'المضيف','net.hostOnly':'المضيف وحده يبدأ الجولة',
- 'net.connecting':'جارٍ الاتصال…','net.failed':'تعذّر الاتصال بالخادم','net.needUrl':'أدخل عنوان الخادم',
- 'net.needCode':'أدخل رمز الغرفة','net.badUrl':'العنوان يجب أن يبدأ بـ wss://','net.slow':'الاتصال يستغرق وقتاً — تأكّد من العنوان','net.left':'غادرت الغرفة','net.started':'بدأت الجولة',
- 'net.weak':'الاتصال ضعيف — قد تتأخر الحركات',
- 'net.micOn':'الميكروفون مفتوح','net.micMuted':'الميكروفون مكتوم','net.micOff':'أُغلق الصوت',
- 'net.micDenied':'لم يُسمح باستخدام الميكروفون',
+ 'net.t':'اللعب عبر الشبكة','net.s':'أنشئ غرفة وأرسل الرابط لمن تلعب معه.',
+ 'net.create':'أنشئ غرفة','net.join':'انضم بالرمز','net.code':'أو ادخل برمز غرفة',
+ 'net.note':'يُنشأ رابط دعوة ترسله لصديقك — يفتحه فيدخل معك مباشرة.',
+ 'net.share':'أرسل هذا الرابط لمن تلعب معه','net.shareBtn':'أرسل الرابط','net.copy':'انسخ الرابط',
+ 'net.copied':'نُسخ الرابط','net.inviteMsg':'العب معي في المجلس',
+ 'net.tipHost':'أنت المضيف — اختر لعبة من الصالة وستفتح عند الجميع.',
+ 'net.tipGuest':'انتظر المضيف ليختار اللعبة.',
+ 'net.joining':'جارٍ الدخول إلى الغرفة…','net.notYourTurn':'ليس دورك الآن',
+ 'net.leave':'خروج','net.room':'غرفة','net.host':'المضيف',
+ 'net.connecting':'جارٍ الاتصال…','net.failed':'تعذّر الاتصال بالخادم',
+ 'net.needCode':'أدخل رمز الغرفة','net.slow':'الاتصال يستغرق وقتاً…',
+ 'net.left':'غادرت الغرفة','net.weak':'الاتصال ضعيف — قد تتأخر الحركات',
  'net.sysJoined':'انضم إلى الغرفة','net.sysLeft':'غادر الغرفة','net.sysDrop':'انقطع اتصاله',
  'net.sysBack':'عاد إلى الغرفة','net.sysHost':'صار المضيف','net.sysRetry':'انقطع الاتصال — نحاول العودة…',
  'net.sysClosed':'أُغلقت الغرفة','net.errNoRoom':'لا توجد غرفة بهذا الرمز','net.errFull':'الغرفة ممتلئة',
+ 'net.micOn':'الميكروفون مفتوح','net.micMuted':'الميكروفون مكتوم','net.micOff':'أُغلق الصوت','net.micDenied':'لم يُسمح باستخدام الميكروفون',
  'g.xo':'إكس أو','g.ludo':'لودو','g.mem':'الذاكرة','g.dots':'خطوط ومربّعات','g.mj':'ماهجونج',
  'm.xo':'لاعبان','m.ludo':'٢-٤ لاعبين · ١٥ دقيقة','m.mem':'لاعبان · ٥ دقائق',
  'm.dots':'٢-٤ لاعبين',
@@ -979,19 +982,22 @@ en:{
  localOnly:'Play locally or online',
  inviteBtn:'Invite',
  onlineBtn:'Online',
- 'net.t':'Play online','net.s':'Create a room and share its code, or enter a friend\'s code.',
- 'net.server':'Server address','net.code':'Room code','net.join':'Join','net.create':'Create a room',
- 'net.note':'The server is open source in the server folder — deploy it on any free host and paste its address here once.',
- 'net.share':'Share this code with the person you are playing','net.start':'Start round','net.leave':'Leave',
- 'net.room':'Room','net.host':'host','net.hostOnly':'Only the host starts the round',
- 'net.connecting':'Connecting…','net.failed':'Could not reach the server','net.needUrl':'Enter the server address',
- 'net.needCode':'Enter the room code','net.badUrl':'Address must start with wss://','net.slow':'Taking a while — check the address','net.left':'You left the room','net.started':'Round started',
- 'net.weak':'Weak connection — moves may lag',
- 'net.micOn':'Microphone on','net.micMuted':'Microphone muted','net.micOff':'Voice off',
- 'net.micDenied':'Microphone permission denied',
+ 'net.t':'Play online','net.s':'Create a room and send the link to your friend.',
+ 'net.create':'Create a room','net.join':'Join with code','net.code':'Or enter a room code',
+ 'net.note':'An invite link is created — send it and your friend joins you directly.',
+ 'net.share':'Send this link to the person you are playing','net.shareBtn':'Send link','net.copy':'Copy link',
+ 'net.copied':'Link copied','net.inviteMsg':'Play with me on Majlis',
+ 'net.tipHost':'You are the host — pick a game in the lobby and it opens for everyone.',
+ 'net.tipGuest':'Waiting for the host to pick a game.',
+ 'net.joining':'Joining the room…','net.notYourTurn':'Not your turn',
+ 'net.leave':'Leave','net.room':'Room','net.host':'host',
+ 'net.connecting':'Connecting…','net.failed':'Could not reach the server',
+ 'net.needCode':'Enter the room code','net.slow':'Taking a while…',
+ 'net.left':'You left the room','net.weak':'Weak connection — moves may lag',
  'net.sysJoined':'joined the room','net.sysLeft':'left the room','net.sysDrop':'lost connection',
  'net.sysBack':'is back','net.sysHost':'is now the host','net.sysRetry':'Disconnected — reconnecting…',
  'net.sysClosed':'Room closed','net.errNoRoom':'No room with that code','net.errFull':'Room is full',
+ 'net.micOn':'Microphone on','net.micMuted':'Microphone muted','net.micOff':'Voice off','net.micDenied':'Microphone permission denied',
  'g.xo':'Tic-Tac-Toe','g.ludo':'Ludo','g.mem':'Memory','g.dots':'Dots & Boxes','g.mj':'Mahjong',
  'm.xo':'2 players','m.ludo':'2–4 players · 15 min','m.mem':'2 players · 5 min',
  'm.dots':'2–4 players',
@@ -1156,6 +1162,7 @@ function go(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   $(id).classList.add('on'); cur=id; scrollTo(0,0);
   document.body.classList.toggle('playing',id!=='lobby');
+  if(netOn()&&netHost()&&GAMEOF[id]){ N().setGame(id); setTimeout(netPush,200); }
   if(id==='mj'){
     if(!mjWall.length) mjNew(true);
     requestAnimationFrame(mjSize);
@@ -1295,6 +1302,7 @@ function xoZero(){
 }
 function xoNew(auto){
   closeAll(); if(!auto) sfx('tap');
+  netTune();
   if(!auto) xoZero();
   xoB=Array(9).fill(null); xoT=cfgX.first; xoLock=false;
   const bd=$('xoboard'); bd.innerHTML='';
@@ -1302,7 +1310,7 @@ function xoNew(auto){
   [1,2].forEach(k=>{const l=document.createElement('div');l.className='ln v';l.style.left=(33.3*k)+'%';bd.appendChild(l);});
   [1,2].forEach(k=>{const l=document.createElement('div');l.className='ln h';l.style.top=(33.3*k)+'%';bd.appendChild(l);});
   $('xores').innerHTML=''; $('sxL').textContent=SYM[cfgX.sym][0]; $('soL').textContent=SYM[cfgX.sym][1];
-  xoRail();
+  xoRail(); netPush();
   if(cfgX.mode==='solo'&&xoT===1) setTimeout(xoBot,450);
 }
 function xoRail(){
@@ -1315,6 +1323,7 @@ function xoRail(){
 }
 function xoPlay(i){
   if(xoLock||xoB[i]!==null){ sfx('miss'); return; }
+  if(netOn()&&!myTurn('xo')){ sfx('miss'); toast(t('net.notYourTurn')); return; }
   if(netOn()&&!netHost()){ N().input('xo',{i}); return; }
   if(!netOn()&&cfgX.mode==='solo'&&xoT===1) return;
   xoDo(i);
@@ -1399,6 +1408,7 @@ function memBuild(){
     const c=document.createElement('button'); c.className='mcard'; c.dataset.idx=i;
     c.innerHTML=`<div class="mface"><div class="mback">${S.star(BRASS)}</div><div class="mfront">${S[k](INK)}</div></div>`;
     c.onclick=()=>{
+      if(netOn()&&!myTurn('mem')){ sfx('miss'); toast(t('net.notYourTurn')); return; }
       if(netOn()&&!netHost()){ N().input('mem',{i}); return; }
       if(!netOn()&&cfgM.mode==='solo'&&mTurn===1) return;
       memFlip(i,c);
@@ -1408,6 +1418,7 @@ function memBuild(){
 }
 function memNew(auto){
   closeAll(); if(!auto) sfx('tap');
+  netTune();
   const pairs=cfgM.size/2, kinds=MEMKINDS.slice(0,pairs);
   mDeck=[...kinds,...kinds].sort(()=>Math.random()-.5);
   mOpen=[]; mLock=false; mTurn=0; mScore=[0,0]; mSeen={}; mDone=0;
@@ -1415,7 +1426,7 @@ function memNew(auto){
   $('m1').querySelector('b').textContent='0'; $('m2').querySelector('b').textContent='0';
   $('m1L').textContent=cfgM.mode==='solo'?t('you'):t('p1');
   $('m2L').textContent=cfgM.mode==='solo'?t('cpu'):t('p2');
-  $('mres').textContent=''; memRail();
+  $('mres').textContent=''; memRail(); netPush();
 }
 function memRail(){
   if(!mDeck) return;
@@ -1704,6 +1715,7 @@ function hint(x,loud){ if(loud&&cur==='ludo'&&!lStop) toast(String(x).replace(/<
 function ludoHintIdle(){}
 function ludoStart(){
   closeAll(); sfx('tap');
+  netTune();
   ACT=activeList(); HUM=ACT.map((p,i)=>cfg.mode==='party'?true:i===0);
   LT=[[],[],[],[]]; ACT.forEach(p=>LT[p]=[-1,-1,-1,-1]);
   stuck=[0,0,0,0]; drought=[0,0,0,0];
@@ -1713,9 +1725,11 @@ function ludoStart(){
   ludoBuild(); ludoPlace(); lrail(); setDie(CP()); showFace(1,false,true);
   $('die').disabled=false;
   hint(HUM[0]?t('yourTurn'):`${t('turnOf')} <b>${cname(CP())}</b>`);
+  netPush();
   if(!HUM[lCur]) setTimeout(roll,700);
 }
 function roll(){
+  if(netOn()&&!myTurn('ludo')){ sfx('miss'); toast(t('net.notYourTurn')); return; }
   if(netOn()&&!netHost()){ N().input('ludoRoll',{}); return; }
   if(lBusy||lOver||lStop||lDie||cur!=='ludo') return;
   lBusy=true; clearCan();
@@ -1737,6 +1751,7 @@ function roll(){
 }
 function clearCan(){ document.querySelectorAll('.tok.can').forEach(x=>x.classList.remove('can')); }
 function tokClick(p,i){
+  if(netOn()&&!myTurn('ludo')) return;
   if(netOn()&&!netHost()){ N().input('ludoPick',{p,i}); return; }
   if(lOver||lBusy||!lDie||p!==CP()||!HUM[lCur]) return;
   if(!$(`t${p}_${i}`).classList.contains('can')) return;
@@ -1865,6 +1880,7 @@ function dotsBuild(){
   }
 }
 function dbTap(k,r,c){
+  if(netOn()&&!myTurn('dots')){ sfx('miss'); toast(t('net.notYourTurn')); return; }
   if(netOn()&&!netHost()){ N().input('dots',{k,r,c}); return; }
   dbPlay(k,r,c);
 }
@@ -1890,6 +1906,7 @@ function dotsPaint(){
 }
 function dotsNew(auto){
   closeAll(); if(!auto) sfx('tap');
+  netTune();
   dbN=cfgD.grid;
   dbH=Array.from({length:dbN+1},()=>Array(dbN).fill(-1));
   dbV=Array.from({length:dbN},()=>Array(dbN+1).fill(-1));
@@ -1898,7 +1915,7 @@ function dotsNew(auto){
   dbHum=Array.from({length:cfgD.count},(_,i)=>cfgD.mode==='party'||i===0);
   dbCur=0; dbLock=false; dbLeft=dbN*dbN;
   dotsBuild(); dotsPaint();
-  $('dbres').textContent=''; dbrail();
+  $('dbres').textContent=''; dbrail(); netPush();
   if(!dbHum[0]) setTimeout(dbBot,700);
 }
 function dbSides(r,c){
@@ -2139,6 +2156,7 @@ function mjRender(){
 }
 function mjNew(auto){
   closeAll(); if(!auto) sfx('tap');
+  netTune();
   const n=cfgJ.count, dep=cfgJ.depth;
   const need=n*MJCOLS*dep;
   let total=need+110; if(total%2) total++;
@@ -2219,6 +2237,7 @@ function mjPullWeighted(){
   return mjPile.splice(i,1)[0];
 }
 function mjDraw(){
+  if(netOn()&&!myTurn('mj')){ sfx('miss'); toast(t('net.notYourTurn')); return; }
   if(netOn()&&!netHost()){ N().input('mjDraw',{}); return; }
   if(mjDrawn||mjLock||mjOver||cur!=='mj') return;
   if(!mjPile.length){
@@ -2242,6 +2261,7 @@ function mjOffer(p){
   }
 }
 function mjPick(ci,who){
+  if(netOn()&&!myTurn('mj')){ sfx('miss'); return; }
   if(netOn()&&!netHost()){ N().input('mjPick',{ci,p:who}); return; }
   if(mjLock||mjOver||!mjDrawn||!mjHum[mjCur]) return;
   if(who!==undefined && who!==mjCur) return;
@@ -2403,6 +2423,9 @@ function mjEndByCount(){
 
 
 /* ================= أونلاين: الغرف والمزامنة والصوت ================= */
+/* عنوان الخادم مضمّن — يمكن تجاوزه بـ ?s=wss://... عند الحاجة */
+/* ▼▼ غيّر هذا السطر وحده إن نقلت الخادم إلى عنوان آخر ▼▼ */
+const DEFAULT_SERVER='wss://majlis.tlhamid18.workers.dev';
 const NETKEY='majlis.net';
 let netCfg={url:'',code:'',id:''};
 try{ Object.assign(netCfg, JSON.parse(localStorage.getItem(NETKEY)||'{}')); }catch(e){}
@@ -2410,8 +2433,16 @@ const netSave=()=>{ try{ localStorage.setItem(NETKEY,JSON.stringify(netCfg)); }c
 const N=()=>window.MajlisNet;
 const netOn=()=>!!(N()&&N().room);
 const netHost=()=>!!(N()&&N().isHost());
-const GAMEOF={xo:'xo',ludo:'ludo',mem:'mem',dots:'dots',mj:'mj'};
-
+const netSeat=()=>{ const m=N()&&N().me(); return m?m.seat:0; };
+const netCount=()=>netOn()?N().room.players.length:0;
+function serverUrl(){
+  const q=new URLSearchParams(location.search).get('s');
+  return q || netCfg.url || DEFAULT_SERVER;
+}
+const GAMEOF={xo:1,ludo:1,mem:1,dots:1,mj:1};
+function roomLink(code){
+  return location.origin+location.pathname+'#r='+code;
+}
 /* ---- لقطات الحالة لكل لعبة ---- */
 const SNAP={
   xo:{
@@ -2468,7 +2499,6 @@ function netApply(game,state){
 /* ---- واجهة الغرفة ---- */
 function openOnline(){
   sfx('tap');
-  $('netUrl').value=netCfg.url||'';
   $('netJoinCode').value='';
   $('netLobby').style.display = netOn()?'none':'block';
   $('netRoom').style.display  = netOn()?'block':'none';
@@ -2477,48 +2507,60 @@ function openOnline(){
 }
 let netTimer=null;
 function netEnsure(){
-  const url=$('netUrl').value.trim();
-  if(!url){ sfx('miss'); toast(t('net.needUrl')); return false; }
-  if(!/^wss?:\/\//i.test(url)){ sfx('miss'); toast(t('net.badUrl')); return false; }
-  N().url=netCfg.url=url; netSave();
+  N().url=serverUrl();
   toast(t('net.connecting'));
   clearTimeout(netTimer);
-  netTimer=setTimeout(()=>{ if(!netOn()) toast(t('net.slow')); },7000);
+  netTimer=setTimeout(()=>{ if(!netOn()) toast(t('net.slow')); },8000);
   return true;
 }
 function netDone(){ clearTimeout(netTimer); }
 async function netCreate(){
-  if(!netEnsure()) return;
-  try{ await N().create(profile.name, cur==='lobby'?'mj':cur); netDone(); }
+  netEnsure();
+  try{ await N().create(profile.name, 'lobby'); netDone(); }
   catch(e){ netDone(); sfx('miss'); toast(t('net.failed')); }
 }
-async function netJoin(){
-  const code=$('netJoinCode').value.trim();
-  if(code.length<4){ sfx('miss'); toast(t('net.needCode')); return; }
-  if(!netEnsure()) return;
-  try{ await N().join(code, profile.name); netDone(); }
+async function netJoin(code){
+  const c=(typeof code==='string'?code:$('netJoinCode').value).trim().toUpperCase();
+  if(c.length<4){ sfx('miss'); toast(t('net.needCode')); return; }
+  netEnsure();
+  try{ await N().join(c, profile.name); netDone(); }
   catch(e){ netDone(); sfx('miss'); toast(t('net.failed')); }
 }
 function netLeave(){
   closeAll(); N().disconnect();
   $('netLobby').style.display='block';
   $('netRoom').style.display='none';
-  netCfg.code=''; netSave();
   $('netbar').style.display='none';
+  netCfg.code=''; netSave();
+  if(location.hash) history.replaceState(null,'',location.pathname+location.search);
   toast(t('net.left'));
 }
-function netStart(){
-  if(!netHost()){ toast(t('net.hostOnly')); return; }
-  closeAll(); netPush(); toast(t('net.started'));
+async function netShare(){
+  const link=roomLink(N().room.code);
+  const data={title:'المجلس · Majlis', text:t('net.inviteMsg'), url:link};
+  try{
+    if(navigator.share){ await navigator.share(data); return; }
+  }catch(e){ return; }
+  netCopy();
+}
+async function netCopy(){
+  const link=roomLink(N().room.code);
+  try{ await navigator.clipboard.writeText(link); sfx('ding'); toast(t('net.copied')); }
+  catch(e){
+    const ta=document.createElement('textarea'); ta.value=link; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); toast(t('net.copied')); }catch(_){ toast(link); }
+    ta.remove();
+  }
 }
 function netRenderRoom(room){
   if(!room) return;
+  netDone();
   $('netLobby').style.display='none';
   $('netRoom').style.display='block';
   $('roomCode').textContent=room.code;
   $('netcode').textContent=room.code;
   $('netbar').style.display='flex';
-  $('netStartBtn').style.display = netHost()?'block':'none';
+  $('netTip').textContent = netHost()? t('net.tipHost') : t('net.tipGuest');
   const box=$('plist'); box.innerHTML='';
   room.players.forEach(p=>{
     const d=document.createElement('div'); d.className='prow'+(p.online?'':' off');
@@ -2546,11 +2588,34 @@ async function toggleMic(){
     V.setMuted(false); V.stop(); btn.className='mic'; btn.textContent='🎙'; toast(t('net.micOff'));
   }
 }
-
+/* ---- ضبط الألعاب لوضع الشبكة: كل اللاعبين بشر ---- */
+function netTune(){
+  if(!netOn()) return;
+  const n=Math.max(2,netCount());
+  cfgX.mode='party'; cfgM.mode='party';
+  cfgD.mode='party'; cfgD.count=Math.min(4,n);
+  cfg.mode='party';  cfg.count=Math.min(4,Math.max(2,n));
+  cfgJ.mode='party'; cfgJ.count=2;
+}
+/* دوري؟ يعتمد على مقعدي في الغرفة */
+function myTurn(game){
+  if(!netOn()) return true;
+  const s=netSeat();
+  if(game==='xo')   return xoT===s;
+  if(game==='mem')  return mTurn===s;
+  if(game==='dots') return dbCur===s;
+  if(game==='ludo') return lCur===s;
+  if(game==='mj')   return mjCur===s;
+  return true;
+}
 /* ---- ربط الأحداث ---- */
 function netInit(){
   const M=N(); if(!M) return;
-  M.on.room = room=>{ netDone(); netRenderRoom(room); netCfg.code=room.code; netSave(); };
+  M.url=serverUrl();
+  M.on.room = room=>{
+    netRenderRoom(room); netCfg.code=room.code; netSave(); netTune();
+    if(netHost() && cur!=='lobby') setTimeout(netPush,120);
+  };
   M.on.state = ({state,game})=>{ if(!netHost()) netApply(game,state); };
   M.on.game  = g=>{ if(!netHost()&&GAMEOF[g]) go(g); };
   M.on.input = m=>{ if(netHost()) netHandleInput(m); };
@@ -2566,22 +2631,31 @@ function netInit(){
     if(m.code==='disconnected'||m.code==='reconnecting') sfx('miss');
     if(m.code==='reconnected'||m.code==='joined') sfx('ding');
   };
+  /* الدخول عبر رابط دعوة */
+  const m=location.hash.match(/r=([A-Za-z0-9]{4,6})/);
+  if(m){
+    history.replaceState(null,'',location.pathname+location.search);
+    setTimeout(()=>{ toast(t('net.joining')); netJoin(m[1].toUpperCase()); },600);
+  }
 }
-/* المضيف ينفّذ نيّات الضيوف ثم يبثّ اللقطة */
+/* المضيف ينفّذ نيّات الضيوف بعد التحقق من صاحب الدور */
 function netHandleInput(m){
-  const a=m.action, g=m.args||{};
+  const a=m.action, g=m.args||{}, seat=m.seat;
+  const okSeat = {xo:()=>xoT===seat, mem:()=>mTurn===seat, dots:()=>dbCur===seat,
+    ludoRoll:()=>lCur===seat, ludoPick:()=>lCur===seat,
+    mjDraw:()=>mjCur===seat, mjPick:()=>mjCur===seat}[a];
+  if(okSeat && !okSeat()) return;        // ليس دوره
   try{
-    if(a==='xo') xoPlay(g.i);
-    else if(a==='mem') { const el=document.querySelector(`.mcard[data-idx="${g.i}"]`); if(el) memFlip(g.i,el); }
-    else if(a==='dots') dbPlay(g.k,g.r,g.c);
+    if(a==='xo') xoDo(g.i);
+    else if(a==='mem'){ const el=document.querySelector(`.mcard[data-idx="${g.i}"]`); if(el) memFlip(g.i,el); }
+    else if(a==='dots') dbDo(g.k,g.r,g.c);
     else if(a==='ludoRoll') roll();
     else if(a==='ludoPick') tokClick(g.p,g.i);
     else if(a==='mjDraw') mjDraw();
     else if(a==='mjPick') mjPick(g.ci,g.p);
   }catch(e){ console.error(e); }
-  setTimeout(netPush,80);
+  setTimeout(netPush,90);
 }
-
 /* ================= تشغيل ================= */
 load();
 $('pname').textContent=profile.name;
