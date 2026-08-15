@@ -1016,7 +1016,7 @@ ar:{
  'net.inviteMsg':'العب معي في المجلس','net.room':'غرفة','net.host':'المضيف',
  'net.connecting':'جارٍ الاتصال…','net.failed':'تعذّر الاتصال بالخادم','net.slow':'الاتصال يستغرق وقتاً…',
  'net.needCode':'أدخل رمز الغرفة','net.left':'غادرت الغرفة','net.joining':'جارٍ الدخول…',
- 'net.weak':'الاتصال ضعيف — قد تتأخر الحركات','net.notYourTurn':'ليس دورك الآن',
+ 'net.weak':'الاتصال ضعيف — قد تتأخر الحركات','net.notYourTurn':'ليس دورك الآن','net.hostOnlySet':'إعدادات اللعبة متاحة للمضيف فقط — يمكنك متابعة اللعب.',
  'net.yourTurnNudge':'دورك — الجميع بانتظارك','net.colorTaken':'هذا اللون محجوز',
  'net.micOn':'الميكروفون مفتوح','net.micMuted':'الميكروفون مكتوم','net.micOff':'أُغلق الصوت',
  'net.micDenied':'لم يُسمح باستخدام الميكروفون',
@@ -1093,7 +1093,7 @@ en:{
  'net.inviteMsg':'Play with me on Majlis','net.room':'Room','net.host':'host',
  'net.connecting':'Connecting…','net.failed':'Could not reach the server','net.slow':'Taking a while…',
  'net.needCode':'Enter the room code','net.left':'You left the room','net.joining':'Joining…',
- 'net.weak':'Weak connection — moves may lag','net.notYourTurn':'Not your turn',
+ 'net.weak':'Weak connection — moves may lag','net.notYourTurn':'Not your turn','net.hostOnlySet':'Game settings are available to the host only — you can keep playing.',
  'net.yourTurnNudge':'Your turn — everyone is waiting','net.colorTaken':'That colour is taken',
  'net.micOn':'Microphone on','net.micMuted':'Microphone muted','net.micOff':'Voice off',
  'net.micDenied':'Microphone permission denied',
@@ -1960,7 +1960,7 @@ function move(p,i){
     LT[p][i]++; k++; ludoPlace(); sfx('step'); hop(el); buzz(6);
     netFx('step',{p,i,v:LT[p][i]});
     if(k===steps){ clearInterval(moveIV); moveIV=null; setTimeout(()=>land(p,i,true),200); }
-  },165);
+  },105);
 }
 function hop(el){ el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); }
 function land(p,i,cap){
@@ -2356,6 +2356,7 @@ function mjNew(auto){
   mjPile=bag; mjDisc=[]; mjIdle=0; mjDrawn=null; mjOver=false; mjLock=true;
   mjHum=Array.from({length:n},(_,i)=>cfgJ.mode==='party'||i===0);
   $('mjres').textContent=''; mjCur=0; mjRender(); mjLots();
+  if(netOn()&&netHost()) setTimeout(netPush,40);
 }
 /* ---- القرعة ---- */
 function mjLots(){
@@ -2386,6 +2387,7 @@ function mjLots(){
         if(cur!=='mj') return;
         mjLotting=false; $('mjmine').style.display=''; mjCur=best; mjLock=false; mjRender();
         $('mjres').textContent = mjHum[mjCur]?t('mj.draw'):'';
+        if(netOn()&&netHost()) netPush();
         if(!mjHum[mjCur]) setTimeout(mjBot,700);
       },1200);
     }
@@ -2475,7 +2477,7 @@ function mjPushFx(p,ci,kind){
   $('mjlive').classList.add('empty');
   if(ghost) ghost.animate([
     {transform:`translate(${liveRect.x-hr.x}px,${liveRect.y-hr.y}px) scale(${s0})`},
-    {transform:'translate(0,0) scale(1)'}],{duration:340,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
+    {transform:'translate(0,0) scale(1)'}],{duration:220,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
   sfx('step');
   setTimeout(()=>{
     kids.forEach((k,i)=>{
@@ -2539,7 +2541,7 @@ function mjPush(p,ci){
   ghost.animate([
     {transform:`translate(${liveRect.x-hr.x}px,${liveRect.y-hr.y}px) scale(${s0}) rotate(-8deg)`},
     {transform:`translate(0px,${preY}px) scale(1.04) rotate(0deg)`}
-  ],{duration:340,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
+  ],{duration:220,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
   sfx('step');
 
   setTimeout(()=>{
@@ -2703,7 +2705,7 @@ const SNAP={
       if(rebuild) ludoBuild();
       ludoPlace(); lrail(); setDie(CP());
       if(lDie>0 && lDie!==lastFace){ showFace(lDie,true); lastFace=lDie; }
-      $('die').disabled = !(netHost()? true : false) || lOver; }
+      $('die').disabled = netOn() ? !(myTurn('ludo') && !lOver && !lBusy && !lDie) : lOver; }
   },
   mj:{
     get:()=>({w:mjWall,p:mjPile,d:mjDisc,k:mjDrawn,c:mjCur,o:mjOver,h:mjHum,r:mjRound,g:cfgJ}),
@@ -2919,10 +2921,11 @@ function uniqOnline(){
   const L=N().Lobby; if(!L) return [];
   const seen=new Set();
   return L.others().filter(p=>{
-    if(!p.online || seen.has(p.name)) return false;
+    if(!p.online || p.id===L.you || p.id===N().you || seen.has(p.name)) return false;
     seen.add(p.name); return true;
   });
 }
+
 function netRenderRoom(room){
   if(!room) return;
   netDone();
