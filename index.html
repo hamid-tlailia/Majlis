@@ -1293,6 +1293,7 @@ function go(id){
 }
 let resetFn=null;
 function askReset(fn){
+  if(!hostOnly()) return;
   sfx('tap'); resetFn=fn;
   $('ovReset').classList.add('on');
 }
@@ -1373,6 +1374,7 @@ function setOpt(el){
   sfx('tap'); const g=el.dataset.g;
   document.querySelectorAll(`[data-g="${g}"]`).forEach(b=>b.classList.remove('sel'));
   el.classList.add('sel'); MAP[g](el.dataset.v); setNote(); save();
+  if(netOn()&&netHost()) setTimeout(netPush,60);
 }
 function applyTheme(){
   const t=profile.theme||'majlis';
@@ -1428,7 +1430,7 @@ function buildSyms(){
     box.appendChild(b);
   });
 }
-function openXoSetup(){ sfx('tap'); buildSyms();
+function openXoSetup(){ if(!hostOnly()) return; sfx('tap'); buildSyms();
   document.querySelectorAll('[data-g="xoMode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgX.mode));
   document.querySelectorAll('[data-g="xoFirst"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgX.first));
   $('ovXo').classList.add('on');
@@ -1534,7 +1536,7 @@ function xoDrawLine(w,quiet){
 
 /* ================= الذاكرة ================= */
 let mDeck,mOpen,mLock,mTurn,mScore,mSeen,mDone;
-function openMemSetup(){ sfx('tap');
+function openMemSetup(){ if(!hostOnly()) return; sfx('tap');
   document.querySelectorAll('[data-g="memMode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgM.mode));
   document.querySelectorAll('[data-g="memSize"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgM.size));
   document.querySelectorAll('[data-g="memLvl"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgM.lvl));
@@ -1739,7 +1741,7 @@ function dismissLudoSetup(){
   closeAll();
   if(lStop) ludoStart();   // لا تترك اللوح مجمّداً
 }
-function openLudoSetup(){ sfx('tap'); buildColors(); setNote();
+function openLudoSetup(){ if(netOn()&&!netHost()){ buildColors(); $('ovLudo').classList.add('on'); return; } sfx('tap'); buildColors(); setNote();
   document.querySelectorAll('[data-g="count"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfg.count));
   document.querySelectorAll('[data-g="mode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfg.mode));
   $('ovLudo').classList.add('on');
@@ -2016,11 +2018,11 @@ function nextTurn(){
 /* ================= خطوط ومربّعات ================= */
 const DBC=[INDIGO,BRASS,CLAY,FELT];
 let dbN=5,dbH=[],dbV=[],dbOwn=[],dbCur=0,dbHum=[],dbScore=[],dbLock=false,dbLeft=0;
-const dbName=i=>seatName(i) || cfgD.mode==='solo'
+const dbName=i=> seatName(i) || (cfgD.mode==='solo'
   ? (i===0?t('you'):(cfgD.count===2?t('cpu'):COLNAME[lang][i]))
-  : COLNAME[lang][i];
+  : COLNAME[lang][i]);
 
-function openDotsSetup(){ sfx('tap');
+function openDotsSetup(){ if(!hostOnly()) return; sfx('tap');
   document.querySelectorAll('[data-g="dbCount"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgD.count));
   document.querySelectorAll('[data-g="dbMode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgD.mode));
   document.querySelectorAll('[data-g="dbGrid"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgD.grid));
@@ -2228,15 +2230,15 @@ function mjPickKinds(){
 }
 let mjWall=[],mjPile=[],mjDisc=[],mjDrawn=null,mjCur=0,mjHum=[],mjLock=false,mjOver=false,mjIdle=0,mjLotting=false;
 const mjView=()=>netOn()?Math.min(netSeat(),cfgJ.count-1):0;   // لوحتي أنا في الأسفل
-const mjName=i=>seatName(i) || cfgJ.mode==='solo'
+const mjName=i=> seatName(i) || (cfgJ.mode==='solo'
   ? (i===0?t('you'):(cfgJ.count===2?t('cpu'):COLNAME[lang][i]))
-  : COLNAME[lang][i];
+  : COLNAME[lang][i]);
 
 function dismissMjSetup(){
   closeAll();
   if(!mjWall.length || mjOver || mjLock) mjNew(true);
 }
-function openMjSetup(){ sfx('tap');
+function openMjSetup(){ if(!hostOnly()) return; sfx('tap');
   document.querySelectorAll('[data-g="mjMode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgJ.mode));
   document.querySelectorAll('[data-g="mjDepth"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgJ.depth));
   document.querySelectorAll('[data-g="mjSet"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgJ.set));
@@ -2292,7 +2294,8 @@ function mjOrn(fr){
 function mjRender(){
   const me=mjView();
   const foes=$('mjfoes'); foes.innerHTML='';
-  for(let q=cfgJ.count-1;q>=1;q--){
+  for(let q=cfgJ.count-1;q>=0;q--){
+    if(q===me) continue;                 // لوحتي تُرسم أسفل، لا هنا
     const fr=document.createElement('div');
     fr.className='mjframe foeframe'+(q===mjCur?' turn':'');
     fr.style.setProperty('--pc',MJC[q]);
@@ -2312,10 +2315,10 @@ function mjRender(){
   const fr=$('mjmine');
   if(!mjLotting || (netOn()&&!netHost())) fr.style.display='';   // لا تُخفَ إلا أثناء قرعة محلية
   if(!fr.querySelector('.orn')) mjOrn(fr);
-  fr.style.setProperty('--pc',MJC[0]);
-  fr.classList.toggle('turn',mjCur===0);
-  const dn0=mjWall[0].filter(mjFull).length;
-  $('mjmylbl').innerHTML=`<i></i>${mjName(0)} <b>${dn0}/${MJCOLS}</b>`;
+  fr.style.setProperty('--pc',MJC[me]);
+  fr.classList.toggle('turn',mjCur===me);
+  const dn0=(mjWall[me]||[]).filter(mjFull).length;
+  $('mjmylbl').innerHTML=`<i></i>${mjName(me)} <b>${dn0}/${MJCOLS}</b>`;
   const box=$('mjwallbox'); box.className='mjside me'; box.innerHTML='';
   for(let ci=0;ci<MJCOLS;ci++){
     const el=mjColEl(me,ci,false,true);
@@ -2699,7 +2702,7 @@ const SNAP={
       ACT=s.a; HUM=s.h; LT=s.p; lCur=s.c; lDie=s.d; lOver=s.o;
       if(rebuild) ludoBuild();
       ludoPlace(); lrail(); setDie(CP());
-      if(lDie!==lastFace){ showFace(lDie||1,false,lDie===0); lastFace=lDie; }
+      if(lDie>0 && lDie!==lastFace){ showFace(lDie,true); lastFace=lDie; }
       $('die').disabled = !(netHost()? true : false) || lOver; }
   },
   mj:{
@@ -3063,6 +3066,11 @@ function seatName(s){
   const p=(N().room.players||[]).find(x=>x.seat===s);
   if(!p) return null;
   return p.id===N().you ? t('you') : p.name;
+}
+/* داخل غرفة: المضيف وحده يضبط الإعدادات ويعيد الجولة */
+function hostOnly(){
+  if(netOn() && !netHost()){ sfx('miss'); toast(t('net.hostOnlySet')); return false; }
+  return true;
 }
 function myTurn(game){
   if(netExec) return true;
