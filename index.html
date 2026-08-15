@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -1077,8 +1076,7 @@ ar:{
  ate:'أكل حجر',homeIn:'حجر وصل البيت',won:'فاز',youWon:'فزت!',
  finished:'أربعة أحجار وصلت البيت',threeRow:'ثلاثة على التوالي',
  pairs:'أزواج',roundOver:'اضغط ↺ لجولة جديدة',nextRound:'جولة جديدة تبدأ الآن…',
- installed:'التطبيق جاهز للعمل دون إنترنت',
- 'setup.disabled':'لا يمكن تغيير الإعدادات أثناء اللعب عبر الشبكة — اتبع المضيف.'
+ installed:'التطبيق جاهز للعمل دون إنترنت'
 },
 en:{
  brand:'Majlis',
@@ -1155,8 +1153,7 @@ en:{
  ate:'captured a piece of',homeIn:'A piece reached home',won:'Winner:',youWon:'You win!',
  finished:'All four pieces are home',threeRow:'Three in a row',
  pairs:'pairs',roundOver:'Press ↺ for a new round',nextRound:'New round starting…',
- installed:'Ready to play offline',
- 'setup.disabled':'Settings are disabled while playing online — follow the host.'
+ installed:'Ready to play offline'
 }};
 const COLNAME={ar:['الأزرق','الذهبي','الأحمر','الأخضر'],en:['Blue','Gold','Red','Green']};
 let lang='ar';
@@ -1433,7 +1430,7 @@ function buildSyms(){
     box.appendChild(b);
   });
 }
-function openXoSetup(){ if(netOn() && !netHost()){ sfx('miss'); toast(t('setup.disabled')); return; } sfx('tap'); buildSyms();
+function openXoSetup(){ if(!hostOnly()) return; sfx('tap'); buildSyms();
   document.querySelectorAll('[data-g="xoMode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgX.mode));
   document.querySelectorAll('[data-g="xoFirst"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgX.first));
   $('ovXo').classList.add('on');
@@ -1539,7 +1536,7 @@ function xoDrawLine(w,quiet){
 
 /* ================= الذاكرة ================= */
 let mDeck,mOpen,mLock,mTurn,mScore,mSeen,mDone;
-function openMemSetup(){ if(netOn() && !netHost()){ sfx('miss'); toast(t('setup.disabled')); return; } sfx('tap');
+function openMemSetup(){ if(!hostOnly()) return; sfx('tap');
   document.querySelectorAll('[data-g="memMode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgM.mode));
   document.querySelectorAll('[data-g="memSize"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgM.size));
   document.querySelectorAll('[data-g="memLvl"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgM.lvl));
@@ -1744,7 +1741,7 @@ function dismissLudoSetup(){
   closeAll();
   if(lStop) ludoStart();   // لا تترك اللوح مجمّداً
 }
-function openLudoSetup(){ if(netOn() && !netHost()){ sfx('miss'); toast(t('setup.disabled')); return; } sfx('tap'); buildColors(); setNote();
+function openLudoSetup(){ if(netOn()&&!netHost()){ buildColors(); $('ovLudo').classList.add('on'); return; } sfx('tap'); buildColors(); setNote();
   document.querySelectorAll('[data-g="count"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfg.count));
   document.querySelectorAll('[data-g="mode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfg.mode));
   $('ovLudo').classList.add('on');
@@ -1803,7 +1800,8 @@ function setDie(p){
 }
 function yardSlot(p,i){
   const [r,c]=PL[p].yard;
-  const dy=0.16*TH/U;
+  // مركز اللبنة = yard+3 ، والأحجار على بعد 1.25 خانة منه في الاتجاهات الأربعة
+  const dy=0.16*TH/U;                    // تعويض ارتفاع الحجر
   return [ r+3-0.5+dy+(i>1?1.25:-1.25), c+3-0.5+(i%2?1.25:-1.25) ];
 }
 function coordOf(p,i){
@@ -2024,7 +2022,7 @@ const dbName=i=> seatName(i) || (cfgD.mode==='solo'
   ? (i===0?t('you'):(cfgD.count===2?t('cpu'):COLNAME[lang][i]))
   : COLNAME[lang][i]);
 
-function openDotsSetup(){ if(netOn() && !netHost()){ sfx('miss'); toast(t('setup.disabled')); return; } sfx('tap');
+function openDotsSetup(){ if(!hostOnly()) return; sfx('tap');
   document.querySelectorAll('[data-g="dbCount"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgD.count));
   document.querySelectorAll('[data-g="dbMode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgD.mode));
   document.querySelectorAll('[data-g="dbGrid"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgD.grid));
@@ -2240,7 +2238,7 @@ function dismissMjSetup(){
   closeAll();
   if(!mjWall.length || mjOver || mjLock) mjNew(true);
 }
-function openMjSetup(){ if(netOn() && !netHost()){ sfx('miss'); toast(t('setup.disabled')); return; } sfx('tap');
+function openMjSetup(){ if(!hostOnly()) return; sfx('tap');
   document.querySelectorAll('[data-g="mjMode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgJ.mode));
   document.querySelectorAll('[data-g="mjDepth"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgJ.depth));
   document.querySelectorAll('[data-g="mjSet"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgJ.set));
@@ -2259,6 +2257,7 @@ function mjSize(){
   const tileW=Math.floor((W-pad-colGap*(MJCOLS-1)-8)/MJCOLS);
   wrap.style.setProperty('--mjw', tileW+'px');
   wrap.style.setProperty('--tr', Math.max(5,Math.round(tileW*0.17))+'px');
+  // الارتفاع: يُملأ رأسياً ثم يُقيَّد بنسبة معقولة
   const rows=cfgJ.depth*2;
   let hi=Math.round(tileW*1.75), lo=Math.max(14,Math.round(tileW*0.8)), best=lo;
   const fits=v=>{
@@ -2279,7 +2278,7 @@ function mjColEl(p,ci,rev,clickable,owner){
   const shown=mjShown(col);
   let html='';
   col.forEach((k,i)=>{
-    const z = col.length-i;
+    const z = col.length-i;   // الأقرب للوسط فوق الأبعد
     html += (i<shown) ? `<div class="mjt" style="z-index:${z}">${mjFace(k)}</div>`
                       : `<div class="mjt back" style="z-index:${z}"></div>`;
   });
@@ -2296,7 +2295,7 @@ function mjRender(){
   const me=mjView();
   const foes=$('mjfoes'); foes.innerHTML='';
   for(let q=cfgJ.count-1;q>=0;q--){
-    if(q===me) continue;
+    if(q===me) continue;                 // لوحتي تُرسم أسفل، لا هنا
     const fr=document.createElement('div');
     fr.className='mjframe foeframe'+(q===mjCur?' turn':'');
     fr.style.setProperty('--pc',MJC[q]);
@@ -2314,7 +2313,7 @@ function mjRender(){
     foes.appendChild(fr);
   }
   const fr=$('mjmine');
-  if(!mjLotting || (netOn()&&!netHost())) fr.style.display='';
+  if(!mjLotting || (netOn()&&!netHost())) fr.style.display='';   // لا تُخفَ إلا أثناء قرعة محلية
   if(!fr.querySelector('.orn')) mjOrn(fr);
   fr.style.setProperty('--pc',MJC[me]);
   fr.classList.toggle('turn',mjCur===me);
@@ -2360,7 +2359,7 @@ function mjNew(auto){
 }
 /* ---- القرعة ---- */
 function mjLots(){
-  if(netOn()&&!netHost()){ mjLotting=false; mjRender(); return; }
+  if(netOn()&&!netHost()){ mjLotting=false; mjRender(); return; }   // الضيف لا يجري قرعة
   const n=cfgJ.count;
   const rolls=Array.from({length:n},()=>1+Math.floor(Math.random()*6));
   let best=0; for(let i=1;i<n;i++) if(rolls[i]>rolls[best]) best=i;
@@ -2386,7 +2385,6 @@ function mjLots(){
       setTimeout(()=>{
         if(cur!=='mj') return;
         mjLotting=false; $('mjmine').style.display=''; mjCur=best; mjLock=false; mjRender();
-        if(netOn() && netHost()) netPush();
         $('mjres').textContent = mjHum[mjCur]?t('mj.draw'):'';
         if(!mjHum[mjCur]) setTimeout(mjBot,700);
       },1200);
@@ -2395,7 +2393,7 @@ function mjLots(){
 }
 /* ---- السحب ---- */
 const mjFull=c=>c.length>0 && c.every(x=>x===c[0]);
-function mjShown(col){
+function mjShown(col){          // البلاطات المطابقة في المقدمة تكون مكشوفة
   let n=1; while(n<col.length && col[n]===col[0]) n++;
   return n;
 }
@@ -2414,6 +2412,7 @@ function mjNeedCount(kind){
     mjWall[p].forEach(c=>{ if(c.length && !mjFull(c) && c[0]===kind) n++; });
   return n;
 }
+/* اختيار مرجّح: كلما كانت البلاطة مطلوبة في أعمدة أكثر ارتفع حظّها */
 function mjPullWeighted(){
   const w=mjPile.map(k=>1+mjNeedCount(k)*5);
   const tot=w.reduce((a,b)=>a+b,0);
@@ -2460,12 +2459,12 @@ function mjAuto(p){
   if(ci>=0) mjPush(p,ci);
 }
 /* حركة الدفع كما يراها الضيف (بلا تغيير الحالة) */
-function mjPushFx(p, ci, kind){
+function mjPushFx(p,ci,kind){
   const isMine=(p===mjView());
   const colEl = isMine ? $(`mc${ci}`) : $(`fc${p}_${ci}`);
   if(!colEl) return;
   const kids=[...colEl.children]; if(!kids.length) return;
-  const headEl = kids[0];
+  const headEl = kids[0];                    // رأس الصف = أول بلاطة في البيانات
   const lastEl = kids[kids.length-1];
   const hr=rectOf(headEl), lr=rectOf(lastEl);
   const liveRect=rectOf($('mjlive'))||rectOf($('mjdeck'));
@@ -2516,26 +2515,27 @@ function mjPush(p,ci){
   const kind=mjDrawn;
   const kids = colEl ? [...colEl.children] : [];
   const rects = kids.map(rectOf);
-  const headEl = kids[0];
-  const lastEl = kids[kids.length-1];
+  const headEl = kids[0];                    // رأس الصف = أول بلاطة في البيانات
+  const lastEl = kids[kids.length-1];        // والذيل آخرها
   const hr = rectOf(headEl), lr = rectOf(lastEl);
   const liveRect = rectOf(liveEl) || rectOf($('mjdeck'));
   const gapPx = (rects.length>1 && rects[0] && rects[1])
       ? Math.abs(rects[1].y-rects[0].y)-rects[0].h : 3;
   const stepPx = (hr ? hr.h : 40) + Math.max(2,gapPx);
-  const away = isMine ? 1 : -1;
+  const away = isMine ? 1 : -1;      // اتجاه الدفع بعيداً عن الوسط
 
-  if(!hr||!liveRect){
+  if(!hr||!liveRect){                // مسار احتياطي بلا حركة
     col.unshift(kind); const pp=col.pop(); mjDrawn=pp;
     mjCur=p; mjLock=false; mjRender();
     if(mjDone(p)){ mjWin(p); return; }
     mjOffer(p); return;
   }
 
+  /* ١) البلاطة الحيّة تطير إلى فم العمود، وتقف أمام الرأس */
   liveEl.classList.add('empty');
   const ghost=makeFly(hr, mjFace(kind), false);
   const s0=clampSc(liveRect.w/hr.w);
-  const preY = -away*stepPx;
+  const preY = -away*stepPx;         // موضع خارج العمود من جهة الوسط
   ghost.animate([
     {transform:`translate(${liveRect.x-hr.x}px,${liveRect.y-hr.y}px) scale(${s0}) rotate(-8deg)`},
     {transform:`translate(0px,${preY}px) scale(1.04) rotate(0deg)`}
@@ -2545,6 +2545,7 @@ function mjPush(p,ci){
   setTimeout(()=>{
     if(cur!=='mj'){ ghost.remove(); return; }
 
+    /* ٢) الدفع: البلاطة تدخل مكان الرأس، والعمود كله ينزلق للخلف، والذيل يخرج */
     ghost.animate([
       {transform:`translate(0px,${preY}px) scale(1.04)`},
       {transform:'translate(0px,0px) scale(1)'}
@@ -2566,6 +2567,7 @@ function mjPush(p,ci){
 
     setTimeout(()=>{
       if(cur!=='mj'){ ghost.remove(); return; }
+      /* ٣) تحديث الحالة ثم طيران الذيل المكشوف إلى الوسط */
       col.unshift(kind);
       const popped=col.pop();
       mjDrawn=null; mjIdle=0;
@@ -2641,6 +2643,8 @@ function mjEndByCount(){
 
 
 /* ================= أونلاين: الغرف والمزامنة والصوت ================= */
+/* عنوان الخادم مضمّن — يمكن تجاوزه بـ ?s=wss://... عند الحاجة */
+/* ▼▼ غيّر هذا السطر وحده إن نقلت الخادم إلى عنوان آخر ▼▼ */
 const DEFAULT_SERVER='wss://majlis.tlhamid18.workers.dev';
 const NETKEY='majlis.net';
 let netCfg={url:'',code:'',id:''};
@@ -2693,25 +2697,18 @@ const SNAP={
   },
   ludo:{
     get:()=>({p:LT,c:lCur,d:lDie,o:lOver,a:ACT,h:HUM,g:cfg}),
-    set:s=>{
-      Object.assign(cfg,s.g);
-      const rebuild = ACT.join()!==s.a.join() || LT.length!==s.p.length;
+    set:s=>{ Object.assign(cfg,s.g);
+      const rebuild = ACT.join()!==s.a.join();
       ACT=s.a; HUM=s.h; LT=s.p; lCur=s.c; lDie=s.d; lOver=s.o;
       if(rebuild) ludoBuild();
       ludoPlace(); lrail(); setDie(CP());
       if(lDie>0 && lDie!==lastFace){ showFace(lDie,true); lastFace=lDie; }
-      $('die').disabled = !(netOn() && netHost()) || lOver;
-    }
+      $('die').disabled = !(netHost()? true : false) || lOver; }
   },
   mj:{
     get:()=>({w:mjWall,p:mjPile,d:mjDisc,k:mjDrawn,c:mjCur,o:mjOver,h:mjHum,r:mjRound,g:cfgJ}),
-    set:s=>{
-      Object.assign(cfgJ,s.g);
-      mjLotting=false; mjLock=false;
-      mjRound=s.r; mjWall=s.w; mjPile=s.p; mjDisc=s.d;
-      mjDrawn=s.k; mjCur=s.c; mjOver=s.o; mjHum=s.h;
-      mjRender();
-    }
+    set:s=>{ Object.assign(cfgJ,s.g); mjLotting=false; mjRound=s.r; mjWall=s.w; mjPile=s.p; mjDisc=s.d;
+      mjDrawn=s.k; mjCur=s.c; mjOver=s.o; mjHum=s.h; mjLock=false; mjRender(); }
   }
 };
 function netPush(){
@@ -2723,50 +2720,53 @@ function netPush(){
     N().pushState(g, env);
   }catch(e){}
 }
+/* مؤثر لحظي بلا حالة — يصل قبل انتهاء الحركة فيرى الضيف ما يجري */
 function netFx(type,d){
   if(!netOn()||!netHost()) return;
   try{ N().pushState(cur, {L:lang, F:Object.assign({type},d||{})}); }catch(e){}
 }
 function netPlayFx(f){
   try{
-    if(f.type==='roll'){
+    if(f.type==='roll'){                      // النرد يدور بنفس النتيجة
       if(cur!=='ludo') return;
       lCur=f.p!==undefined?f.p:lCur; lDie=f.d; lastFace=f.d; setDie(CP()); lrail(); showFace(f.d,true); sfx('roll'); buzz([25,30,25]);
       $('die').disabled=true;
-    }else if(f.type==='step'){
-      // no-op for speed; we use state sync
-    }else if(f.type==='can'){
+    }else if(f.type==='step'){                // حجر يتحرك خطوة
+      if(cur!=='ludo'||!LT[f.p]) return;
+      LT[f.p][f.i]=f.v; ludoPlace(); sfx('step'); buzz(8);
+      const el=$(`t${f.p}_${f.i}`); if(el) hop(el);
+    }else if(f.type==='can'){                 // إبراز الأحجار القابلة للتحريك
       if(cur!=='ludo') return;
       clearCan();
       (f.a||[]).forEach(i=>{ const el=$(`t${f.p}_${i}`); if(el) el.classList.add('can'); });
       if((f.a||[]).length) buzz(14);
-    }else if(f.type==='home'){
+    }else if(f.type==='home'){                // حجر وصل البيت
       if(cur!=='ludo') return;
       const el=$(`t${f.p}_${f.i}`); if(el) burstAt(el,40);
       sfx('home'); buzz([20,50,20]);
-    }else if(f.type==='mjpush'){
+    }else if(f.type==='mjpush'){              // حركة الدفع في ماهجونج
       if(cur!=='mj') return;
-      mjPushFx(f.p, f.ci, f.k);
-    }else if(f.type==='memclose'){
+      mjPushFx(f.p,f.ci,f.k);
+    }else if(f.type==='memclose'){            // بطاقتان تُغلقان
       if(cur!=='mem') return;
       (f.a||[]).forEach(i=>{
         const el=document.querySelector(`.mcard[data-idx="${i}"]`);
         if(el){ el.classList.add('miss'); setTimeout(()=>el.classList.remove('flip','miss'),300); }
       });
       sfx('miss'); buzz(12);
-    }else if(f.type==='memdone'){
+    }else if(f.type==='memdone'){             // بطاقتان تطابقتا
       if(cur!=='mem') return;
       (f.a||[]).forEach(i=>{
         const el=document.querySelector(`.mcard[data-idx="${i}"]`);
         if(el){ el.classList.add('flip','done'); burstAt(el,18); }
       });
       sfx('match'); buzz([15,40,15]);
-    }else if(f.type==='eat'){
+    }else if(f.type==='eat'){                 // ضربة: الحجر يعود للصندوق
       if(cur!=='ludo'||!LT[f.q]) return;
       const dead=$(`t${f.q}_${f.j}`);
       if(dead){ dead.classList.add('dead'); setTimeout(()=>dead.classList.remove('dead'),420); burstAt(dead,26); }
       LT[f.q][f.j]=-1; ludoPlace(); sfx('cap'); shake(); buzz([30,40,60]);
-    }else if(f.type==='mjdraw'){
+    }else if(f.type==='mjdraw'){              // بلاطة سُحبت
       if(cur!=='mj') return;
       mjDrawn=f.k; mjRender(); sfx('flip'); buzz(10);
       const lv=$('mjlive'); lv.classList.remove('out'); void lv.offsetWidth; lv.classList.add('out');
@@ -2783,9 +2783,9 @@ function netPlayFx(f){
 }
 function netApply(game,env){
   if(!SNAP[game]||!env) return;
-  if(env.F){ if(cur!==game) go(game); netPlayFx(env.F); return; }
+  if(env.F){ if(cur!==game) go(game); netPlayFx(env.F); return; }   // مؤثر فقط
   const st = env.S!==undefined ? env.S : env;
-  if(env.L && env.L!==lang){ lang=env.L; applyLang(); }
+  if(env.L && env.L!==lang){ lang=env.L; applyLang(); }   // توحيد اللغة مع المضيف
   if(env.C) netColors=env.C;
   if(cur!==game) go(game);
   try{ SNAP[game].set(st); }catch(e){ console.error(e); }
@@ -2797,6 +2797,7 @@ function netApply(game,env){
   }
   netSyncControls(); netNudge();
 }
+/* تفعيل/تعطيل الأزرار حسب صاحب الدور */
 function netSyncControls(){
   if(!netOn()) return;
   const d=$('die');
@@ -2905,6 +2906,7 @@ function netRenderInvite(){
     const box=$('invList'); box.innerHTML='';
     N().room.players.forEach(p=>box.appendChild(prow(p)));
   }
+  /* المتصلون الآن — دعوة مباشرة بلا رابط */
   const box2=$('invOnline'), hd=$('invOnlineHd');
   box2.innerHTML='';
   const others=uniqOnline();
@@ -2912,12 +2914,12 @@ function netRenderInvite(){
   hd.textContent = t('inv.onlineNow')+' ('+others.length+')';
   others.forEach(p=>box2.appendChild(prow(p,true)));
 }
+/* المتصلون بلا تكرار */
 function uniqOnline(){
   const L=N().Lobby; if(!L) return [];
   const seen=new Set();
-  const me=N().you;
   return L.others().filter(p=>{
-    if(!p.online || p.id===me || seen.has(p.name)) return false;
+    if(!p.online || seen.has(p.name)) return false;
     seen.add(p.name); return true;
   });
 }
@@ -3037,6 +3039,7 @@ function inviteDecline(){
   try{ N().Lobby.reply(m.from,false); }catch(e){}
   sfx('tap');
 }
+/* دعوة شخص متصل إلى اللعبة الحالية */
 async function invitePerson(id){
   if(!netOn()||!netHost()){ await inviteHere(); }
   setTimeout(()=>{
@@ -3110,6 +3113,7 @@ function prevJoin(){
   $('ovPrev').classList.remove('on'); sfx('tap');
   netJoin(netCfg.code);
 }
+/* أخبر الطرف الآخر أنني لن أعود، ثم انسَ الغرفة */
 async function prevDrop(){
   $('ovPrev').classList.remove('on'); sfx('tap');
   const code=netCfg.code; netCfg.code=''; netSave();
@@ -3131,7 +3135,9 @@ function closedLeave(){
 }
 function closedStay(){
   $('ovClosed').classList.remove('on'); sfx('tap'); toast(t('cl.waiting'));
+  /* ابقَ حيث أنت: لا مغادرة للغرفة ولا رجوع للصالة */
 }
+/* عودة بعد انقطاع: نسأل اللاعب */
 let backCode=null;
 function askRejoin(code){ backCode=code; $('ovBack').classList.add('on'); buzz([25,50,25]); }
 function rejoinYes(){
@@ -3182,6 +3188,7 @@ function netInit(){
     if(m.code==='disconnected'||m.code==='reconnecting') sfx('miss');
     if(m.code==='reconnected'||m.code==='joined') sfx('ding');
   };
+  /* الدخول عبر رابط دعوة — عند الفتح وعند تغيّر الرابط */
   const tryHash=()=>{
     const m=location.hash.match(/r=([A-Za-z0-9]{4,6})/);
     if(!m) return;
@@ -3198,13 +3205,13 @@ function netHandleInput(m){
   const a=m.action, g=m.args||{}, seat=m.seat;
   if(a==='color'){
     const c=+g.c;
-    if(netColors.some((x,s)=>s!==seat&&x===c)) return;
+    if(netColors.some((x,s)=>s!==seat&&x===c)) return;    // اللون محجوز
     netColors[seat]=c; ludoStart(); return;
   }
   const okSeat = {xo:()=>xoT===seat, mem:()=>mTurn===seat, dots:()=>dbCur===seat,
     ludoRoll:()=>lCur===seat, ludoPick:()=>lCur===seat,
     mjDraw:()=>mjCur===seat, mjPick:()=>mjCur===seat}[a];
-  if(okSeat && !okSeat()) return;
+  if(okSeat && !okSeat()) return;        // ليس دوره
   netExec=true;
   try{
     if(a==='xo') xoDo(g.i);
