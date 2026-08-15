@@ -922,6 +922,8 @@ html[data-theme="sand"]{
       <button class="secondary" onclick="netCopy()" data-i="net.copy"></button>
       <div class="plist" id="invList"></div>
     </div>
+    <p class="note" id="invOnlineHd" style="display:none"></p>
+    <div class="plist" id="invOnline"></div>
   </div>
 </div>
 
@@ -1667,7 +1669,7 @@ function mix(a,b,t){
   const c=(x,y)=>Math.round(x+(y-x)*t).toString(16).padStart(2,'0');
   return '#'+c(r1,r2)+c(g1,g2)+c(b1,b2);
 }
-let LT=[[],[],[],[]],ACT=[],HUM=[],lCur=0,lBusy=false,lDie=0,lOver=false;
+let LT=[[],[],[],[]],ACT=[],HUM=[],lCur=0,lBusy=false,lDie=0,lOver=false,lastFace=-1;
 let stuck=[0,0,0,0],drought=[0,0,0,0],lStop=false,moveIV=null;
 const CP=()=>ACT[lCur];
 const cname=p=>COLNAME[lang][p];
@@ -1895,7 +1897,7 @@ function ludoStart(){
   stuck=[0,0,0,0]; drought=[0,0,0,0];
   lCur=0; lBusy=false; lOver=false; lDie=0; lStop=false;
   if(moveIV){ clearInterval(moveIV); moveIV=null; }
-  spinX=0; spinY=0;
+  spinX=0; spinY=0; lastFace=-1;
   ludoBuild(); ludoPlace(); lrail(); setDie(CP()); showFace(1,false,true);
   $('die').disabled=false; netSyncControls();
   hint(HUM[0]?t('yourTurn'):`${t('turnOf')} <b>${cname(CP())}</b>`);
@@ -1910,7 +1912,7 @@ function roll(){
   $('die').disabled=true;
   const p=CP(), d=$('die');
   sfx('roll'); buzz(20);
-  lDie=rollDie(p); showFace(lDie,true); netFx('roll',{p:lCur,d:lDie});
+  lDie=rollDie(p); lastFace=lDie; showFace(lDie,true); netFx('roll',{p:lCur,d:lDie});
   setTimeout(()=>{
     sfx('place');
     const mv=legal(p,lDie);
@@ -2429,13 +2431,14 @@ function mjDraw(){
   mjOffer(mjCur);
 }
 function mjOffer(p){
-  if(netOn()&&netHost()) setTimeout(netPush,60);
   if(mjHasMatch(p)){
     mjCur=p; mjRender();
+    if(netOn()&&netHost()) setTimeout(netPush,50);
     $('mjres').textContent = mjHum[p]?t('mj.match'):'';
     if(!mjHum[p]) setTimeout(()=>mjAuto(p),640);
   }else{
     $('mjres').textContent='';
+    if(netOn()&&netHost()) setTimeout(netPush,50);
     setTimeout(mjPass,780);
   }
 }
@@ -2602,10 +2605,15 @@ function mjPass(){
   const n=cfgJ.count;
   for(let s=1;s<n;s++){
     const q=(mjCur+s)%n;
-    if(mjHasMatch(q)){ mjCur=q; mjRender(); if(mjHum[q]){ $('mjres').textContent=t('mj.match'); } else setTimeout(()=>mjAuto(q),620); return; }
+    if(mjHasMatch(q)){
+      mjCur=q; mjRender();
+      if(netOn()&&netHost()) netPush();
+      if(mjHum[q]){ $('mjres').textContent=t('mj.match'); } else setTimeout(()=>mjAuto(q),620);
+      return; }
   }
   toast(t('mj.none')); sfx('miss'); mjDisc.push(mjDrawn); mjDrawn=null;
   mjCur=(mjCur+1)%n; mjRender();
+  if(netOn()&&netHost()) netPush();
   if(!mjPile.length && !mjDisc.length){ mjEndByCount(); return; }
   $('mjres').textContent = mjHum[mjCur]?t('mj.draw'):'';
   if(!mjHum[mjCur]) setTimeout(mjBot,700);
@@ -2690,7 +2698,8 @@ const SNAP={
       const rebuild = ACT.join()!==s.a.join();
       ACT=s.a; HUM=s.h; LT=s.p; lCur=s.c; lDie=s.d; lOver=s.o;
       if(rebuild) ludoBuild();
-      ludoPlace(); lrail(); setDie(CP()); showFace(lDie||1,false,true);
+      ludoPlace(); lrail(); setDie(CP());
+      if(lDie!==lastFace){ showFace(lDie||1,false,lDie===0); lastFace=lDie; }
       $('die').disabled = !(netHost()? true : false) || lOver; }
   },
   mj:{
@@ -2717,16 +2726,17 @@ function netPlayFx(f){
   try{
     if(f.type==='roll'){                      // النرد يدور بنفس النتيجة
       if(cur!=='ludo') return;
-      lCur=f.p!==undefined?f.p:lCur; lDie=f.d; setDie(CP()); lrail(); showFace(f.d,true); sfx('roll'); buzz(15);
+      lCur=f.p!==undefined?f.p:lCur; lDie=f.d; lastFace=f.d; setDie(CP()); lrail(); showFace(f.d,true); sfx('roll'); buzz([25,30,25]);
       $('die').disabled=true;
     }else if(f.type==='step'){                // حجر يتحرك خطوة
       if(cur!=='ludo'||!LT[f.p]) return;
-      LT[f.p][f.i]=f.v; ludoPlace(); sfx('step');
+      LT[f.p][f.i]=f.v; ludoPlace(); sfx('step'); buzz(8);
       const el=$(`t${f.p}_${f.i}`); if(el) hop(el);
     }else if(f.type==='can'){                 // إبراز الأحجار القابلة للتحريك
       if(cur!=='ludo') return;
       clearCan();
       (f.a||[]).forEach(i=>{ const el=$(`t${f.p}_${i}`); if(el) el.classList.add('can'); });
+      if((f.a||[]).length) buzz(14);
     }else if(f.type==='home'){                // حجر وصل البيت
       if(cur!=='ludo') return;
       const el=$(`t${f.p}_${f.i}`); if(el) burstAt(el,40);
@@ -2755,7 +2765,7 @@ function netPlayFx(f){
       LT[f.q][f.j]=-1; ludoPlace(); sfx('cap'); shake(); buzz([30,40,60]);
     }else if(f.type==='mjdraw'){              // بلاطة سُحبت
       if(cur!=='mj') return;
-      mjDrawn=f.k; mjRender(); sfx('flip');
+      mjDrawn=f.k; mjRender(); sfx('flip'); buzz(10);
       const lv=$('mjlive'); lv.classList.remove('out'); void lv.offsetWidth; lv.classList.add('out');
     }else if(f.type==='memflip'){
       if(cur!=='mem') return;
@@ -2818,14 +2828,7 @@ function netRenderPresence(){
   $('netLeaveBtn').style.display = inRoom?'':'none';
   const box=$('plist'); box.innerHTML='';
   if(inRoom) N().room.players.forEach(p=>box.appendChild(prow(p)));
-  let others=N().Lobby? N().Lobby.others():[];
-  const seen=new Set();
-  others=others.filter(p=>{                       // اطرح الجلسات المكرّرة والقديمة
-    if(!p.online) return false;
-    const k=(p.name||'')+'|'+(p.status||'');
-    if(seen.has(p.name)) return false;
-    seen.add(p.name); return true;
-  });
+  const others=uniqOnline();
   if(others.length){
     const hd=document.createElement('p'); hd.className='note';
     hd.textContent=t('inv.onlineNow')+' ('+others.length+')';
@@ -2882,7 +2885,7 @@ function openInviteGame(){
   const ready = netOn() && netHost();
   $('invMake').style.display  = ready?'none':'block';
   $('invReady').style.display = ready?'block':'none';
-  if(ready) netRenderInvite();
+  netRenderInvite();
   $('ovInviteGame').classList.add('on');
 }
 async function inviteHere(){
@@ -2895,10 +2898,27 @@ async function inviteHere(){
   }catch(e){ netDone(); sfx('miss'); toast(t('net.failed')); }
 }
 function netRenderInvite(){
-  if(!netOn()) return;
-  $('invCode').textContent=N().room.code;
-  const box=$('invList'); box.innerHTML='';
-  N().room.players.forEach(p=>box.appendChild(prow(p)));
+  if(netOn()){
+    $('invCode').textContent=N().room.code;
+    const box=$('invList'); box.innerHTML='';
+    N().room.players.forEach(p=>box.appendChild(prow(p)));
+  }
+  /* المتصلون الآن — دعوة مباشرة بلا رابط */
+  const box2=$('invOnline'), hd=$('invOnlineHd');
+  box2.innerHTML='';
+  const others=uniqOnline();
+  hd.style.display = others.length?'':'none';
+  hd.textContent = t('inv.onlineNow')+' ('+others.length+')';
+  others.forEach(p=>box2.appendChild(prow(p,true)));
+}
+/* المتصلون بلا تكرار */
+function uniqOnline(){
+  const L=N().Lobby; if(!L) return [];
+  const seen=new Set();
+  return L.others().filter(p=>{
+    if(!p.online || seen.has(p.name)) return false;
+    seen.add(p.name); return true;
+  });
 }
 function netRenderRoom(room){
   if(!room) return;
@@ -2988,7 +3008,11 @@ let lobbyList=[], pendingInvite=null, netJoinedOnce=false;
 function lobbyStart(){
   const L=N().Lobby; if(!L) return;
   N().url=serverUrl();
-  L.on.list = arr=>{ lobbyList=arr; if($('ovOnline').classList.contains('on')) netRenderPresence(); };
+  L.on.list = arr=>{
+    lobbyList=arr;
+    if($('ovOnline').classList.contains('on')) netRenderPresence();
+    if($('ovInviteGame').classList.contains('on')) netRenderInvite();
+  };
   L.on.invite = m=>{ pendingInvite=m; showInvitePrompt(m); };
   L.on.reply = m=>{ toast(m.name+' — '+t(m.ok?'inv.accepted':'inv.declined')); if(!m.ok) sfx('miss'); };
   L.join(profile.name);
