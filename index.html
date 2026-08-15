@@ -1016,13 +1016,13 @@ ar:{
  'net.inviteMsg':'العب معي في المجلس','net.room':'غرفة','net.host':'المضيف',
  'net.connecting':'جارٍ الاتصال…','net.failed':'تعذّر الاتصال بالخادم','net.slow':'الاتصال يستغرق وقتاً…',
  'net.needCode':'أدخل رمز الغرفة','net.left':'غادرت الغرفة','net.joining':'جارٍ الدخول…',
- 'net.weak':'الاتصال ضعيف — قد تتأخر الحركات','net.notYourTurn':'ليس دورك الآن','net.hostOnlySet':'إعدادات اللعبة متاحة للمضيف فقط — يمكنك متابعة اللعب.',
+ 'net.weak':'الاتصال ضعيف — قد تتأخر الحركات','net.notYourTurn':'ليس دورك الآن',
  'net.yourTurnNudge':'دورك — الجميع بانتظارك','net.colorTaken':'هذا اللون محجوز',
  'net.micOn':'الميكروفون مفتوح','net.micMuted':'الميكروفون مكتوم','net.micOff':'أُغلق الصوت',
  'net.micDenied':'لم يُسمح باستخدام الميكروفون',
  'net.sysJoined':'انضم إلى الغرفة','net.sysLeft':'غادر الغرفة','net.sysDrop':'انقطع اتصاله',
  'net.sysBack':'عاد إلى الغرفة','net.sysHost':'صار المضيف','net.sysRetry':'انقطع الاتصال — نحاول العودة…',
- 'net.sysClosed':'أُغلقت الغرفة','net.errNoRoom':'لا توجد غرفة بهذا الرمز','net.errFull':'الغرفة ممتلئة',
+ 'net.sysClosed':'أُغلقت الغرفة','net.hostOnlySet':'الإعدادات للمضيف فقط','net.errNoRoom':'لا توجد غرفة بهذا الرمز','net.errFull':'الغرفة ممتلئة',
  'mic.on':'الميكروفون مفتوح','mic.mute':'كتم مؤقّت','mic.off':'إغلاق الصوت',
  'inv.onlineNow':'متصلون الآن','inv.nobody':'لا أحد متصل الآن — استعمل الرابط للدعوة.',
  'inv.btn':'ادعُ','inv.free':'متاح','inv.busy':'في لعبة',
@@ -1093,13 +1093,13 @@ en:{
  'net.inviteMsg':'Play with me on Majlis','net.room':'Room','net.host':'host',
  'net.connecting':'Connecting…','net.failed':'Could not reach the server','net.slow':'Taking a while…',
  'net.needCode':'Enter the room code','net.left':'You left the room','net.joining':'Joining…',
- 'net.weak':'Weak connection — moves may lag','net.notYourTurn':'Not your turn','net.hostOnlySet':'Game settings are available to the host only — you can keep playing.',
+ 'net.weak':'Weak connection — moves may lag','net.notYourTurn':'Not your turn',
  'net.yourTurnNudge':'Your turn — everyone is waiting','net.colorTaken':'That colour is taken',
  'net.micOn':'Microphone on','net.micMuted':'Microphone muted','net.micOff':'Voice off',
  'net.micDenied':'Microphone permission denied',
  'net.sysJoined':'joined the room','net.sysLeft':'left the room','net.sysDrop':'lost connection',
  'net.sysBack':'is back','net.sysHost':'is now the host','net.sysRetry':'Disconnected — reconnecting…',
- 'net.sysClosed':'Room closed','net.errNoRoom':'No room with that code','net.errFull':'Room is full',
+ 'net.sysClosed':'Room closed','net.hostOnlySet':'Settings are host-only','net.errNoRoom':'No room with that code','net.errFull':'Room is full',
  'mic.on':'Microphone on','mic.mute':'Mute temporarily','mic.off':'Turn voice off',
  'inv.onlineNow':'Online now','inv.nobody':'Nobody is online — use the link to invite.',
  'inv.btn':'Invite','inv.free':'free','inv.busy':'in a game',
@@ -1374,7 +1374,7 @@ function setOpt(el){
   sfx('tap'); const g=el.dataset.g;
   document.querySelectorAll(`[data-g="${g}"]`).forEach(b=>b.classList.remove('sel'));
   el.classList.add('sel'); MAP[g](el.dataset.v); setNote(); save();
-  if(netOn()&&netHost()) setTimeout(netPush,60);
+  if(netOn()&&netHost()) setTimeout(netPush,20);
 }
 function applyTheme(){
   const t=profile.theme||'majlis';
@@ -1471,7 +1471,7 @@ function xoPlay(i){
   if(netOn()&&!netHost()){ N().input('xo',{i}); return; }
   if(!netOn()&&cfgX.mode==='solo'&&xoT===1) return;
   xoDo(i);
-  if(netOn()&&netHost()) setTimeout(netPush,60);
+  if(netOn()&&netHost()) setTimeout(netPush,20);
 }
 function xoDo(i){
   xoB[i]=xoT; sfx('place'); buzz(12);
@@ -1960,7 +1960,7 @@ function move(p,i){
     LT[p][i]++; k++; ludoPlace(); sfx('step'); hop(el); buzz(6);
     netFx('step',{p,i,v:LT[p][i]});
     if(k===steps){ clearInterval(moveIV); moveIV=null; setTimeout(()=>land(p,i,true),200); }
-  },105);
+  },165);
 }
 function hop(el){ el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); }
 function land(p,i,cap){
@@ -2006,7 +2006,7 @@ function land(p,i,cap){
 }
 function nextTurn(){
   if(lStop) return;
-  if(netOn()&&netHost()) setTimeout(netPush,60);
+  if(netOn()&&netHost()) setTimeout(netPush,20);
   setTimeout(()=>{netSyncControls();netNudge();},80);
   lCur=(lCur+1)%ACT.length; lDie=0; lBusy=false; lrail(); setDie(CP());
   const d=$('die');
@@ -2120,7 +2120,7 @@ function dbPlay(k,r,c){
   if(dbLock||cur!=='dots') return;
   if(!dbHum[dbCur]) return;
   dbDo(k,r,c);
-  if(netOn()&&netHost()) setTimeout(netPush,60);
+  if(netOn()&&netHost()) setTimeout(netPush,20);
 }
 function dbDo(k,r,c){
   const arr = k==='h'?dbH:dbV;
@@ -2356,7 +2356,6 @@ function mjNew(auto){
   mjPile=bag; mjDisc=[]; mjIdle=0; mjDrawn=null; mjOver=false; mjLock=true;
   mjHum=Array.from({length:n},(_,i)=>cfgJ.mode==='party'||i===0);
   $('mjres').textContent=''; mjCur=0; mjRender(); mjLots();
-  if(netOn()&&netHost()) setTimeout(netPush,40);
 }
 /* ---- القرعة ---- */
 function mjLots(){
@@ -2387,8 +2386,8 @@ function mjLots(){
         if(cur!=='mj') return;
         mjLotting=false; $('mjmine').style.display=''; mjCur=best; mjLock=false; mjRender();
         $('mjres').textContent = mjHum[mjCur]?t('mj.draw'):'';
-        if(netOn()&&netHost()) netPush();
         if(!mjHum[mjCur]) setTimeout(mjBot,700);
+        if(netOn()&&netHost()) netPush();
       },1200);
     }
   },430);
@@ -2477,7 +2476,7 @@ function mjPushFx(p,ci,kind){
   $('mjlive').classList.add('empty');
   if(ghost) ghost.animate([
     {transform:`translate(${liveRect.x-hr.x}px,${liveRect.y-hr.y}px) scale(${s0})`},
-    {transform:'translate(0,0) scale(1)'}],{duration:220,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
+    {transform:'translate(0,0) scale(1)'}],{duration:340,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
   sfx('step');
   setTimeout(()=>{
     kids.forEach((k,i)=>{
@@ -2503,7 +2502,7 @@ function makeFly(r,faceHTML,showBack){
   const f=document.createElement('div'); f.className='mjfly';
   f.style.left=r.x+'px'; f.style.top=r.y+'px'; f.style.width=r.w+'px'; f.style.height=r.h+'px';
   f.innerHTML=`<div class="fc front">${faceHTML}</div><div class="fc rear"></div>`;
-  f.style.setProperty('--lc',MJC[mjCur]||BRASS);
+  f.style.setProperty('--lc',MJC[p]||BRASS);
   if(showBack) f.style.transform='rotateY(180deg)';
   document.body.appendChild(f); return f;
 }
@@ -2541,7 +2540,7 @@ function mjPush(p,ci){
   ghost.animate([
     {transform:`translate(${liveRect.x-hr.x}px,${liveRect.y-hr.y}px) scale(${s0}) rotate(-8deg)`},
     {transform:`translate(0px,${preY}px) scale(1.04) rotate(0deg)`}
-  ],{duration:220,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
+  ],{duration:340,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
   sfx('step');
 
   setTimeout(()=>{
@@ -2705,7 +2704,7 @@ const SNAP={
       if(rebuild) ludoBuild();
       ludoPlace(); lrail(); setDie(CP());
       if(lDie>0 && lDie!==lastFace){ showFace(lDie,true); lastFace=lDie; }
-      $('die').disabled = netOn() ? !(myTurn('ludo') && !lOver && !lBusy && !lDie) : lOver; }
+      $('die').disabled = !(netHost()? true : false) || lOver; }
   },
   mj:{
     get:()=>({w:mjWall,p:mjPile,d:mjDisc,k:mjDrawn,c:mjCur,o:mjOver,h:mjHum,r:mjRound,g:cfgJ}),
@@ -2725,7 +2724,10 @@ function netPush(){
 /* مؤثر لحظي بلا حالة — يصل قبل انتهاء الحركة فيرى الضيف ما يجري */
 function netFx(type,d){
   if(!netOn()||!netHost()) return;
-  try{ N().pushState(cur, {L:lang, F:Object.assign({type},d||{})}); }catch(e){}
+  try{
+    const state = JSON.parse(JSON.stringify(SNAP[cur].get()));
+    N().pushState(cur, {L:lang, S:state, F:Object.assign({type},d||{})});
+  }catch(e){}
 }
 function netPlayFx(f){
   try{
@@ -2785,7 +2787,14 @@ function netPlayFx(f){
 }
 function netApply(game,env){
   if(!SNAP[game]||!env) return;
-  if(env.F){ if(cur!==game) go(game); netPlayFx(env.F); return; }   // مؤثر فقط
+  if(env.F){
+    if(cur!==game) go(game);
+    const delayState = (env.F.type==='mjpush');
+    if(env.S && !delayState) try{ SNAP[game].set(env.S); }catch(e){ console.error(e); }
+    netPlayFx(env.F);
+    if(env.S && delayState) try{ SNAP[game].set(env.S); }catch(e){ console.error(e); }
+    return;
+  }
   const st = env.S!==undefined ? env.S : env;
   if(env.L && env.L!==lang){ lang=env.L; applyLang(); }   // توحيد اللغة مع المضيف
   if(env.C) netColors=env.C;
@@ -2832,7 +2841,7 @@ function netRenderPresence(){
   ['netCodeLbl','netJoinCode','netJoinBtn'].forEach(id=>$(id).style.display = inRoom?'none':'');
   $('netLeaveBtn').style.display = inRoom?'':'none';
   const box=$('plist'); box.innerHTML='';
-  if(inRoom) N().room.players.forEach(p=>box.appendChild(prow(p)));
+  if(inRoom) N().room.players.filter(p => p.id !== N().you).forEach(p=>box.appendChild(prow(p)));
   const others=uniqOnline();
   if(others.length){
     const hd=document.createElement('p'); hd.className='note';
@@ -2906,7 +2915,7 @@ function netRenderInvite(){
   if(netOn()){
     $('invCode').textContent=N().room.code;
     const box=$('invList'); box.innerHTML='';
-    N().room.players.forEach(p=>box.appendChild(prow(p)));
+    N().room.players.filter(p => p.id !== N().you).forEach(p=>box.appendChild(prow(p)));
   }
   /* المتصلون الآن — دعوة مباشرة بلا رابط */
   const box2=$('invOnline'), hd=$('invOnlineHd');
@@ -2921,11 +2930,10 @@ function uniqOnline(){
   const L=N().Lobby; if(!L) return [];
   const seen=new Set();
   return L.others().filter(p=>{
-    if(!p.online || p.id===L.you || p.id===N().you || seen.has(p.name)) return false;
+    if(!p.online || seen.has(p.name)) return false;
     seen.add(p.name); return true;
   });
 }
-
 function netRenderRoom(room){
   if(!room) return;
   netDone();
@@ -3244,3 +3252,4 @@ if('serviceWorker' in navigator){
 </script>
 </body>
 </html>
+
