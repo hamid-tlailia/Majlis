@@ -244,7 +244,7 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
   cursor:pointer;perspective:none;transition:top .45s cubic-bezier(.4,1.1,.4,1),inset-inline-start .45s cubic-bezier(.4,1.1,.4,1)}
 .die3d[disabled]{cursor:default;opacity:.72}
 .cube{position:relative;width:100%;height:100%;transform-style:preserve-3d;
-  transition:transform .85s cubic-bezier(.22,.9,.28,1)}
+  transition:transform .58s cubic-bezier(.2,.9,.25,1)}
 .face{position:absolute;inset:0;border-radius:var(--br,14px);overflow:hidden;backface-visibility:hidden;display:grid;padding:14%;gap:7%;
   grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
   background:linear-gradient(150deg,rgba(255,255,255,.42),rgba(255,255,255,.02) 62%),var(--dc,#EFE7D8);
@@ -1908,7 +1908,14 @@ function ludoStart(){
 }
 function roll(){
   if(netOn()&&!myTurn('ludo')){ sfx('miss'); toast(t('net.notYourTurn')); return; }
-  if(netOn()&&!netHost()){ N().input('ludoRoll',{}); return; }
+  if(netOn()&&!netHost()){
+    if(lBusy||lDie) return;
+    lBusy=true; $('die').disabled=true; sfx('roll'); buzz(20);
+    spinX+=360*3; spinY+=360*2;                      // دوران محلي فوري أثناء انتظار النتيجة
+    $('cube').style.transform=`rotateX(${spinX}deg) rotateY(${spinY}deg)`;
+    N().input('ludoRoll',{});
+    return;
+  }
   if(lBusy||lOver||lStop||lDie||cur!=='ludo') return;
   lBusy=true; clearCan();
   $('die').disabled=true;
@@ -1918,15 +1925,15 @@ function roll(){
   setTimeout(()=>{
     sfx('place');
     const mv=legal(p,lDie);
-    if(!mv.length){ hint(`${nameOf(p)}: ${lDie} — ${t('noMove')}`,true); sfx('miss'); setTimeout(nextTurn,850); return; }
-    if(!HUM[lCur]){ setTimeout(()=>move(p,botPick(p,mv,lDie)),450); return; }
+    if(!mv.length){ hint(`${nameOf(p)}: ${lDie} — ${t('noMove')}`,true); sfx('miss'); setTimeout(nextTurn,420); return; }
+    if(!HUM[lCur]){ setTimeout(()=>move(p,botPick(p,mv,lDie)),320); return; }
     const spots=[...new Set(mv.map(i=>LT[p][i]))];
-    if(mv.length===1||spots.length===1){ setTimeout(()=>move(p,mv[0]),300); return; }
+    if(mv.length===1||spots.length===1){ setTimeout(()=>move(p,mv[0]),200); return; }
     hint(`${t('pick')}`,true);
     mv.forEach(i=>$(`t${p}_${i}`).classList.add('can'));
     netFx('can',{p,a:mv});
     lBusy=false;   // النرد يبقى معطّلاً حتى يُختار الحجر
-  },880);
+  },420);
 }
 function clearCan(){ document.querySelectorAll('.tok.can').forEach(x=>x.classList.remove('can')); }
 function tokClick(p,i){
@@ -1954,13 +1961,13 @@ function botPick(p,mv,d){
 function move(p,i){
   if(lStop) return;
   const steps=lDie; let k=0; const el=$(`t${p}_${i}`);
-  if(LT[p][i]<0){ LT[p][i]=0; ludoPlace(); sfx('step'); hop(el); netFx('step',{p,i,v:0}); setTimeout(()=>land(p,i,false),280); return; }
+  if(LT[p][i]<0){ LT[p][i]=0; ludoPlace(); sfx('step'); hop(el); netFx('step',{p,i,v:0}); setTimeout(()=>land(p,i,false),200); return; }
   moveIV=setInterval(()=>{
     if(lStop){ clearInterval(moveIV); moveIV=null; return; }
     LT[p][i]++; k++; ludoPlace(); sfx('step'); hop(el); buzz(6);
     netFx('step',{p,i,v:LT[p][i]});
-    if(k===steps){ clearInterval(moveIV); moveIV=null; setTimeout(()=>land(p,i,true),200); }
-  },165);
+    if(k===steps){ clearInterval(moveIV); moveIV=null; setTimeout(()=>land(p,i,true),140); }
+  },125);
 }
 function hop(el){ el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); }
 function land(p,i,cap){
@@ -2385,6 +2392,7 @@ function mjLots(){
       setTimeout(()=>{
         if(cur!=='mj') return;
         mjLotting=false; $('mjmine').style.display=''; mjCur=best; mjLock=false; mjRender();
+        if(netOn()&&netHost()) netPush();
         $('mjres').textContent = mjHum[mjCur]?t('mj.draw'):'';
         if(!mjHum[mjCur]) setTimeout(mjBot,700);
       },1200);
@@ -2459,7 +2467,7 @@ function mjAuto(p){
   if(ci>=0) mjPush(p,ci);
 }
 /* حركة الدفع كما يراها الضيف (بلا تغيير الحالة) */
-function mjPushFx(p,ci,kind){
+function mjPushFx(p,ci,kind,popped){
   const isMine=(p===mjView());
   const colEl = isMine ? $(`mc${ci}`) : $(`fc${p}_${ci}`);
   if(!colEl) return;
@@ -2485,8 +2493,26 @@ function mjPushFx(p,ci,kind){
         {duration:340,delay:tail?0:i*12,easing:'cubic-bezier(.34,1.1,.42,1)',fill:'forwards'});
     });
     sfx('match'); buzz([12,30,12]); burstAt(colEl,16);
-    setTimeout(()=>{ if(ghost) ghost.remove(); },420);
-  },350);
+    setTimeout(()=>{
+      if(ghost) ghost.remove();
+      /* البلاطة المطرودة تطير إلى المنتصف وتنقلب */
+      if(popped && lr){
+        const target=rectOf($('mjlive'))||rectOf($('mjdeck'));
+        const from={x:lr.x, y:lr.y+away*step*1.45, w:lr.w, h:lr.h};
+        const f2=(target)?makeFly(target, mjFace(popped), true):null;
+        if(f2){
+          const dx=from.x-target.x, dy=from.y-target.y, sc=clampSc(from.w/target.w);
+          sfx('flip');
+          f2.animate([
+            {transform:`rotateY(180deg) translate(${dx}px,${dy}px) scale(${sc})`,offset:0},
+            {transform:`rotateY(90deg) translate(${dx*.55}px,${dy*.55}px) scale(${(sc+1)/2*1.15})`,offset:.55},
+            {transform:'rotateY(0deg) translate(0,0) scale(1)',offset:1}
+          ],{duration:640,easing:'cubic-bezier(.3,.85,.32,1)',fill:'forwards'});
+          setTimeout(()=>f2.remove(),660);
+        }
+      }
+    },400);
+  },330);
 }
 /* ---- الدفع: تدخل أمام مثيلتها، ثم تُطرد الأخيرة وتُقلب ---- */
 function rectOf(el){
@@ -2507,7 +2533,7 @@ function makeFly(r,faceHTML,showBack){
 }
 function mjPush(p,ci){
   mjLock=true;
-  netFx('mjpush',{p,ci,k:mjDrawn});
+  netFx('mjpush',{p,ci,k:mjDrawn,e:mjWall[p][ci][mjWall[p][ci].length-1]});
   const col=mjWall[p][ci];
   const isMine=(p===mjView());
   const colEl = isMine ? $(`mc${ci}`) : $(`fc${p}_${ci}`);
@@ -2699,7 +2725,7 @@ const SNAP={
     get:()=>({p:LT,c:lCur,d:lDie,o:lOver,a:ACT,h:HUM,g:cfg}),
     set:s=>{ Object.assign(cfg,s.g);
       const rebuild = ACT.join()!==s.a.join();
-      ACT=s.a; HUM=s.h; LT=s.p; lCur=s.c; lDie=s.d; lOver=s.o;
+      ACT=s.a; HUM=s.h; LT=s.p; lCur=s.c; lDie=s.d; lOver=s.o; lBusy=false;
       if(rebuild) ludoBuild();
       ludoPlace(); lrail(); setDie(CP());
       if(lDie>0 && lDie!==lastFace){ showFace(lDie,true); lastFace=lDie; }
@@ -2729,8 +2755,9 @@ function netPlayFx(f){
   try{
     if(f.type==='roll'){                      // النرد يدور بنفس النتيجة
       if(cur!=='ludo') return;
-      lCur=f.p!==undefined?f.p:lCur; lDie=f.d; lastFace=f.d; setDie(CP()); lrail(); showFace(f.d,true); sfx('roll'); buzz([25,30,25]);
-      $('die').disabled=true;
+      lCur=f.p!==undefined?f.p:lCur; lDie=f.d; lastFace=f.d; setDie(CP()); lrail();
+      showFace(f.d,true); sfx('roll');
+      $('die').disabled=true;    // نرد الضيف يُعاد ضبطه لاحقاً عبر netSyncControls بلا تجميد lBusy
     }else if(f.type==='step'){                // حجر يتحرك خطوة
       if(cur!=='ludo'||!LT[f.p]) return;
       LT[f.p][f.i]=f.v; ludoPlace(); sfx('step'); buzz(8);
@@ -2746,7 +2773,7 @@ function netPlayFx(f){
       sfx('home'); buzz([20,50,20]);
     }else if(f.type==='mjpush'){              // حركة الدفع في ماهجونج
       if(cur!=='mj') return;
-      mjPushFx(f.p,f.ci,f.k);
+      mjPushFx(f.p,f.ci,f.k,f.e);
     }else if(f.type==='memclose'){            // بطاقتان تُغلقان
       if(cur!=='mem') return;
       (f.a||[]).forEach(i=>{
@@ -2919,7 +2946,9 @@ function uniqOnline(){
   const L=N().Lobby; if(!L) return [];
   const seen=new Set();
   return L.others().filter(p=>{
-    if(!p.online || seen.has(p.name)) return false;
+    if(!p.online) return false;
+    if(p.name===profile.name) return false;    // استبعد نفسي دائماً بالاسم أيضاً
+    if(seen.has(p.name)) return false;
     seen.add(p.name); return true;
   });
 }
