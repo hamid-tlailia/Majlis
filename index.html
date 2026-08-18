@@ -233,7 +233,7 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 .yardlink{position:absolute;z-index:2;border:2px dashed;border-radius:26%;opacity:.42}
 .center-home{border-radius:5px;box-shadow:inset 0 0 0 1.5px rgba(16,14,12,.35)}
 .tok{position:absolute;z-index:4;border:none;background:none;padding:0;cursor:default;
-  transition:inset-inline-start .32s cubic-bezier(.22,.9,.28,1),top .32s cubic-bezier(.22,.9,.28,1);filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}
+  transition:inset-inline-start .29s cubic-bezier(.22,.9,.28,1),top .29s cubic-bezier(.22,.9,.28,1);filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}
 .tok svg{width:100%;height:100%;display:block}
 .tok.can{cursor:pointer;animation:breathe 1.05s infinite;z-index:7}
 @keyframes breathe{50%{filter:drop-shadow(0 0 7px rgba(207,162,74,.95)) drop-shadow(0 3px 4px rgba(0,0,0,.5));transform:translateY(-3px)}}
@@ -640,7 +640,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.xo"></div>
     <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
-    <button class="icon roomsettings" onclick="sfx('tap');openXoSetup()">⚙</button>
+    <button class="icon roomsettings" onclick="openRoomSettings(openXoSetup)">⚙</button>
     <button class="icon roomhost" onclick="askReset(()=>xoNew())">↺</button>
   </div>
   <div class="gwrap">
@@ -661,7 +661,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.ludo"></div>
     <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
-    <button class="icon roomsettings" onclick="sfx('tap');openLudoSetup()">⚙</button>
+    <button class="icon roomsettings" onclick="openRoomSettings(openLudoSetup)">⚙</button>
     <button class="icon roomhost" onclick="askReset(()=>ludoStart())">↺</button>
   </div>
   <div class="gwrap">
@@ -678,7 +678,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.dots"></div>
     <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
-    <button class="icon roomsettings" onclick="sfx('tap');openDotsSetup()">⚙</button>
+    <button class="icon roomsettings" onclick="openRoomSettings(openDotsSetup)">⚙</button>
     <button class="icon roomhost" onclick="askReset(()=>dotsNew())">↺</button>
   </div>
   <div class="gwrap">
@@ -694,7 +694,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.mj"></div>
     <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
-    <button class="icon roomsettings" onclick="sfx('tap');openMjSetup()">⚙</button>
+    <button class="icon roomsettings" onclick="openRoomSettings(openMjSetup)">⚙</button>
     <button class="icon roomhost" onclick="askReset(()=>mjNew())">↺</button>
   </div>
   <div class="gwrap">
@@ -719,7 +719,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.mem"></div>
     <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
-    <button class="icon roomsettings" onclick="sfx('tap');openMemSetup()">⚙</button>
+    <button class="icon roomsettings" onclick="openRoomSettings(openMemSetup)">⚙</button>
     <button class="icon roomhost" onclick="askReset(()=>memNew())">↺</button>
   </div>
   <div class="gwrap">
@@ -1315,9 +1315,9 @@ function askExit(){
 function cancelExit(){ sfx('tap'); $('ovExit').classList.remove('on'); }
 function doExit(){
   sfx('tap'); $('ovExit').classList.remove('on'); closeAll();
-  if(netOn()){                       // مغادرة اللعبة تُنهي الغرفة
-    prevClear();
-    try{ N().emote(netHost()?'#end':'#out'); }catch(e){}
+  if(netOn()){
+    /* احتفظ بمفتاح العودة: prevAsk يفحص لاحقاً أن لاعباً آخر ما زال ينتظر قبل إظهار الطلب. */
+    prevSave();
     setTimeout(()=>{ N().disconnect(); $('netbar').style.display='none'; netColors=[]; },220);
   }
   if(cur==='mj'){ mjOver=true; mjLock=true; }
@@ -1426,7 +1426,7 @@ const MEMKINDS=['star','hex','ring','arch','dia','wave','tri','latt','moon','kno
 
 /* ================= إكس أو ================= */
 const SYM=[['✕','◯'],['★','❖'],['▲','■'],['ض','ق']];
-let xoB,xoT,xoLock,xoWin=null,xoS={a:0,b:0,d:0};
+let xoB,xoT,xoLock,xoWin=null,xoS={a:0,b:0,d:0},xoPending=null;
 const WINS=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 function buildSyms(){
   const box=$('xoSyms'); if(!box) return; box.innerHTML='';
@@ -1456,7 +1456,7 @@ function xoNew(auto){
   closeAll(); if(!auto) sfx('tap');
   netTune();
   if(!auto) xoZero();
-  xoB=Array(9).fill(null); xoT=cfgX.first; xoLock=false; xoWin=null;
+  xoB=Array(9).fill(null); xoT=cfgX.first; xoLock=false; xoWin=null; xoPending=null;
   const bd=$('xoboard'); bd.innerHTML='';
   for(let i=0;i<9;i++){ const b=document.createElement('button'); b.onclick=()=>xoPlay(i); bd.appendChild(b); }
   [1,2].forEach(k=>{const l=document.createElement('div');l.className='ln v';l.style.left=(33.3*k)+'%';bd.appendChild(l);});
@@ -1475,9 +1475,16 @@ function xoRail(){
   $('sx').classList.toggle('live',xoT===0); $('so').classList.toggle('live',xoT===1);
 }
 function xoPlay(i){
-  if(xoLock||xoB[i]!==null){ sfx('miss'); return; }
+  if(xoLock||xoB[i]!==null||xoPending!==null){ sfx('miss'); return; }
   if(netOn()&&!myTurn('xo')){ sfx('miss'); toast(t('net.notYourTurn')); return; }
-  if(netOn()&&!netHost()){ N().input('xo',{i}); return; }
+  if(netOn()&&!netHost()){
+    xoPending={i,p:xoT};
+    const el=$('xoboard').children[i];
+    if(el) el.innerHTML=`<span class="glyph" style="color:${xoT?CLAY:INK}">${SYM[cfgX.sym][xoT]}</span>`;
+    N().input('xo',{i});
+    setTimeout(()=>{ if(xoPending?.i===i&&xoB[i]===null){ xoPending=null; const cell=$('xoboard').children[i]; if(cell) cell.innerHTML=''; } },1800);
+    return;
+  }
   if(!netOn()&&cfgX.mode==='solo'&&xoT===1) return;
   xoDo(i);
   if(netOn()&&netHost()) setTimeout(netPush,60);
@@ -1686,7 +1693,7 @@ function mix(a,b,t){
 let LT=[[],[],[],[]],ACT=[],HUM=[],lCur=0,lBusy=false,lDie=0,lOver=false,lastFace=-1;
 let stuck=[0,0,0,0],drought=[0,0,0,0],lStop=false,moveIV=null;
 /* مهلة خطوة مرئية ومتعمدة؛ يجب أن تكون أطول من انتقال CSS كي يقرأ اللاعب كل نقلة. */
-const LUDO_STEP_MS=350;
+const LUDO_STEP_MS=320;
 const CP=()=>ACT[lCur];
 const cname=p=>COLNAME[lang][p];
 const nameOf=p=>{ const s=ACT.indexOf(p); const nm=s>=0?seatName(s):null; return nm || ((cfg.mode==='solo'&&p===ACT[0])?t('you'):cname(p)); };
@@ -2545,8 +2552,8 @@ function mjPushFx(p,ci,kind,popped){
           setTimeout(()=>f2.remove(),660);
         }
       }
-    },400);
-  },330);
+    },350);
+  },320);
 }
 /* ---- الدفع: تدخل أمام مثيلتها، ثم تُطرد الأخيرة وتُقلب ---- */
 function rectOf(el){
@@ -2730,6 +2737,7 @@ const SNAP={
     set:s=>{ Object.assign(cfgX,s.c); xoB=s.b; xoT=s.t; xoLock=s.l; xoS=s.s;
       const bd=$('xoboard'); [...bd.querySelectorAll('button')].forEach((b,i)=>{
         b.innerHTML = xoB[i]===null?'':`<span class="glyph" style="color:${xoB[i]?CLAY:INK}">${SYM[cfgX.sym][xoB[i]]}</span>`; });
+      xoPending=null;
       $('sx').querySelector('b').textContent=xoS.a; $('sd').querySelector('b').textContent=xoS.d;
       $('so').querySelector('b').textContent=xoS.b; xoRail();
       bd.querySelectorAll('.winline').forEach(e=>e.remove());
@@ -2810,7 +2818,7 @@ function netPlayFx(f){
       $('die').disabled=true;    // نرد الضيف يُعاد ضبطه لاحقاً عبر netSyncControls بلا تجميد lBusy
     }else if(f.type==='xoplace'){             // إظهار حركة الضيف فور تنفيذ المضيف لها
       if(cur!=='xo') return;
-      xoB[f.i]=f.p;
+      xoB[f.i]=f.p; xoPending=null;
       const el=$('xoboard').children[f.i];
       if(el) el.innerHTML=`<span class="glyph" style="color:${f.p?CLAY:INK}">${SYM[cfgX.sym][f.p]}</span>`;
       sfx('place'); buzz(12);
@@ -2829,7 +2837,7 @@ function netPlayFx(f){
       sfx('home'); buzz([20,50,20]);
     }else if(f.type==='mjpush'){              // حركة الدفع في ماهجونج
       if(cur!=='mj') return;
-      netHoldVisual('mj',1520); mjLock=true;
+      netHoldVisual('mj',980); mjLock=true;
       requestAnimationFrame(()=>mjPushFx(f.p,f.ci,f.k,f.e));
     }else if(f.type==='memclose'){            // بطاقتان تُغلقان
       if(cur!=='mem') return;
@@ -2894,6 +2902,10 @@ function netSyncControls(){
   if(!netOn()) return;
   document.querySelectorAll('.roomhost').forEach(b=>{
     b.disabled=!netHost(); b.classList.toggle('off',!netHost());
+  });
+  document.querySelectorAll('.roomsettings').forEach(b=>{
+    const locked=!netHost(); b.classList.toggle('off',locked);
+    b.setAttribute('aria-disabled',String(locked)); b.title=locked?t('net.hostOnlySet'):'';
   });
   const d=$('die');
   if(d && ACT.length) d.disabled = !(myTurn('ludo') && !lOver && !lBusy && !lDie);
@@ -3175,6 +3187,10 @@ function seatName(s){
 function hostOnly(){
   if(netOn() && !netHost()){ sfx('miss'); toast(t('net.hostOnlySet')); return false; }
   return true;
+}
+function openRoomSettings(open){
+  if(netOn()&&!netHost()){ hostOnly(); return; }
+  open();
 }
 /* الضيف يستطيع قراءة الإعدادات، لكن عناصر التغيير وبدء الجولة تبقى بيد المضيف. */
 function setupRoomSheet(id){
