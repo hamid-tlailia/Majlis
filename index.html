@@ -1288,7 +1288,10 @@ function go(id){
   if(netOn()&&netHost()&&GAMEOF[id]){ N().setGame(id); setTimeout(netPush,200); }
   if(id==='mj'){
     if(!mjWall.length) mjNew(true);
-    if(!$('mjlot') && !document.querySelector('#mjfoes .mjframe')){ mjLotting=false; mjRender(); }
+    if(!$('mjlot') && !document.querySelector('#mjfoes .mjframe')){
+      if(netOn()&&!netHost()){ mjLotting=true; mjLock=true; } else mjLotting=false;
+      mjRender();
+    }
     requestAnimationFrame(mjSize);
   }
   if(GAMEOF[id]) setTimeout(()=>prevAsk(id),500);
@@ -1348,9 +1351,17 @@ function winBanner(seat,sub,cols){
   if(netOn()&&netHost()) { netEvt={type:'win',s:seat,b:sub,c:cols}; setTimeout(netPush,40); }
   showWinLocal(seat,sub,cols);
 }
+function localWinnerColor(seat){
+  /* في لودو رقم المقعد يختلف عن رقم اللون الفعلي داخل ACT؛ بقية الألعاب تستخدم المقعد نفسه. */
+  return cur==='ludo' ? (ACT[seat]??seat) : seat;
+}
 function showWinLocal(seat,sub,cols){
-  const mine = netOn() ? (seat===netSeat()) : (seat===0);
-  const nm = netOn() ? (seatName(seat)||'') : '';
+  if(!netOn()){
+    const color=COLNAME[lang][localWinnerColor(seat)] || COLNAME[lang][seat] || '';
+    showBannerLocal(color?`${t('won')} ${color}`:t('won'),sub,cols);
+    return;
+  }
+  const mine=seat===netSeat(), nm=seatName(seat)||'';
   showBannerLocal(mine? t('youWon') : (nm? `${t('won')} ${nm}` : t('won')), sub, cols);
 }
 function showBanner(title,text,cols){
@@ -1693,7 +1704,7 @@ function mix(a,b,t){
   const c=(x,y)=>Math.round(x+(y-x)*t).toString(16).padStart(2,'0');
   return '#'+c(r1,r2)+c(g1,g2)+c(b1,b2);
 }
-let LT=[[],[],[],[]],ACT=[],HUM=[],lCur=0,lBusy=false,lDie=0,lOver=false,lastFace=-1,lRollPending=false,lPickPending=null;
+let LT=[[],[],[],[]],ACT=[],HUM=[],lCur=0,lBusy=false,lDie=0,lOver=false,lastFace=-1;
 let stuck=[0,0,0,0],drought=[0,0,0,0],lStop=false,moveIV=null;
 /* مهلة خطوة مرئية ومتعمدة؛ يجب أن تكون أطول من انتقال CSS كي يقرأ اللاعب كل نقلة. */
 const LUDO_STEP_MS=240;
@@ -1926,7 +1937,7 @@ function ludoStart(){
   ACT=activeList(); HUM=ACT.map((p,i)=>cfg.mode==='party'?true:i===0);
   LT=[[],[],[],[]]; ACT.forEach(p=>LT[p]=[-1,-1,-1,-1]);
   stuck=[0,0,0,0]; drought=[0,0,0,0];
-  lCur=0; lBusy=false; lOver=false; lDie=0; lStop=false; lRollPending=false; lPickPending=null;
+  lCur=0; lBusy=false; lOver=false; lDie=0; lStop=false;
   if(moveIV){ clearInterval(moveIV); moveIV=null; }
   spinX=0; spinY=0; lastFace=-1;
   ludoBuild(); ludoPlace(); lrail(); setDie(CP()); showFace(1,false,true);
@@ -1939,9 +1950,8 @@ function roll(){
   if(netOn()&&!myTurn('ludo')){ sfx('miss'); toast(t('net.notYourTurn')); return; }
   if(netOn()&&!netHost()){
     if(lBusy||lDie) return;
-    /* أظهر حركة فورية بلا صوت؛ حدث المضيف وحده يحدد الوجه ويشغّل صوت الرمية. */
+    /* ينتظر الضيف حدث المضيف الموحّد حتى يكمل دوران واحد بالوجه الصحيح. */
     lBusy=true; $('die').disabled=true;
-    lRollPending=true; showFace(lastFace>0?lastFace:1,true);
     N().input('ludoRoll',{});
     return;
   }
@@ -1969,9 +1979,8 @@ function tokClick(p,i){
   if(netOn()&&!myTurn('ludo')) return;
   if(netOn()&&!netHost()){
     const el=$(`t${p}_${i}`);
-    if(!el?.classList.contains('can')||!lDie||lPickPending) return;
-    const v=LT[p][i]<0?0:LT[p][i]+1;
-    lPickPending={p,i,v}; LT[p][i]=v; clearCan(); ludoPlace(); hop(el);
+    if(!el?.classList.contains('can')||!lDie) return;
+    /* لا نغيّر موضع الحجر محلياً: حدث step من المضيف هو الحركة الوحيدة. */
     N().input('ludoPick',{p,i}); return;
   }
   if(lOver||lBusy||!lDie||p!==CP()||!HUM[lCur]) return;
@@ -2823,9 +2832,8 @@ function netPlayFx(f){
   try{
     if(f.type==='roll'){                      // النرد يدور بنفس النتيجة
       if(cur!=='ludo') return;
-      const alreadyRolling=lRollPending; lRollPending=false;
       lCur=f.p!==undefined?f.p:lCur; lDie=f.d; lastFace=f.d; setDie(CP()); lrail();
-      showFace(f.d,!alreadyRolling,alreadyRolling); sfx('roll'); // دوران واحد متصل يبدأ عند ضغط الضيف
+      showFace(f.d,true); sfx('roll'); // دوران واحد كامل بالنتيجة النهائية
       $('die').disabled=true;    // نرد الضيف يُعاد ضبطه لاحقاً عبر netSyncControls بلا تجميد lBusy
     }else if(f.type==='xoplace'){             // إظهار حركة الضيف فور تنفيذ المضيف لها
       if(cur!=='xo') return;
@@ -2836,9 +2844,7 @@ function netPlayFx(f){
       if(!sameOptimistic){ sfx('place'); buzz(12); }
     }else if(f.type==='step'){                // حجر يتحرك خطوة
       if(cur!=='ludo'||!LT[f.p]) return;
-      const sameOptimistic=lPickPending?.p===f.p&&lPickPending?.i===f.i&&lPickPending?.v===f.v;
-      if(sameOptimistic) lPickPending=null;
-      LT[f.p][f.i]=f.v; ludoPlace(); if(!sameOptimistic){ sfx('step'); buzz(8); }
+      LT[f.p][f.i]=f.v; ludoPlace(); sfx('step'); buzz(8);
       const el=$(`t${f.p}_${f.i}`); if(el) hop(el);
     }else if(f.type==='can'){                 // إبراز الأحجار القابلة للتحريك
       if(cur!=='ludo') return;
@@ -3251,14 +3257,16 @@ async function prevAsk(game){
   if(!netCfg.code || netCfg.game!==game) return;
   if(Date.now()-(netCfg.at||0) > 1000*60*30){ netCfg.code=''; netSave(); return; }
   const saved={code:netCfg.code,you:netCfg.you,game};
-  let info=null;
+  let info=null, checked=false;
   try{
     /* بعد الخروج قد لا يحتفظ العميل بعنوان الخادم؛ ثبّته قبل فحص اللاعب المنتظر. */
     N().url=serverUrl();
     info=await N().roomInfo(saved.code,saved.you,true);
-  }catch(e){}
+    checked=true;
+  }catch(e){ return; } // لا نمسح مفتاح العودة عند فشل شبكة عابر؛ نعيد المحاولة عند فتح اللعبة
   /* لا نسأل إلا إذا كان لاعب آخر متصلاً وينتظر؛ الغرفة الخالية تُحذف من الخادم. */
-  if(!info || !info.waiting){ prevClear(); return; }
+  if(!checked || !info){ return; }
+  if(!info.waiting){ prevClear(); return; }
   if(netOn() || cur!==saved.game || netCfg.code!==saved.code) return;
   $('pvCode').textContent=netCfg.code;
   $('pvSub').textContent=t('pv.s');
@@ -3367,7 +3375,7 @@ function netHandleInput(m){
   }
   const okSeat = {xo:()=>xoT===seat, mem:()=>mTurn===seat, dots:()=>dbCur===seat,
     ludoRoll:()=>lCur===seat, ludoPick:()=>lCur===seat,
-    mjDraw:()=>mjCur===seat, mjPick:()=>mjCur===seat}[a];
+    mjDraw:()=>!mjLotting&&!mjLock&&mjCur===seat, mjPick:()=>!mjLotting&&!mjLock&&mjCur===seat}[a];
   if(okSeat && !okSeat()) return;        // ليس دوره
   netExec=true;
   try{
