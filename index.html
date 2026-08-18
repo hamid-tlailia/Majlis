@@ -1429,7 +1429,7 @@ const MEMKINDS=['star','hex','ring','arch','dia','wave','tri','latt','moon','kno
 
 /* ================= إكس أو ================= */
 const SYM=[['✕','◯'],['★','❖'],['▲','■'],['ض','ق']];
-let xoB,xoT,xoLock,xoWin=null,xoS={a:0,b:0,d:0},xoPending=null;
+let xoB,xoT,xoLock,xoWin=null,xoS={a:0,b:0,d:0},xoPending=null,xoConfirmed=-1;
 const WINS=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 function buildSyms(){
   const box=$('xoSyms'); if(!box) return; box.innerHTML='';
@@ -1459,7 +1459,7 @@ function xoNew(auto){
   closeAll(); if(!auto) sfx('tap');
   netTune();
   if(!auto) xoZero();
-  xoB=Array(9).fill(null); xoT=cfgX.first; xoLock=false; xoWin=null; xoPending=null;
+  xoB=Array(9).fill(null); xoT=cfgX.first; xoLock=false; xoWin=null; xoPending=null; xoConfirmed=-1;
   const bd=$('xoboard'); bd.innerHTML='';
   for(let i=0;i<9;i++){ const b=document.createElement('button'); b.onclick=()=>xoPlay(i); bd.appendChild(b); }
   [1,2].forEach(k=>{const l=document.createElement('div');l.className='ln v';l.style.left=(33.3*k)+'%';bd.appendChild(l);});
@@ -1693,7 +1693,7 @@ function mix(a,b,t){
   const c=(x,y)=>Math.round(x+(y-x)*t).toString(16).padStart(2,'0');
   return '#'+c(r1,r2)+c(g1,g2)+c(b1,b2);
 }
-let LT=[[],[],[],[]],ACT=[],HUM=[],lCur=0,lBusy=false,lDie=0,lOver=false,lastFace=-1,lRollPending=false;
+let LT=[[],[],[],[]],ACT=[],HUM=[],lCur=0,lBusy=false,lDie=0,lOver=false,lastFace=-1,lRollPending=false,lPickPending=null;
 let stuck=[0,0,0,0],drought=[0,0,0,0],lStop=false,moveIV=null;
 /* مهلة خطوة مرئية ومتعمدة؛ يجب أن تكون أطول من انتقال CSS كي يقرأ اللاعب كل نقلة. */
 const LUDO_STEP_MS=240;
@@ -1926,7 +1926,7 @@ function ludoStart(){
   ACT=activeList(); HUM=ACT.map((p,i)=>cfg.mode==='party'?true:i===0);
   LT=[[],[],[],[]]; ACT.forEach(p=>LT[p]=[-1,-1,-1,-1]);
   stuck=[0,0,0,0]; drought=[0,0,0,0];
-  lCur=0; lBusy=false; lOver=false; lDie=0; lStop=false; lRollPending=false;
+  lCur=0; lBusy=false; lOver=false; lDie=0; lStop=false; lRollPending=false; lPickPending=null;
   if(moveIV){ clearInterval(moveIV); moveIV=null; }
   spinX=0; spinY=0; lastFace=-1;
   ludoBuild(); ludoPlace(); lrail(); setDie(CP()); showFace(1,false,true);
@@ -1967,7 +1967,13 @@ function roll(){
 function clearCan(){ document.querySelectorAll('.tok.can').forEach(x=>x.classList.remove('can')); }
 function tokClick(p,i){
   if(netOn()&&!myTurn('ludo')) return;
-  if(netOn()&&!netHost()){ N().input('ludoPick',{p,i}); return; }
+  if(netOn()&&!netHost()){
+    const el=$(`t${p}_${i}`);
+    if(!el?.classList.contains('can')||!lDie||lPickPending) return;
+    const v=LT[p][i]<0?0:LT[p][i]+1;
+    lPickPending={p,i,v}; LT[p][i]=v; clearCan(); ludoPlace(); hop(el);
+    N().input('ludoPick',{p,i}); return;
+  }
   if(lOver||lBusy||!lDie||p!==CP()||!HUM[lCur]) return;
   if(!$(`t${p}_${i}`).classList.contains('can')) return;
   lBusy=true; clearCan(); move(p,i);
@@ -2519,7 +2525,6 @@ function mjPushFx(p,ci,kind,popped){
   const step=hr.h+3, away=isMine?1:-1;
   const ghost=makeFly(hr, mjFace(kind), false);
   const s0=clampSc(liveRect.w/hr.w);
-  $('mjlive').classList.add('empty');
   const preY=-away*step;
   if(ghost) ghost.animate([
     {transform:`translate(${liveRect.x-hr.x}px,${liveRect.y-hr.y}px) scale(${s0}) rotate(-8deg)`},
@@ -2527,6 +2532,7 @@ function mjPushFx(p,ci,kind,popped){
   ],{duration:230,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
   sfx('step');
   setTimeout(()=>{
+    $('mjlive').classList.add('empty');
     if(ghost) ghost.animate([
       {transform:`translate(0,${preY}px) scale(1.04)`},
       {transform:'translate(0,0) scale(1)'}
@@ -2539,7 +2545,7 @@ function mjPushFx(p,ci,kind,popped){
     });
     sfx('match'); buzz([12,30,12]); burstAt(colEl,16);
     setTimeout(()=>{
-      if(ghost) ghost.remove();
+      if(ghost) setTimeout(()=>ghost.remove(),180);
       /* البلاطة المطرودة تطير إلى المنتصف وتنقلب */
       if(popped && lr){
         const target=rectOf($('mjlive'))||rectOf($('mjdeck'));
@@ -2603,7 +2609,6 @@ function mjPush(p,ci){
   }
 
   /* ١) البلاطة الحيّة تطير إلى فم العمود، وتقف أمام الرأس */
-  liveEl.classList.add('empty');
   const ghost=makeFly(hr, mjFace(kind), false);
   const s0=clampSc(liveRect.w/hr.w);
   const preY = -away*stepPx;         // موضع خارج العمود من جهة الوسط
@@ -2615,6 +2620,7 @@ function mjPush(p,ci){
 
   setTimeout(()=>{
     if(cur!=='mj'){ ghost.remove(); return; }
+    liveEl.classList.add('empty');
 
     /* ٢) الدفع: البلاطة تدخل مكان الرأس، والعمود كله ينزلق للخلف، والذيل يخرج */
     ghost.animate([
@@ -2819,17 +2825,20 @@ function netPlayFx(f){
       if(cur!=='ludo') return;
       const alreadyRolling=lRollPending; lRollPending=false;
       lCur=f.p!==undefined?f.p:lCur; lDie=f.d; lastFace=f.d; setDie(CP()); lrail();
-      showFace(f.d,!alreadyRolling); sfx('roll'); // صوت واحد، مع دوران فوري بدأ عند ضغط الضيف
+      showFace(f.d,!alreadyRolling,alreadyRolling); sfx('roll'); // دوران واحد متصل يبدأ عند ضغط الضيف
       $('die').disabled=true;    // نرد الضيف يُعاد ضبطه لاحقاً عبر netSyncControls بلا تجميد lBusy
     }else if(f.type==='xoplace'){             // إظهار حركة الضيف فور تنفيذ المضيف لها
       if(cur!=='xo') return;
-      xoB[f.i]=f.p; xoPending=null;
+      const sameOptimistic=xoPending?.i===f.i && xoPending?.p===f.p;
+      xoB[f.i]=f.p; xoPending=null; if(sameOptimistic) xoConfirmed=f.i;
       const el=$('xoboard').children[f.i];
-      if(el) el.innerHTML=`<span class="glyph" style="color:${f.p?CLAY:INK}">${SYM[cfgX.sym][f.p]}</span>`;
-      sfx('place'); buzz(12);
+      if(el&&!sameOptimistic) el.innerHTML=`<span class="glyph" style="color:${f.p?CLAY:INK}">${SYM[cfgX.sym][f.p]}</span>`;
+      if(!sameOptimistic){ sfx('place'); buzz(12); }
     }else if(f.type==='step'){                // حجر يتحرك خطوة
       if(cur!=='ludo'||!LT[f.p]) return;
-      LT[f.p][f.i]=f.v; ludoPlace(); sfx('step'); buzz(8);
+      const sameOptimistic=lPickPending?.p===f.p&&lPickPending?.i===f.i&&lPickPending?.v===f.v;
+      if(sameOptimistic) lPickPending=null;
+      LT[f.p][f.i]=f.v; ludoPlace(); if(!sameOptimistic){ sfx('step'); buzz(8); }
       const el=$(`t${f.p}_${f.i}`); if(el) hop(el);
     }else if(f.type==='can'){                 // إبراز الأحجار القابلة للتحريك
       if(cur!=='ludo') return;
@@ -3243,7 +3252,11 @@ async function prevAsk(game){
   if(Date.now()-(netCfg.at||0) > 1000*60*30){ netCfg.code=''; netSave(); return; }
   const saved={code:netCfg.code,you:netCfg.you,game};
   let info=null;
-  try{ info=await N().roomInfo(saved.code,saved.you,true); }catch(e){}
+  try{
+    /* بعد الخروج قد لا يحتفظ العميل بعنوان الخادم؛ ثبّته قبل فحص اللاعب المنتظر. */
+    N().url=serverUrl();
+    info=await N().roomInfo(saved.code,saved.you,true);
+  }catch(e){}
   /* لا نسأل إلا إذا كان لاعب آخر متصلاً وينتظر؛ الغرفة الخالية تُحذف من الخادم. */
   if(!info || !info.waiting){ prevClear(); return; }
   if(netOn() || cur!==saved.game || netCfg.code!==saved.code) return;
