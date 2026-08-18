@@ -1355,10 +1355,18 @@ function localWinnerColor(seat){
   /* في لودو رقم المقعد يختلف عن رقم اللون الفعلي داخل ACT؛ بقية الألعاب تستخدم المقعد نفسه. */
   return cur==='ludo' ? (ACT[seat]??seat) : seat;
 }
+function localWinnerName(seat){
+  const mode={xo:cfgX.mode,mem:cfgM.mode,dots:cfgD.mode,ludo:cfg.mode,mj:cfgJ.mode}[cur];
+  if(mode==='solo'){
+    const human=cur==='ludo' ? !!HUM[seat] : seat===0;
+    return human?t('you'):t('cpu');
+  }
+  return COLNAME[lang][localWinnerColor(seat)] || COLNAME[lang][seat] || '';
+}
 function showWinLocal(seat,sub,cols){
   if(!netOn()){
-    const color=COLNAME[lang][localWinnerColor(seat)] || COLNAME[lang][seat] || '';
-    showBannerLocal(color?`${t('won')} ${color}`:t('won'),sub,cols);
+    const name=localWinnerName(seat);
+    showBannerLocal(name?`${t('won')} ${name}`:t('won'),sub,cols);
     return;
   }
   const mine=seat===netSeat(), nm=seatName(seat)||'';
@@ -1704,7 +1712,7 @@ function mix(a,b,t){
   const c=(x,y)=>Math.round(x+(y-x)*t).toString(16).padStart(2,'0');
   return '#'+c(r1,r2)+c(g1,g2)+c(b1,b2);
 }
-let LT=[[],[],[],[]],ACT=[],HUM=[],lCur=0,lBusy=false,lDie=0,lOver=false,lastFace=-1;
+let LT=[[],[],[],[]],ACT=[],HUM=[],lCur=0,lBusy=false,lDie=0,lOver=false,lastFace=-1,lPreview=null;
 let stuck=[0,0,0,0],drought=[0,0,0,0],lStop=false,moveIV=null;
 /* مهلة خطوة مرئية ومتعمدة؛ يجب أن تكون أطول من انتقال CSS كي يقرأ اللاعب كل نقلة. */
 const LUDO_STEP_MS=240;
@@ -1937,7 +1945,7 @@ function ludoStart(){
   ACT=activeList(); HUM=ACT.map((p,i)=>cfg.mode==='party'?true:i===0);
   LT=[[],[],[],[]]; ACT.forEach(p=>LT[p]=[-1,-1,-1,-1]);
   stuck=[0,0,0,0]; drought=[0,0,0,0];
-  lCur=0; lBusy=false; lOver=false; lDie=0; lStop=false;
+  lCur=0; lBusy=false; lOver=false; lDie=0; lStop=false; lPreview=null;
   if(moveIV){ clearInterval(moveIV); moveIV=null; }
   spinX=0; spinY=0; lastFace=-1;
   ludoBuild(); ludoPlace(); lrail(); setDie(CP()); showFace(1,false,true);
@@ -1975,12 +1983,34 @@ function roll(){
   },300);
 }
 function clearCan(){ document.querySelectorAll('.tok.can').forEach(x=>x.classList.remove('can')); }
+function clearLudoPreview(){
+  if(lPreview?.timer) clearInterval(lPreview.timer);
+  lPreview=null;
+}
+function ludoPreviewStep(){
+  const q=lPreview;
+  if(!q || cur!=='ludo' || !LT[q.p]) return clearLudoPreview();
+  const now=LT[q.p][q.i];
+  if(now>=q.target) return;
+  LT[q.p][q.i]=now<0?0:now+1;
+  ludoPlace();
+  const el=$(`t${q.p}_${q.i}`); if(el){ hop(el); sfx('step'); buzz(5); }
+}
+function startLudoPreview(p,i){
+  clearLudoPreview();
+  const base=LT[p][i], target=base<0?0:Math.min(56,base+lDie);
+  lPreview={p,i,base,target,timer:null};
+  ludoPreviewStep();
+  if(target>0) lPreview.timer=setInterval(ludoPreviewStep,LUDO_STEP_MS);
+  setTimeout(()=>{ if(lPreview?.p===p&&lPreview?.i===i) clearLudoPreview(); },Math.max(2600,(lDie+3)*LUDO_STEP_MS));
+}
 function tokClick(p,i){
   if(netOn()&&!myTurn('ludo')) return;
   if(netOn()&&!netHost()){
     const el=$(`t${p}_${i}`);
     if(!el?.classList.contains('can')||!lDie) return;
-    /* لا نغيّر موضع الحجر محلياً: حدث step من المضيف هو الحركة الوحيدة. */
+    /* يبدأ المسار كاملاً فوراً، وتأتي خطوة المضيف لتأكيده دون إرجاعه للخلف. */
+    clearCan(); startLudoPreview(p,i);
     N().input('ludoPick',{p,i}); return;
   }
   if(lOver||lBusy||!lDie||p!==CP()||!HUM[lCur]) return;
@@ -2786,7 +2816,12 @@ const SNAP={
     get:()=>({p:LT,c:lCur,d:lDie,o:lOver,a:ACT,h:HUM,g:cfg}),
     set:s=>{ Object.assign(cfg,s.g);
       const rebuild = ACT.join()!==s.a.join();
+      /* لا تسمح للقطة متأخرة أن تعيد حجر الضيف أثناء معاينة مساره المتصل. */
+      if(lPreview && s.p?.[lPreview.p] && s.p[lPreview.p][lPreview.i] < LT[lPreview.p][lPreview.i]){
+        s.p[lPreview.p][lPreview.i]=LT[lPreview.p][lPreview.i];
+      }
       ACT=s.a; HUM=s.h; LT=s.p; lCur=s.c; lDie=s.d; lOver=s.o; lBusy=false;
+      if(lPreview && LT[lPreview.p]?.[lPreview.i] >= lPreview.target) clearLudoPreview();
       if(rebuild) ludoBuild();
       ludoPlace(); lrail(); setDie(CP());
       if(lDie>0 && lDie!==lastFace){ showFace(lDie,true); lastFace=lDie; }
@@ -2844,7 +2879,11 @@ function netPlayFx(f){
       if(!sameOptimistic){ sfx('place'); buzz(12); }
     }else if(f.type==='step'){                // حجر يتحرك خطوة
       if(cur!=='ludo'||!LT[f.p]) return;
-      LT[f.p][f.i]=f.v; ludoPlace(); sfx('step'); buzz(8);
+      const preview=lPreview?.p===f.p&&lPreview?.i===f.i ? lPreview : null;
+      if(!preview || f.v>LT[f.p][f.i]){
+        LT[f.p][f.i]=f.v; ludoPlace(); sfx('step'); buzz(8);
+      }
+      if(preview && f.v>=preview.target) clearLudoPreview();
       const el=$(`t${f.p}_${f.i}`); if(el) hop(el);
     }else if(f.type==='can'){                 // إبراز الأحجار القابلة للتحريك
       if(cur!=='ludo') return;
@@ -3247,26 +3286,32 @@ function netNudge(){
 /* ---- الغرفة السابقة ---- */
 function prevSave(){
   if(!netOn()) return;
-  netCfg.code=N().room.code; netCfg.game=cur; netCfg.you=N().you; netCfg.at=Date.now(); netSave();
+  const others=(N().room?.players||[]).filter(p=>p.id!==N().you&&p.online);
+  netCfg.code=N().room.code; netCfg.game=cur; netCfg.you=N().you; netCfg.waiting=others.length>0; netCfg.at=Date.now(); netSave();
 }
 function prevClear(){
-  netCfg.code=''; netCfg.game=''; netCfg.you=''; netCfg.at=0; netSave();
+  netCfg.code=''; netCfg.game=''; netCfg.you=''; netCfg.waiting=false; netCfg.at=0; netSave();
 }
 async function prevAsk(game){
   if(netOn()) return;
   if(!netCfg.code || netCfg.game!==game) return;
   if(Date.now()-(netCfg.at||0) > 1000*60*30){ netCfg.code=''; netSave(); return; }
-  const saved={code:netCfg.code,you:netCfg.you,game};
+  const saved={code:netCfg.code,you:netCfg.you,game,waiting:!!netCfg.waiting};
   let info=null, checked=false;
   try{
     /* بعد الخروج قد لا يحتفظ العميل بعنوان الخادم؛ ثبّته قبل فحص اللاعب المنتظر. */
     N().url=serverUrl();
     info=await N().roomInfo(saved.code,saved.you,true);
     checked=true;
-  }catch(e){ return; } // لا نمسح مفتاح العودة عند فشل شبكة عابر؛ نعيد المحاولة عند فتح اللعبة
+  }catch(e){
+    /* إن كنا نعرف أن لاعباً كان ينتظر، لا نخفي خيار العودة بسبب عطل استعلام عابر. */
+    if(!saved.waiting) return;
+  }
   /* لا نسأل إلا إذا كان لاعب آخر متصلاً وينتظر؛ الغرفة الخالية تُحذف من الخادم. */
-  if(!checked || !info){ return; }
-  if(!info.waiting){ prevClear(); return; }
+  if(!checked || !info){
+    if(!saved.waiting) return;
+  }
+  if(info && !info.waiting){ prevClear(); return; }
   if(netOn() || cur!==saved.game || netCfg.code!==saved.code) return;
   $('pvCode').textContent=netCfg.code;
   $('pvSub').textContent=t('pv.s');
