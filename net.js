@@ -130,6 +130,16 @@
       if (pre !== null) await this.openFor(c); else await this._plain();
       return this.send({ t: 'join', code: c, name, rejoin: rejoinId || undefined });
     },
+    async roomInfo(code, excludeId = null, dropIfEmpty = false) {
+      const base = this._base().replace(/^wss:/, 'https:').replace(/^ws:/, 'http:');
+      if (!base) return null;
+      const q = new URLSearchParams({ code: String(code || '').toUpperCase() });
+      if (excludeId) q.set('exclude', excludeId);
+      if (dropIfEmpty) q.set('drop', '1');
+      const r = await fetch(`${base}/room?${q}`, { cache: 'no-store' });
+      if (!r.ok) return null;
+      return r.json();
+    },
     setGame(game) { return this.send({ t: 'game', game }); },
 
     /* المضيف يبثّ لقطة، والضيف يرسل نيّة */

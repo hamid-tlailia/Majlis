@@ -233,7 +233,7 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 .yardlink{position:absolute;z-index:2;border:2px dashed;border-radius:26%;opacity:.42}
 .center-home{border-radius:5px;box-shadow:inset 0 0 0 1.5px rgba(16,14,12,.35)}
 .tok{position:absolute;z-index:4;border:none;background:none;padding:0;cursor:default;
-  transition:inset-inline-start .38s cubic-bezier(.22,.9,.28,1),top .38s cubic-bezier(.22,.9,.28,1);filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}
+  transition:inset-inline-start .32s cubic-bezier(.22,.9,.28,1),top .32s cubic-bezier(.22,.9,.28,1);filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}
 .tok svg{width:100%;height:100%;display:block}
 .tok.can{cursor:pointer;animation:breathe 1.05s infinite;z-index:7}
 @keyframes breathe{50%{filter:drop-shadow(0 0 7px rgba(207,162,74,.95)) drop-shadow(0 3px 4px rgba(0,0,0,.5));transform:translateY(-3px)}}
@@ -640,7 +640,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.xo"></div>
     <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
-    <button class="icon roomhost" onclick="sfx('tap');openXoSetup()">⚙</button>
+    <button class="icon roomsettings" onclick="sfx('tap');openXoSetup()">⚙</button>
     <button class="icon roomhost" onclick="askReset(()=>xoNew())">↺</button>
   </div>
   <div class="gwrap">
@@ -661,7 +661,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.ludo"></div>
     <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
-    <button class="icon roomhost" onclick="sfx('tap');openLudoSetup()">⚙</button>
+    <button class="icon roomsettings" onclick="sfx('tap');openLudoSetup()">⚙</button>
     <button class="icon roomhost" onclick="askReset(()=>ludoStart())">↺</button>
   </div>
   <div class="gwrap">
@@ -678,7 +678,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.dots"></div>
     <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
-    <button class="icon roomhost" onclick="sfx('tap');openDotsSetup()">⚙</button>
+    <button class="icon roomsettings" onclick="sfx('tap');openDotsSetup()">⚙</button>
     <button class="icon roomhost" onclick="askReset(()=>dotsNew())">↺</button>
   </div>
   <div class="gwrap">
@@ -694,7 +694,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.mj"></div>
     <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
-    <button class="icon roomhost" onclick="sfx('tap');openMjSetup()">⚙</button>
+    <button class="icon roomsettings" onclick="sfx('tap');openMjSetup()">⚙</button>
     <button class="icon roomhost" onclick="askReset(()=>mjNew())">↺</button>
   </div>
   <div class="gwrap">
@@ -719,7 +719,7 @@ html[data-theme="sand"]{
     <button class="icon back" onclick="askExit()">‹</button>
     <div class="title" data-i="g.mem"></div>
     <button class="icon" onclick="openInviteGame()" aria-label="invite">👥</button>
-    <button class="icon roomhost" onclick="sfx('tap');openMemSetup()">⚙</button>
+    <button class="icon roomsettings" onclick="sfx('tap');openMemSetup()">⚙</button>
     <button class="icon roomhost" onclick="askReset(()=>memNew())">↺</button>
   </div>
   <div class="gwrap">
@@ -1438,7 +1438,7 @@ function buildSyms(){
     box.appendChild(b);
   });
 }
-function openXoSetup(){ if(!hostOnly()) return; sfx('tap'); buildSyms();
+function openXoSetup(){ sfx('tap'); buildSyms(); setupRoomSheet('ovXo');
   document.querySelectorAll('[data-g="xoMode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgX.mode));
   document.querySelectorAll('[data-g="xoFirst"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgX.first));
   $('ovXo').classList.add('on');
@@ -1452,6 +1452,7 @@ function xoZero(){
   ['sx','sd','so'].forEach(id=>$(id).querySelector('b').textContent='0');
 }
 function xoNew(auto){
+  if(netOn()&&!netHost()) return;
   closeAll(); if(!auto) sfx('tap');
   netTune();
   if(!auto) xoZero();
@@ -1482,9 +1483,11 @@ function xoPlay(i){
   if(netOn()&&netHost()) setTimeout(netPush,60);
 }
 function xoDo(i){
-  xoB[i]=xoT; sfx('place'); buzz(12);
+  const placed=xoT;
+  xoB[i]=placed; sfx('place'); buzz(12);
   const el=$('xoboard').children[i];
-  el.innerHTML=`<span class="glyph" style="color:${xoT?CLAY:INK}">${SYM[cfgX.sym][xoT]}</span>`;
+  el.innerHTML=`<span class="glyph" style="color:${placed?CLAY:INK}">${SYM[cfgX.sym][placed]}</span>`;
+  if(netOn()&&netHost()) netFx('xoplace',{i,p:placed});
   const w=WINS.find(c=>c.every(k=>xoB[k]===xoT));
   const n=xoNames();
   if(w){
@@ -1544,7 +1547,7 @@ function xoDrawLine(w,quiet){
 
 /* ================= الذاكرة ================= */
 let mDeck,mOpen,mLock,mTurn,mScore,mSeen,mDone;
-function openMemSetup(){ if(!hostOnly()) return; sfx('tap');
+function openMemSetup(){ sfx('tap'); setupRoomSheet('ovMem');
   document.querySelectorAll('[data-g="memMode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgM.mode));
   document.querySelectorAll('[data-g="memSize"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgM.size));
   document.querySelectorAll('[data-g="memLvl"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgM.lvl));
@@ -1570,6 +1573,7 @@ function memBuild(){
   });
 }
 function memNew(auto){
+  if(netOn()&&!netHost()) return;
   closeAll(); if(!auto) sfx('tap');
   netTune();
   const pairs=cfgM.size/2, kinds=MEMKINDS.slice(0,pairs);
@@ -1682,7 +1686,7 @@ function mix(a,b,t){
 let LT=[[],[],[],[]],ACT=[],HUM=[],lCur=0,lBusy=false,lDie=0,lOver=false,lastFace=-1;
 let stuck=[0,0,0,0],drought=[0,0,0,0],lStop=false,moveIV=null;
 /* مهلة خطوة مرئية ومتعمدة؛ يجب أن تكون أطول من انتقال CSS كي يقرأ اللاعب كل نقلة. */
-const LUDO_STEP_MS=420;
+const LUDO_STEP_MS=350;
 const CP=()=>ACT[lCur];
 const cname=p=>COLNAME[lang][p];
 const nameOf=p=>{ const s=ACT.indexOf(p); const nm=s>=0?seatName(s):null; return nm || ((cfg.mode==='solo'&&p===ACT[0])?t('you'):cname(p)); };
@@ -1751,7 +1755,7 @@ function dismissLudoSetup(){
   closeAll();
   if(lStop) ludoStart();   // لا تترك اللوح مجمّداً
 }
-function openLudoSetup(){ if(!hostOnly()) return; sfx('tap'); buildColors(); setNote();
+function openLudoSetup(){ sfx('tap'); buildColors(); setNote(); setupRoomSheet('ovLudo');
   document.querySelectorAll('[data-g="count"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfg.count));
   document.querySelectorAll('[data-g="mode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfg.mode));
   $('ovLudo').classList.add('on');
@@ -2043,7 +2047,7 @@ const dbName=i=> seatName(i) || (cfgD.mode==='solo'
   ? (i===0?t('you'):(cfgD.count===2?t('cpu'):COLNAME[lang][i]))
   : COLNAME[lang][i]);
 
-function openDotsSetup(){ if(!hostOnly()) return; sfx('tap');
+function openDotsSetup(){ sfx('tap'); setupRoomSheet('ovDots');
   document.querySelectorAll('[data-g="dbCount"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgD.count));
   document.querySelectorAll('[data-g="dbMode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgD.mode));
   document.querySelectorAll('[data-g="dbGrid"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgD.grid));
@@ -2109,6 +2113,7 @@ function dotsPaint(){
   }
 }
 function dotsNew(auto){
+  if(netOn()&&!netHost()) return;
   closeAll(); if(!auto) sfx('tap');
   netTune();
   dbN=cfgD.grid;
@@ -2259,7 +2264,7 @@ function dismissMjSetup(){
   closeAll();
   if(!mjWall.length || mjOver || mjLock) mjNew(true);
 }
-function openMjSetup(){ if(!hostOnly()) return; sfx('tap');
+function openMjSetup(){ sfx('tap'); setupRoomSheet('ovMj');
   document.querySelectorAll('[data-g="mjMode"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgJ.mode));
   document.querySelectorAll('[data-g="mjDepth"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===cfgJ.depth));
   document.querySelectorAll('[data-g="mjSet"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===cfgJ.set));
@@ -2315,6 +2320,7 @@ function mjOrn(fr){
 function mjRender(){
   const me=mjView();
   const localTurn=!netOn() || mjCur===me;
+  const localCanAct=localTurn && !mjLock && !mjOver && !mjLotting;
   const foes=$('mjfoes'); foes.innerHTML='';
   for(let q=cfgJ.count-1;q>=0;q--){
     if(q===me) continue;                 // لوحتي تُرسم أسفل، لا هنا
@@ -2326,7 +2332,7 @@ function mjRender(){
     lbl.innerHTML=`<i></i>${mjName(q)} <b>${dn}/${MJCOLS}</b>`;
     const side=document.createElement('div'); side.className='mjside foe';
     for(let ci=0;ci<MJCOLS;ci++){
-      const foeCanAct=!netOn() || q===me;
+      const foeCanAct=localCanAct && (!netOn() || q===me);
       const el=mjColEl(q,ci,true,foeCanAct,q);
       if(foeCanAct && mjCur===q && mjDrawn && !mjLock && mjHum[q] && !mjFull(mjWall[q][ci]) && mjWall[q][ci][0]===mjDrawn)
         el.classList.add('hit');
@@ -2344,14 +2350,14 @@ function mjRender(){
   $('mjmylbl').innerHTML=`<i></i>${mjName(me)} <b>${dn0}/${MJCOLS}</b>`;
   const box=$('mjwallbox'); box.className='mjside me'; box.innerHTML='';
   for(let ci=0;ci<MJCOLS;ci++){
-    const el=mjColEl(me,ci,false,true);
-    if(localTurn && mjCur===me && mjDrawn && !mjLock && mjHum[me] && !mjFull(mjWall[me][ci]) && mjWall[me][ci][0]===mjDrawn)
+    const el=mjColEl(me,ci,false,localCanAct);
+    if(localCanAct && mjCur===me && mjDrawn && mjHum[me] && !mjFull(mjWall[me][ci]) && mjWall[me][ci][0]===mjDrawn)
       el.classList.add('hit');
     box.appendChild(el);
   }
   $('mjcnt').textContent=mjPile.length+mjDisc.length;
   const dk=$('mjdeck');
-  const canDraw = localTurn && !mjDrawn && !mjLock && !mjOver && mjHum[mjCur] && (mjPile.length+mjDisc.length)>0;
+  const canDraw = localCanAct && !mjDrawn && mjHum[mjCur] && (mjPile.length+mjDisc.length)>0;
   dk.disabled=!canDraw; dk.classList.toggle('ready',canDraw);
   const lv=$('mjlive');
   lv.style.setProperty('--lc',MJC[mjCur]||BRASS);
@@ -2447,9 +2453,9 @@ function mjPullWeighted(){
   return mjPile.splice(i,1)[0];
 }
 function mjDraw(){
+  if(mjDrawn||mjLock||mjOver||mjLotting||cur!=='mj') return;
   if(netOn()&&!myTurn('mj')){ sfx('miss'); toast(t('net.notYourTurn')); return; }
   if(netOn()&&!netHost()){ N().input('mjDraw',{}); return; }
-  if(mjDrawn||mjLock||mjOver||cur!=='mj') return;
   if(!mjPile.length){
     if(!mjDisc.length){ mjEndByCount(); return; }
     mjPile=mjDisc.sort(()=>Math.random()-.5); mjDisc=[]; toast(t('mj.reshuffle'));
@@ -2472,9 +2478,10 @@ function mjOffer(p){
   }
 }
 function mjPick(ci,who){
+  if(mjLock||mjOver||!mjDrawn||mjLotting) return;
   if(netOn()&&!myTurn('mj')){ sfx('miss'); toast(t('net.notYourTurn')); return; }
   if(netOn()&&!netHost()){ N().input('mjPick',{ci,p:(who!==undefined?who:mjCur)}); return; }
-  if(mjLock||mjOver||!mjDrawn||!mjHum[mjCur]) return;
+  if(!mjHum[mjCur]) return;
   if(who!==undefined && who!==mjCur) return;
   const p=mjCur;
   if(mjFull(mjWall[p][ci])||mjWall[p][ci][0]!==mjDrawn){ sfx('miss'); return; }
@@ -2502,16 +2509,22 @@ function mjPushFx(p,ci,kind,popped){
   const ghost=makeFly(hr, mjFace(kind), false);
   const s0=clampSc(liveRect.w/hr.w);
   $('mjlive').classList.add('empty');
+  const preY=-away*step;
   if(ghost) ghost.animate([
-    {transform:`translate(${liveRect.x-hr.x}px,${liveRect.y-hr.y}px) scale(${s0})`},
-    {transform:'translate(0,0) scale(1)'}],{duration:340,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
+    {transform:`translate(${liveRect.x-hr.x}px,${liveRect.y-hr.y}px) scale(${s0}) rotate(-8deg)`},
+    {transform:`translate(0,${preY}px) scale(1.04) rotate(0deg)`}
+  ],{duration:340,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
   sfx('step');
   setTimeout(()=>{
+    if(ghost) ghost.animate([
+      {transform:`translate(0,${preY}px) scale(1.04)`},
+      {transform:'translate(0,0) scale(1)'}
+    ],{duration:330,easing:'cubic-bezier(.34,1.2,.42,1)',fill:'forwards'});
     kids.forEach((k,i)=>{
       const tail=(k===lastEl);
       k.animate([{transform:'translateY(0)',opacity:1},
         {transform:`translateY(${away*step*(tail?1.45:1)}px)`,opacity:tail?.55:1}],
-        {duration:340,delay:tail?0:i*12,easing:'cubic-bezier(.34,1.1,.42,1)',fill:'forwards'});
+        {duration:360,delay:tail?0:i*14,easing:'cubic-bezier(.34,1.1,.42,1)',fill:'forwards'});
     });
     sfx('match'); buzz([12,30,12]); burstAt(colEl,16);
     setTimeout(()=>{
@@ -2753,9 +2766,9 @@ const SNAP={
       $('die').disabled = !(netHost()? true : false) || lOver; }
   },
   mj:{
-    get:()=>({w:mjWall,p:mjPile,d:mjDisc,k:mjDrawn,c:mjCur,o:mjOver,h:mjHum,r:mjRound,g:cfgJ}),
+    get:()=>({w:mjWall,p:mjPile,d:mjDisc,k:mjDrawn,c:mjCur,o:mjOver,h:mjHum,r:mjRound,l:mjLock,q:mjLotting,g:cfgJ}),
     set:s=>{ Object.assign(cfgJ,s.g); mjLotting=false; mjRound=s.r; mjWall=s.w; mjPile=s.p; mjDisc=s.d;
-      mjDrawn=s.k; mjCur=s.c; mjOver=s.o; mjHum=s.h; mjLock=false; mjRender(); }
+      mjDrawn=s.k; mjCur=s.c; mjOver=s.o; mjHum=s.h; mjLock=!!s.l; mjLotting=!!s.q; mjRender(); }
   }
 };
 /* لا نسمح للّقطة التالية أن تعيد بناء اللوح قبل اكتمال المؤثر اللحظي عند الضيف. */
@@ -2795,6 +2808,12 @@ function netPlayFx(f){
       lCur=f.p!==undefined?f.p:lCur; lDie=f.d; lastFace=f.d; setDie(CP()); lrail();
       showFace(f.d,true); sfx('roll'); // هذا هو الصوت الوحيد للضيف عند الرمية
       $('die').disabled=true;    // نرد الضيف يُعاد ضبطه لاحقاً عبر netSyncControls بلا تجميد lBusy
+    }else if(f.type==='xoplace'){             // إظهار حركة الضيف فور تنفيذ المضيف لها
+      if(cur!=='xo') return;
+      xoB[f.i]=f.p;
+      const el=$('xoboard').children[f.i];
+      if(el) el.innerHTML=`<span class="glyph" style="color:${f.p?CLAY:INK}">${SYM[cfgX.sym][f.p]}</span>`;
+      sfx('place'); buzz(12);
     }else if(f.type==='step'){                // حجر يتحرك خطوة
       if(cur!=='ludo'||!LT[f.p]) return;
       LT[f.p][f.i]=f.v; ludoPlace(); sfx('step'); buzz(8);
@@ -2961,7 +2980,7 @@ function openInviteGame(){
   sfx('tap');
   const named={xo:'g.xo',ludo:'g.ludo',mem:'g.mem',dots:'g.dots',mj:'g.mj'}[cur];
   $('invSub').textContent = t('inv.s')+' — '+t(named||'g.xo');
-  const ready = netOn() && netHost();
+  const ready = netOn();
   $('invMake').style.display  = ready?'none':'block';
   $('invReady').style.display = ready?'block':'none';
   netRenderInvite();
@@ -2993,10 +3012,12 @@ function netRenderInvite(){
 /* المتصلون بلا تكرار */
 function uniqOnline(){
   const L=N().Lobby; if(!L) return [];
+  const roomNames=new Set((N().room?.players||[]).map(p=>p.name));
   const seen=new Set();
   return L.others().filter(p=>{
     if(!p.online) return false;
     if(p.name===profile.name) return false;    // استبعد نفسي دائماً بالاسم أيضاً
+    if(roomNames.has(p.name)) return false;    // اللاعب عضو في الغرفة الحالية بالفعل
     if(seen.has(p.name)) return false;
     seen.add(p.name); return true;
   });
@@ -3119,7 +3140,10 @@ function inviteDecline(){
 }
 /* دعوة شخص متصل إلى اللعبة الحالية */
 async function invitePerson(id){
-  if(!netOn()||!netHost()){ await inviteHere(); }
+  const peer=(N().Lobby?.others()||[]).find(p=>p.id===id);
+  const roomNames=new Set((N().room?.players||[]).map(p=>p.name));
+  if(!peer || roomNames.has(peer.name)){ toast(t('net.failed')); return; }
+  if(!netOn()) await inviteHere();
   setTimeout(()=>{
     if(!netOn()){ toast(t('net.failed')); return; }
     const ok=N().Lobby.invite(id, N().room.code, cur);
@@ -3151,6 +3175,14 @@ function seatName(s){
 function hostOnly(){
   if(netOn() && !netHost()){ sfx('miss'); toast(t('net.hostOnlySet')); return false; }
   return true;
+}
+/* الضيف يستطيع قراءة الإعدادات، لكن عناصر التغيير وبدء الجولة تبقى بيد المضيف. */
+function setupRoomSheet(id){
+  const editable=!netOn() || netHost(), sheet=$(id);
+  sheet.querySelectorAll('[data-g],button.primary').forEach(b=>{
+    b.disabled=!editable; b.classList.toggle('off',!editable);
+  });
+  return editable;
 }
 function myTurn(game){
   if(netExec) return true;
@@ -3184,10 +3216,16 @@ function prevSave(){
 function prevClear(){
   netCfg.code=''; netCfg.game=''; netCfg.you=''; netCfg.at=0; netSave();
 }
-function prevAsk(game){
+async function prevAsk(game){
   if(netOn()) return;
   if(!netCfg.code || netCfg.game!==game) return;
   if(Date.now()-(netCfg.at||0) > 1000*60*30){ netCfg.code=''; netSave(); return; }
+  const saved={code:netCfg.code,you:netCfg.you,game};
+  let info=null;
+  try{ info=await N().roomInfo(saved.code,saved.you,true); }catch(e){}
+  /* لا نسأل إلا إذا كان لاعب آخر متصلاً وينتظر؛ الغرفة الخالية تُحذف من الخادم. */
+  if(!info || !info.waiting){ prevClear(); return; }
+  if(netOn() || cur!==saved.game || netCfg.code!==saved.code) return;
   $('pvCode').textContent=netCfg.code;
   $('pvSub').textContent=t('pv.s');
   $('ovPrev').classList.add('on'); buzz(20);
@@ -3204,9 +3242,9 @@ async function prevDrop(){
   if(!code) return;
   try{
     N().url=serverUrl();
-    /* ندخل بالهوية المحفوظة ثم نغادرها فعلياً، فلا تبقى خانة شبحية في الغرفة. */
+    /* ندخل بالهوية المحفوظة ثم نغادرها فعلياً من دون إنذار للطرف الآخر. */
     await N().join(code, profile.name, rejoinId);
-    setTimeout(()=>{ try{ N().emote('#out'); }catch(e){} setTimeout(()=>{ N().disconnect(); prevClear(); },300); },400);
+    setTimeout(()=>{ N().disconnect(); prevClear(); netJoinedOnce=false; lobbyBusy(false); },400);
   }catch(e){ prevClear(); }
   toast(t('pv.dropped'));
 }
