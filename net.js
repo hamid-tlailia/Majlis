@@ -69,11 +69,14 @@
     },
 
     disconnect() {
+      /* المغادرة صريحة: ألغِ أي إعادة اتصال معلّقة حتى لا تعود الغرفة وحدها. */
       this.closedByUser = true;
+      clearTimeout(this._reTimer); this._reTimer = null;
       this.send({ t: 'leave' });
       this._stopPing(); Voice.stopAll();
       try { this.ws && this.ws.close(); } catch {}
       this.ws = null; this.room = null; this.you = null; this.connected = false;
+      this._openCode = null; this.seq = 0;
       this._setQuality('offline');
     },
 
@@ -120,12 +123,12 @@
     rejoin(code) {
       return this.send({ t: 'join', code, name: Net.myName, rejoin: this.you });
     },
-    async join(code, name) {
+    async join(code, name, rejoinId = null) {
       Net.myName = name;
       const c = String(code || '').toUpperCase().trim();
       const pre = await this._newCode();           // هل الخادم يوجّه كل غرفة إلى مسار خاص؟
       if (pre !== null) await this.openFor(c); else await this._plain();
-      return this.send({ t: 'join', code: c, name });
+      return this.send({ t: 'join', code: c, name, rejoin: rejoinId || undefined });
     },
     setGame(game) { return this.send({ t: 'game', game }); },
 

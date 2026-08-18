@@ -232,7 +232,7 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 .yardlink{position:absolute;z-index:2;border:2px dashed;border-radius:26%;opacity:.42}
 .center-home{border-radius:5px;box-shadow:inset 0 0 0 1.5px rgba(16,14,12,.35)}
 .tok{position:absolute;z-index:4;border:none;background:none;padding:0;cursor:default;
-  transition:inset-inline-start .16s ease,top .16s ease;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}
+  transition:inset-inline-start .22s ease,top .22s ease;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}
 .tok svg{width:100%;height:100%;display:block}
 .tok.can{cursor:pointer;animation:breathe 1.05s infinite;z-index:7}
 @keyframes breathe{50%{filter:drop-shadow(0 0 7px rgba(207,162,74,.95)) drop-shadow(0 3px 4px rgba(0,0,0,.5));transform:translateY(-3px)}}
@@ -1311,6 +1311,7 @@ function cancelExit(){ sfx('tap'); $('ovExit').classList.remove('on'); }
 function doExit(){
   sfx('tap'); $('ovExit').classList.remove('on'); closeAll();
   if(netOn()){                       // مغادرة اللعبة تُنهي الغرفة
+    prevClear();
     try{ N().emote(netHost()?'#end':'#out'); }catch(e){}
     setTimeout(()=>{ N().disconnect(); $('netbar').style.display='none'; netColors=[]; },220);
   }
@@ -1673,6 +1674,7 @@ function mix(a,b,t){
 }
 let LT=[[],[],[],[]],ACT=[],HUM=[],lCur=0,lBusy=false,lDie=0,lOver=false,lastFace=-1;
 let stuck=[0,0,0,0],drought=[0,0,0,0],lStop=false,moveIV=null;
+const LUDO_STEP_MS=210;
 const CP=()=>ACT[lCur];
 const cname=p=>COLNAME[lang][p];
 const nameOf=p=>{ const s=ACT.indexOf(p); const nm=s>=0?seatName(s):null; return nm || ((cfg.mode==='solo'&&p===ACT[0])?t('you'):cname(p)); };
@@ -1786,9 +1788,13 @@ function showFace(v,spin,instant){
   const cu=$('cube'); if(!cu) return;
   const [rx,ry]=FACE_ROT[v]||[0,0];
   if(spin){ spinX+=360*(2+Math.floor(Math.random()*2)); spinY+=360*(2+Math.floor(Math.random()*2)); }
-  if(instant) cu.style.transition='none';
-  cu.style.transform=`rotateX(${spinX+rx}deg) rotateY(${spinY+ry}deg)`;
-  if(instant){ void cu.offsetWidth; cu.style.transition=''; }
+  const paint=()=>{ cu.style.transform=`rotateX(${spinX+rx}deg) rotateY(${spinY+ry}deg)`; };
+  if(instant){
+    cu.style.transition='none'; paint(); void cu.offsetWidth; cu.style.transition='';
+  }else if(spin){
+    /* فصل حساب النتيجة عن الرسم بإطار واحد يضمن دوران النرد عند المضيف والضيف. */
+    requestAnimationFrame(paint);
+  }else paint();
 }
 function setDie(p){
   const d=$('die'); if(!d) return;
@@ -1961,13 +1967,13 @@ function botPick(p,mv,d){
 function move(p,i){
   if(lStop) return;
   const steps=lDie; let k=0; const el=$(`t${p}_${i}`);
-  if(LT[p][i]<0){ LT[p][i]=0; ludoPlace(); sfx('step'); hop(el); netFx('step',{p,i,v:0}); setTimeout(()=>land(p,i,false),200); return; }
+  if(LT[p][i]<0){ LT[p][i]=0; ludoPlace(); sfx('step'); hop(el); netFx('step',{p,i,v:0}); setTimeout(()=>land(p,i,false),LUDO_STEP_MS+30); return; }
   moveIV=setInterval(()=>{
     if(lStop){ clearInterval(moveIV); moveIV=null; return; }
     LT[p][i]++; k++; ludoPlace(); sfx('step'); hop(el); buzz(6);
     netFx('step',{p,i,v:LT[p][i]});
-    if(k===steps){ clearInterval(moveIV); moveIV=null; setTimeout(()=>land(p,i,true),140); }
-  },125);
+    if(k===steps){ clearInterval(moveIV); moveIV=null; setTimeout(()=>land(p,i,true),190); }
+  },LUDO_STEP_MS);
 }
 function hop(el){ el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); }
 function land(p,i,cap){
@@ -2361,6 +2367,7 @@ function mjNew(auto){
     mjWall.push(w);
   }
   mjPile=bag; mjDisc=[]; mjIdle=0; mjDrawn=null; mjOver=false; mjLock=true;
+  /* اللعب الجماعي لا يضع حاسوباً مكان أي مقعد؛ يتوقف الدور لحين تفاعل صاحبه. */
   mjHum=Array.from({length:n},(_,i)=>cfgJ.mode==='party'||i===0);
   $('mjres').textContent=''; mjCur=0; mjRender(); mjLots();
 }
@@ -2703,11 +2710,11 @@ const SNAP={
       if(xoWin) requestAnimationFrame(()=>xoDrawLine(xoWin,true)); }
   },
   mem:{
-    get:()=>({d:mDeck,o:mOpen.map(x=>x.i),t:mTurn,s:mScore,n:mDone,c:cfgM,
+    get:()=>({d:mDeck,o:mOpen.map(x=>x.i),l:mLock,t:mTurn,s:mScore,n:mDone,c:cfgM,
       f:[...document.querySelectorAll('.mcard')].map(c=>c.classList.contains('flip')?(c.classList.contains('done')?2:1):0)}),
     set:s=>{ Object.assign(cfgM,s.c);
       if(!mDeck||mDeck.length!==s.d.length||mDeck.join()!==s.d.join()){ mDeck=s.d; memBuild(); }
-      mTurn=s.t; mScore=s.s; mDone=s.n;
+      mTurn=s.t; mScore=s.s; mDone=s.n; mLock=!!s.l;
       [...document.querySelectorAll('.mcard')].forEach((c,i)=>{
         c.classList.toggle('flip',s.f[i]>0); c.classList.toggle('done',s.f[i]===2); });
       $('m1').querySelector('b').textContent=mScore[0]; $('m2').querySelector('b').textContent=mScore[1]; memRail(); }
@@ -2737,6 +2744,22 @@ const SNAP={
       mjDrawn=s.k; mjCur=s.c; mjOver=s.o; mjHum=s.h; mjLock=false; mjRender(); }
   }
 };
+/* لا نسمح للّقطة التالية أن تعيد بناء اللوح قبل اكتمال المؤثر اللحظي عند الضيف. */
+const netVisualUntil=Object.create(null), netDeferredState=Object.create(null), netDeferredTimer=Object.create(null);
+function netHoldVisual(game,ms){ netVisualUntil[game]=Math.max(netVisualUntil[game]||0,Date.now()+ms); }
+function netReceiveState(game,state){
+  const wait=(netVisualUntil[game]||0)-Date.now();
+  if(!state?.F && wait>0){
+    netDeferredState[game]=state;
+    clearTimeout(netDeferredTimer[game]);
+    netDeferredTimer[game]=setTimeout(()=>{
+      const pending=netDeferredState[game]; delete netDeferredState[game];
+      if(pending) netApply(game,pending);
+    },wait+20);
+    return;
+  }
+  netApply(game,state);
+}
 function netPush(){
   if(!netOn()||!netHost()) return;
   const g=cur; if(!SNAP[g]) return;
@@ -2773,9 +2796,11 @@ function netPlayFx(f){
       sfx('home'); buzz([20,50,20]);
     }else if(f.type==='mjpush'){              // حركة الدفع في ماهجونج
       if(cur!=='mj') return;
-      mjPushFx(f.p,f.ci,f.k,f.e);
+      netHoldVisual('mj',800); mjLock=true;
+      requestAnimationFrame(()=>mjPushFx(f.p,f.ci,f.k,f.e));
     }else if(f.type==='memclose'){            // بطاقتان تُغلقان
       if(cur!=='mem') return;
+      netHoldVisual('mem',340);
       (f.a||[]).forEach(i=>{
         const el=document.querySelector(`.mcard[data-idx="${i}"]`);
         if(el){ el.classList.add('miss'); setTimeout(()=>el.classList.remove('flip','miss'),300); }
@@ -2783,6 +2808,7 @@ function netPlayFx(f){
       sfx('miss'); buzz(12);
     }else if(f.type==='memdone'){             // بطاقتان تطابقتا
       if(cur!=='mem') return;
+      netHoldVisual('mem',440);
       (f.a||[]).forEach(i=>{
         const el=document.querySelector(`.mcard[data-idx="${i}"]`);
         if(el){ el.classList.add('flip','done'); burstAt(el,18); }
@@ -2799,8 +2825,14 @@ function netPlayFx(f){
       const lv=$('mjlive'); lv.classList.remove('out'); void lv.offsetWidth; lv.classList.add('out');
     }else if(f.type==='memflip'){
       if(cur!=='mem') return;
+      netHoldVisual('mem',440);
       const el=document.querySelector(`.mcard[data-idx="${f.i}"]`);
-      if(el&&!el.classList.contains('flip')){ el.classList.add('flip'); sfx('flip'); }
+      if(el&&!el.classList.contains('flip')){
+        /* إطار مستقل يثبت الحالة الابتدائية ثم يشغّل انتقال قلب البطاقة عند الضيف. */
+        void el.offsetWidth;
+        requestAnimationFrame(()=>{ if(cur==='mem'&&el.isConnected) el.classList.add('flip'); });
+        sfx('flip');
+      }
     }else if(f.type==='dbline'){
       if(cur!=='dots') return;
       const el=$(`${f.k}${f.r}_${f.c}`);
@@ -2888,11 +2920,11 @@ function prow(p,invitable){
   }
   return d;
 }
-async function netJoin(code){
+async function netJoin(code,rejoinId=null){
   const c=(typeof code==='string'?code:$('netJoinCode').value).trim().toUpperCase();
   if(c.length<4){ sfx('miss'); toast(t('net.needCode')); return; }
   netEnsure();
-  try{ await N().join(c, profile.name); netDone(); }
+  try{ await N().join(c, profile.name, rejoinId); netDone(); }
   catch(e){ netDone(); sfx('miss'); toast(t('net.failed')); }
 }
 function closeAllSheets(){
@@ -2902,7 +2934,7 @@ function closeAllSheets(){
 function netLeave(){
   closeAll(); N().disconnect(); netJoinedOnce=false;
   $('netbar').style.display='none'; micPaint(); lobbyBusy(false);
-  netCfg.code=''; netSave(); netColors=[];
+  prevClear(); netColors=[];
   if(location.hash) history.replaceState(null,'',location.pathname+location.search);
   toast(t('net.left'));
 }
@@ -3087,6 +3119,8 @@ function netTune(){
   cfgD.mode='party'; cfgD.count=Math.min(4,n);
   cfg.mode='party';  cfg.count=Math.min(4,Math.max(2,n));
   cfgJ.mode='party'; cfgJ.count=2;
+  /* قد تكون الجولة قد بدأت محلياً قبل إنشاء الغرفة؛ حوّل المقعد الثاني فوراً إلى لاعب بشري. */
+  if(cur==='mj' && Array.isArray(mjHum) && mjHum.length) mjHum=Array.from({length:cfgJ.count},()=>true);
 }
 let netExec=false;                 // المضيف ينفّذ حركة ضيف الآن
 /* اسم صاحب المقعد: أنت / اسمه في الغرفة */
@@ -3130,6 +3164,9 @@ function prevSave(){
   if(!netOn()) return;
   netCfg.code=N().room.code; netCfg.game=cur; netCfg.you=N().you; netCfg.at=Date.now(); netSave();
 }
+function prevClear(){
+  netCfg.code=''; netCfg.game=''; netCfg.you=''; netCfg.at=0; netSave();
+}
 function prevAsk(game){
   if(netOn()) return;
   if(!netCfg.code || netCfg.game!==game) return;
@@ -3140,23 +3177,26 @@ function prevAsk(game){
 }
 function prevJoin(){
   $('ovPrev').classList.remove('on'); sfx('tap');
-  netJoin(netCfg.code);
+  netJoin(netCfg.code,netCfg.you);
 }
 /* أخبر الطرف الآخر أنني لن أعود، ثم انسَ الغرفة */
 async function prevDrop(){
   $('ovPrev').classList.remove('on'); sfx('tap');
-  const code=netCfg.code; netCfg.code=''; netSave();
+  const code=netCfg.code, rejoinId=netCfg.you;
+  prevClear();
   if(!code) return;
   try{
     N().url=serverUrl();
-    await N().join(code, profile.name);
-    setTimeout(()=>{ try{ N().emote('#out'); }catch(e){} setTimeout(()=>N().disconnect(),300); },400);
-  }catch(e){}
+    /* ندخل بالهوية المحفوظة ثم نغادرها فعلياً، فلا تبقى خانة شبحية في الغرفة. */
+    await N().join(code, profile.name, rejoinId);
+    setTimeout(()=>{ try{ N().emote('#out'); }catch(e){} setTimeout(()=>{ N().disconnect(); prevClear(); },300); },400);
+  }catch(e){ prevClear(); }
   toast(t('pv.dropped'));
 }
 function closedLeave(){
   $('ovClosed').classList.remove('on');
   if(netOn()) N().disconnect();
+  prevClear();
   $('netbar').style.display='none'; netColors=[];
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   $('lobby').classList.add('on'); cur='lobby';
@@ -3177,6 +3217,7 @@ function rejoinYes(){
 function rejoinNo(){
   $('ovBack').classList.remove('on'); backCode=null;
   if(netOn()) N().disconnect();
+  prevClear();
   $('netbar').style.display='none';
 }
 /* ---- ربط الأحداث ---- */
@@ -3189,7 +3230,7 @@ function netInit(){
     if(!netHost() && GAMEOF[room.game] && cur!==room.game) go(room.game);
     if(netHost() && cur!=='lobby') setTimeout(netPush,120);
   };
-  M.on.state = ({state,game})=>{ if(!netHost()) netApply(game,state); };
+  M.on.state = ({state,game})=>{ if(!netHost()) netReceiveState(game,state); };
   M.on.game  = g=>{ if(!netHost()&&GAMEOF[g]) go(g); };
   M.on.input = m=>{ if(netHost()) netHandleInput(m); };
   M.on.quality = netQuality;
