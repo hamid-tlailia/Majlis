@@ -1032,6 +1032,7 @@ ar:{
  'net.connecting':'جارٍ الاتصال…','net.failed':'تعذّر الاتصال بالخادم','net.slow':'الاتصال يستغرق وقتاً…',
  'net.needCode':'أدخل رمز الغرفة','net.left':'غادرت الغرفة','net.joining':'جارٍ الدخول…',
  'net.weak':'الاتصال ضعيف — قد تتأخر الحركات','net.notYourTurn':'ليس دورك الآن',
+ 'net.hostOnlySet':'المضيف وحده يضبط إعدادات اللعبة',
  'net.yourTurnNudge':'دورك — الجميع بانتظارك','net.colorTaken':'هذا اللون محجوز',
  'net.micOn':'الميكروفون مفتوح','net.micMuted':'الميكروفون مكتوم','net.micOff':'أُغلق الصوت',
  'net.micDenied':'لم يُسمح باستخدام الميكروفون',
@@ -1109,6 +1110,7 @@ en:{
  'net.connecting':'Connecting…','net.failed':'Could not reach the server','net.slow':'Taking a while…',
  'net.needCode':'Enter the room code','net.left':'You left the room','net.joining':'Joining…',
  'net.weak':'Weak connection — moves may lag','net.notYourTurn':'Not your turn',
+ 'net.hostOnlySet':'Only the host changes the game settings',
  'net.yourTurnNudge':'Your turn — everyone is waiting','net.colorTaken':'That colour is taken',
  'net.micOn':'Microphone on','net.micMuted':'Microphone muted','net.micOff':'Voice off',
  'net.micDenied':'Microphone permission denied',
@@ -1172,7 +1174,14 @@ en:{
 }};
 const COLNAME={ar:['الأزرق','الذهبي','الأحمر','الأخضر'],en:['Blue','Gold','Red','Green']};
 let lang='ar';
-const t=k=>(I18N[lang][k]!==undefined?I18N[lang][k]:k);
+const t=k=>{
+  const v=I18N[lang][k];
+  if(v!==undefined) return v;
+  const alt=I18N[lang==='ar'?'en':'ar'][k];      // جرّب اللغة الأخرى قبل اليأس
+  if(alt!==undefined) return alt;
+  console.warn('مفتاح ترجمة ناقص:',k);
+  return /^[a-z]+\.[A-Za-z]+$/.test(k) ? '' : k; // لا تعرض مفتاحاً خاماً كنص للمستخدم
+};
 function applyLang(){
   const rtl=lang==='ar';
   document.documentElement.lang=lang;
