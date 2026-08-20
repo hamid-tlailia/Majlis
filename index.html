@@ -245,8 +245,8 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 .die3d[disabled]{cursor:default;opacity:.72}
 .cube{position:relative;width:100%;height:100%;transform-style:preserve-3d;
   transition:transform .58s cubic-bezier(.2,.9,.25,1)}
-.cube.waiting{animation:cubewait 1.05s linear infinite;transition:none}
-@keyframes cubewait{from{transform:rotateX(0deg) rotateY(0deg)}to{transform:rotateX(360deg) rotateY(300deg)}}
+.die3d.press{animation:diepress .26s ease}
+@keyframes diepress{40%{transform:scale(.86)}100%{transform:scale(1)}}
 .face{position:absolute;inset:0;border-radius:var(--br,14px);overflow:hidden;backface-visibility:hidden;display:grid;padding:14%;gap:7%;
   grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
   background:linear-gradient(150deg,rgba(255,255,255,.42),rgba(255,255,255,.02) 62%),var(--dc,#EFE7D8);
@@ -1786,11 +1786,7 @@ function rollDie(p){
 const FACE_ROT={1:[0,0],2:[-90,0],3:[0,-90],4:[0,90],5:[90,0],6:[0,180]};
 let spinX=0,spinY=0;
 function stopWaitSpin(){
-  const cu=$('cube'); if(!cu||!cu.classList.contains('waiting')) return;
-  /* التقط زاوية الدوران الحالية من أنيميشن الانتظار قبل إزالته، لانتقال سلس بلا قفزة */
-  const cs=getComputedStyle(cu).transform;
-  cu.classList.remove('waiting');
-  if(cs && cs!=='none'){ cu.style.transform=cs; void cu.offsetWidth; }
+  const d=$('die'); if(d) d.classList.remove('press');
 }
 function buildDie(bd){
   const b=document.createElement('button'); b.className='die3d'; b.id='die';
@@ -1942,8 +1938,8 @@ function roll(){
   if(netOn()&&!netHost()){
     if(lBusy||lDie) return;
     lBusy=true; $('die').disabled=true; sfx('roll'); buzz(20);
-    /* دوران انتظار سلس ومتواصل بأنيميشن CSS — لا يتوقف ولا يُعاد أبداً حتى تصل النتيجة الحقيقية */
-    $('cube').classList.add('waiting');
+    /* ردّ لمسة فوري بلا تدوير — التدوير الحقيقي يحدث مرة واحدة فقط عند وصول النتيجة */
+    const d=$('die'); d.classList.remove('press'); void d.offsetWidth; d.classList.add('press');
     N().input('ludoRoll',{});
     return;
   }
