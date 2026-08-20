@@ -245,6 +245,8 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 .die3d[disabled]{cursor:default;opacity:.72}
 .cube{position:relative;width:100%;height:100%;transform-style:preserve-3d;
   transition:transform .58s cubic-bezier(.2,.9,.25,1)}
+.cube.waiting{animation:cubewait 1.05s linear infinite;transition:none}
+@keyframes cubewait{from{transform:rotateX(0deg) rotateY(0deg)}to{transform:rotateX(360deg) rotateY(300deg)}}
 .face{position:absolute;inset:0;border-radius:var(--br,14px);overflow:hidden;backface-visibility:hidden;display:grid;padding:14%;gap:7%;
   grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
   background:linear-gradient(150deg,rgba(255,255,255,.42),rgba(255,255,255,.02) 62%),var(--dc,#EFE7D8);
@@ -482,6 +484,16 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
 .prow.off{opacity:.45}
 .prow .mic{font-size:13px;color:var(--muted)}
 .prow .mic.on{color:var(--ok)}
+.roomfab{position:fixed;z-index:60;inset-inline-start:14px;bottom:calc(16px + env(safe-area-inset-bottom));
+  width:52px;height:52px;border-radius:50%;border:1px solid var(--brass);display:none;
+  background:var(--ink2);color:var(--brass);font-size:18px;cursor:pointer;
+  box-shadow:0 6px 16px rgba(0,0,0,.55),0 0 0 3px color-mix(in srgb,var(--brass) 22%,transparent);
+  align-items:center;justify-content:center}
+.roomfab.show{display:flex}
+.roomfab .dotq{position:absolute;top:5px;inset-inline-end:5px;width:9px;height:9px;border-radius:50%;background:var(--ok);
+  box-shadow:0 0 0 2px var(--ink2);animation:mjdot 1.4s infinite}
+.roomfab span{width:26px;height:26px;border-radius:50%;background:var(--bone);color:var(--ink);
+  display:grid;place-items:center;font-family:"Aref Ruqaa",serif;font-size:14px;font-weight:700}
 .micfab{position:fixed;z-index:60;inset-inline-end:14px;bottom:calc(16px + env(safe-area-inset-bottom));
   width:52px;height:52px;border-radius:50%;border:1px solid var(--line);display:none;
   background:var(--ink2);color:var(--bone2);font-size:21px;cursor:pointer;
@@ -549,6 +561,9 @@ html[data-theme="sand"]{
 <script src="./net.js"></script>
 <canvas id="fx"></canvas>
 <button class="micfab" id="micFab" onclick="micMenu()" aria-label="mic"><i class="dotq"></i><span id="micIco"></span></button>
+<button class="roomfab" id="roomFab" onclick="openActiveRoom()" aria-label="active room">
+  <i class="dotq good"></i><span id="roomFabAv"></span>
+</button>
 <div class="micmenu" id="micMenu">
   <button onclick="micSet('on')" id="mm_on"></button>
   <button onclick="micSet('mute')" id="mm_mute"></button>
@@ -957,12 +972,12 @@ html[data-theme="sand"]{
   </div>
 </div>
 
-<!-- ===== غرفة سابقة ===== -->
+<!-- ===== غرفتك النشطة ===== -->
 <div class="overlay" id="ovPrev">
   <div class="sheet">
     <div class="grab"></div>
     <h2 data-i="pv.t"></h2><p class="sub" id="pvSub"></p>
-    <div class="roomcode" id="pvCode">-----</div>
+    <div class="plist" id="pvWho"></div>
     <button class="primary" onclick="prevJoin()" data-i="pv.join"></button>
     <button class="secondary" onclick="prevDrop()" data-i="pv.drop"></button>
   </div>
@@ -1029,8 +1044,8 @@ ar:{
  'inv.sent':'أُرسلت الدعوة','inv.accepted':'قبل الدعوة','inv.declined':'اعتذر عن الدعوة',
  'inv.incoming':'دعوة للعب','inv.wants':'يدعوك إلى','inv.accept':'اقبل وادخل','inv.decline':'اعتذر',
  'inv.micOn':'فتح الميكروفون','inv.micOff':'أغلق الميكروفون',
- 'pv.t':'غرفة سابقة','pv.s':'لك غرفة مفتوحة في هذه اللعبة — هل تعود إليها؟',
- 'pv.join':'عُد إلى الغرفة','pv.drop':'لا، اتركها','pv.dropped':'أُبلغ اللاعب الآخر',
+ 'pv.t':'غرفتك النشطة','pv.s':'لك غرفة مفتوحة في هذه اللعبة — هل تعود إليها؟',
+ 'pv.s2':'ينتظرك في','pv.join':'استأنف اللعب','pv.drop':'أنهِ الغرفة','pv.dropped':'أُبلغ اللاعب الآخر',
  'cl.t':'انتهت الجولة','cl.host':'المضيف غادر اللعبة','cl.guest':'اللاعب الآخر غادر اللعبة',
  'cl.leave':'العودة إلى الصالة','cl.stay':'ابقَ في الغرفة','cl.waiting':'في انتظار اللاعب الآخر…',
  'rc.t':'عاد الاتصال','rc.s':'هل تعود إلى الغرفة وتكمل الجولة؟','rc.yes':'نعم، عُد','rc.no':'لا، اخرج',
@@ -1106,8 +1121,8 @@ en:{
  'inv.sent':'Invite sent','inv.accepted':'accepted the invite','inv.declined':'declined the invite',
  'inv.incoming':'Game invite','inv.wants':'invites you to','inv.accept':'Accept and join','inv.decline':'Decline',
  'inv.micOn':'turned the mic on','inv.micOff':'turned the mic off',
- 'pv.t':'Previous room','pv.s':'You have an open room in this game — rejoin it?',
- 'pv.join':'Rejoin the room','pv.drop':'No, drop it','pv.dropped':'The other player was notified',
+ 'pv.t':'Your active room','pv.s':'You have an open room in this game — rejoin it?',
+ 'pv.s2':'is waiting for you in','pv.join':'Resume playing','pv.drop':'End the room','pv.dropped':'The other player was notified',
  'cl.t':'Round ended','cl.host':'the host left the game','cl.guest':'the other player left',
  'cl.leave':'Back to lobby','cl.stay':'Stay in the room','cl.waiting':'Waiting for the other player…',
  'rc.t':'Connection restored','rc.s':'Rejoin the room and continue the round?','rc.yes':'Yes, rejoin','rc.no':'No, leave',
@@ -1284,7 +1299,6 @@ function go(id){
     if(!$('mjlot') && !document.querySelector('#mjfoes .mjframe')){ mjLotting=false; mjRender(); }
     requestAnimationFrame(mjSize);
   }
-  if(GAMEOF[id]) setTimeout(()=>prevAsk(id),500);
   if(id==='ludo'){
     requestAnimationFrame(()=>{ sizeDie(); ludoPlace(); });
     if(lStop) setTimeout(openLudoSetup,120);
@@ -1469,7 +1483,13 @@ function xoRail(){
 function xoPlay(i){
   if(xoLock||xoB[i]!==null){ sfx('miss'); return; }
   if(netOn()&&!myTurn('xo')){ sfx('miss'); toast(t('net.notYourTurn')); return; }
-  if(netOn()&&!netHost()){ N().input('xo',{i}); return; }
+  if(netOn()&&!netHost()){
+    /* رمز فوري بلا انتظار عودة الشبكة — المضيف يرسل الحالة الحقيقية خلف الكواليس */
+    const el=$('xoboard').children[i];
+    if(el && !el.innerHTML) el.innerHTML=`<span class="glyph" style="color:${xoT?CLAY:INK}">${SYM[cfgX.sym][xoT]}</span>`;
+    sfx('place'); buzz(12);
+    N().input('xo',{i}); return;
+  }
   if(!netOn()&&cfgX.mode==='solo'&&xoT===1) return;
   xoDo(i);
   if(netOn()&&netHost()) setTimeout(netPush,60);
@@ -1765,6 +1785,13 @@ function rollDie(p){
 }
 const FACE_ROT={1:[0,0],2:[-90,0],3:[0,-90],4:[0,90],5:[90,0],6:[0,180]};
 let spinX=0,spinY=0;
+function stopWaitSpin(){
+  const cu=$('cube'); if(!cu||!cu.classList.contains('waiting')) return;
+  /* التقط زاوية الدوران الحالية من أنيميشن الانتظار قبل إزالته، لانتقال سلس بلا قفزة */
+  const cs=getComputedStyle(cu).transform;
+  cu.classList.remove('waiting');
+  if(cs && cs!=='none'){ cu.style.transform=cs; void cu.offsetWidth; }
+}
 function buildDie(bd){
   const b=document.createElement('button'); b.className='die3d'; b.id='die';
   b.setAttribute('aria-label','die');
@@ -1915,8 +1942,8 @@ function roll(){
   if(netOn()&&!netHost()){
     if(lBusy||lDie) return;
     lBusy=true; $('die').disabled=true; sfx('roll'); buzz(20);
-    spinX+=360*3; spinY+=360*2;                      // دوران محلي فوري أثناء انتظار النتيجة
-    $('cube').style.transform=`rotateX(${spinX}deg) rotateY(${spinY}deg)`;
+    /* دوران انتظار سلس ومتواصل بأنيميشن CSS — لا يتوقف ولا يُعاد أبداً حتى تصل النتيجة الحقيقية */
+    $('cube').classList.add('waiting');
     N().input('ludoRoll',{});
     return;
   }
@@ -2729,6 +2756,7 @@ const SNAP={
     get:()=>({p:LT,c:lCur,d:lDie,o:lOver,a:ACT,h:HUM,g:cfg}),
     set:s=>{ Object.assign(cfg,s.g);
       const rebuild = ACT.join()!==s.a.join();
+      stopWaitSpin();
       ACT=s.a; HUM=s.h; LT=s.p; lCur=s.c; lDie=s.d; lOver=s.o; lBusy=false;
       if(rebuild) ludoBuild();
       ludoPlace(); lrail(); setDie(CP());
@@ -2759,6 +2787,7 @@ function netPlayFx(f){
   try{
     if(f.type==='roll'){                      // النرد يدور بنفس النتيجة
       if(cur!=='ludo') return;
+      stopWaitSpin();                             // أوقف دوران الانتظار قبل الاستقرار على النتيجة الحقيقية
       lCur=f.p!==undefined?f.p:lCur; lDie=f.d; lastFace=f.d; setDie(CP()); lrail();
       showFace(f.d,true); sfx('roll');
       $('die').disabled=true;    // نرد الضيف يُعاد ضبطه لاحقاً عبر netSyncControls بلا تجميد lBusy
@@ -2913,7 +2942,7 @@ function netUntune(){
 function netLeave(){
   closeAll(); N().disconnect(); netJoinedOnce=false;
   $('netbar').style.display='none'; micPaint(); lobbyBusy(false);
-  netCfg.code=''; netSave(); netColors=[]; netUntune();
+  netCfg.code=''; netSave(); netColors=[]; netUntune(); setRoomFab(null); pvPeek=null;
   if(GAMEOF[cur]) localRebuild(cur);         // اضمن لوحاً محلياً جاهزاً فوراً، لا حالة شبكة متجمّدة
   if(location.hash) history.replaceState(null,'',location.pathname+location.search);
   toast(t('net.left'));
@@ -3154,18 +3183,51 @@ function prevSave(){
   if(!netOn()||exitingRoom) return;
   netCfg.code=N().room.code; netCfg.game=cur; netCfg.you=N().you; netCfg.at=Date.now(); netSave();
 }
-let pvGame=null;
-function prevAsk(game){
-  if(netOn()) return;
-  if(!netCfg.code || netCfg.game!==game) return;
-  if(Date.now()-(netCfg.at||0) > 1000*60*30){ netCfg.code=''; netSave(); return; }
-  pvGame=game;
-  $('pvCode').textContent=netCfg.code;
-  $('pvSub').textContent=t('pv.s');
-  $('ovPrev').classList.add('on'); buzz(20);
+let pvGame=null, pvPeek=null, pvChecking=false;
+/* استطلاع دوري: هل غرفتي المحفوظة لا تزال حيّة وفيها من ينتظر؟ */
+async function checkActiveRoom(){
+  if(netOn()||pvChecking) return;
+  if(!netCfg.code){ setRoomFab(null); return; }
+  if(Date.now()-(netCfg.at||0) > 1000*60*60*6){ netCfg.code=''; netSave(); setRoomFab(null); return; }
+  pvChecking=true;
+  try{
+    const base=serverUrl().replace(/^wss:/,'https:').replace(/^ws:/,'http:').replace(/\/(ws)?$/,'');
+    const r=await fetch(base+'/peek?code='+encodeURIComponent(netCfg.code),{cache:'no-store'});
+    const j=await r.json();
+    if(!j.exists){ netCfg.code=''; netSave(); setRoomFab(null); pvPeek=null; return; }
+    const waiting=(j.players||[]).filter(p=>p.online && p.name!==profile.name);
+    pvPeek=j;
+    setRoomFab(waiting.length?waiting[0]:null, j.game);
+  }catch(e){ /* تعذّر الاستطلاع — لا تُغيّر شيئاً، حاول لاحقاً */ }
+  finally{ pvChecking=false; }
+}
+function setRoomFab(peer,game){
+  const f=$('roomFab');
+  if(!peer){ f.classList.remove('show'); return; }
+  $('roomFabAv').textContent=[...(peer.name||'?')][0];
+  f.classList.add('show');
+  pvGame=game||pvGame;
+}
+function openActiveRoom(){
+  if(!netCfg.code||!pvPeek){ checkActiveRoom(); return; }
+  sfx('tap');
+  const waiting=(pvPeek.players||[]).filter(p=>p.online && p.name!==profile.name);
+  const nm = waiting[0]?.name || '';
+  const gname={xo:'g.xo',ludo:'g.ludo',mem:'g.mem',dots:'g.dots',mj:'g.mj'}[pvPeek.game]||'g.xo';
+  $('pvSub').textContent = (nm? nm+' — ':'')+t('pv.s2')+' '+t(gname);
+  $('pvWho').innerHTML='';
+  (pvPeek.players||[]).forEach(p=>{
+    const d=document.createElement('div'); d.className='prow'+(p.online?'':' off');
+    d.innerHTML=`<div class="av">${[...(p.name||'?')][0]}</div><div class="nm">${p.name}</div>
+      <span class="tag">${p.online?t('inv.free'):''}</span>`;
+    $('pvWho').appendChild(d);
+  });
+  pvGame=pvPeek.game;
+  $('ovPrev').classList.add('on'); buzz(15);
 }
 function prevJoin(){
   $('ovPrev').classList.remove('on'); sfx('tap');
+  setRoomFab(null);
   netJoin(netCfg.code);
 }
 /* أخبر الطرف الآخر أنني لن أعود، ثم انسَ الغرفة */
@@ -3177,7 +3239,7 @@ async function prevDrop(){
   $('ovPrev').classList.remove('on'); sfx('tap');
   const code=netCfg.code; const game=pvGame||cur; netCfg.code=''; netSave();
   const finish=()=>{
-    N()._leavingSilently=false; netCfg.code=''; netSave(); netUntune();
+    N()._leavingSilently=false; netCfg.code=''; netSave(); netUntune(); setRoomFab(null); pvPeek=null;
     if(cur!==game && GAMEOF[game]) go(game);   // تأكّد أننا فعلاً على شاشة اللعبة المقصودة
     if(GAMEOF[game]) localRebuild(game);       // اضمن لوحاً محلياً جاهزاً فوراً
   };
@@ -3196,6 +3258,7 @@ function closedLeave(){
   $('ovClosed').classList.remove('on');
   if(netOn()) N().disconnect();
   $('netbar').style.display='none'; netColors=[]; netCfg.code=''; netSave(); netUntune();
+  setRoomFab(null); pvPeek=null;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   $('lobby').classList.add('on'); cur='lobby';
   document.body.classList.remove('playing'); sfx('tap');
@@ -3241,6 +3304,7 @@ function netInit(){
     if(m.e==='#end'||m.e==='#out'){
       $('clSub').textContent = (m.name||'')+' — '+t(m.e==='#end'?'cl.host':'cl.guest');
       $('ovClosed').classList.add('on'); sfx('miss'); buzz([30,60,30]);
+      setTimeout(checkActiveRoom,1500);
       return;
     }
     toast(`${m.name} ${m.e}`);
@@ -3291,9 +3355,9 @@ function netHandleInput(m){
     else if(a==='mjPick') mjPick(g.ci,g.p);
   }catch(e){ console.error(e); }
   netExec=false;
-  /* mjPick يشغّل حركة دفع تمتد نحو 1.5 ثانية وتُعيد بناء العمود بالكامل عبر mjRender —
-     أي بثّ حالة مبكر هنا يُدمّر عناصر الحركة الحقيقية. mjPush يبثّ حالتها بنفسه في الوقت الصحيح. */
-  if(a!=='mjPick') setTimeout(netPush,90);
+  /* mjPick و ludoRoll يشغّلان حركات ممتدة (دفع ماهجونج، دوران النرد والاختيار بين الأحجار)
+     تدير بثّ حالتها بنفسه في اللحظة المناسبة — بثّ مبكر هنا يقطع الحركة أو يُعيد ضبط النرد قبل أوانه. */
+  if(a!=='mjPick' && a!=='ludoRoll') setTimeout(netPush,90);
 }
 /* ================= تشغيل ================= */
 load();
@@ -3303,6 +3367,9 @@ $('sndBtn').textContent=SND.on?'♪':'✕'; $('sndBtn').classList.toggle('off',!
 applyTheme();
 netInit();
 setTimeout(()=>{ try{ lobbyStart(); }catch(e){} },1200);
+setTimeout(checkActiveRoom,1800);
+setInterval(checkActiveRoom,25000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checkActiveRoom(); });
 xoNew(); memNew(); dotsNew(true); mjNew(true); ludoStart(); applyLang(); closeAll();
 document.addEventListener('click',()=>AC(),{once:true});
 if('serviceWorker' in navigator){
