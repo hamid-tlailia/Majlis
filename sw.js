@@ -1,16 +1,16 @@
 /* المجلس — عامل الخدمة | Majlis service worker */
-const VERSION = 'majlis-v7.6.2-icons';
+const VERSION = 'majlis-v7.4.8-live';
 const SHELL = [
   './',
   './index.html',
   './net.js',
   './privacy.html',
-  './manifest.webmanifest?v=7.6.2-icons',
-  './icons/favicon-64.png?v=7.6.2-icons',
-  './icons/icon-192.png?v=7.6.2-icons',
-  './icons/icon-512.png?v=7.6.2-icons',
-  './icons/icon-180.png?v=7.6.2-icons',
-  './icons/icon-maskable-512.png?v=7.6.2-icons'
+  './manifest.webmanifest?v=7.4.8-live',
+  './icons/favicon-64.png?v=7.4.8-live',
+  './icons/icon-192.png?v=7.4.8-live',
+  './icons/icon-512.png?v=7.4.8-live',
+  './icons/icon-180.png?v=7.4.8-live',
+  './icons/icon-maskable-512.png?v=7.4.8-live'
 ];
 
 self.addEventListener('install', e => {
