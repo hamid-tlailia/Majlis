@@ -7,16 +7,16 @@
 <meta name="referrer" content="no-referrer">
 <title>المجلس · Majlis</title>
 <meta name="description" content="خمس ألعاب لوحية على جهاز واحد: إكس أو، لودو، الذاكرة، خطوط ومربّعات، ماهجونج. تعمل دون إنترنت. Five board games on one device, fully offline.">
-<link rel="manifest" href="./manifest.webmanifest?v=7.6.2-live">
+<link rel="manifest" href="./manifest.webmanifest?v=7.6.3-live">
 <meta name="theme-color" content="#12100E">
 <meta name="color-scheme" content="dark">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="المجلس">
-<link rel="icon" href="./icons/favicon-64.png?v=7.6.2-live" type="image/png">
-<link rel="icon" sizes="192x192" href="./icons/icon-192.png?v=7.6.2-live" type="image/png">
-<link rel="apple-touch-icon" href="./icons/icon-180.png?v=7.6.2-live">
+<link rel="icon" href="./icons/favicon-64.png?v=7.6.3-live" type="image/png">
+<link rel="icon" sizes="192x192" href="./icons/icon-192.png?v=7.6.3-live" type="image/png">
+<link rel="apple-touch-icon" href="./icons/icon-180.png?v=7.6.3-live">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -236,6 +236,8 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 .tok svg{width:100%;height:100%;display:block}
 .tok.can{cursor:pointer;animation:breathe 1.05s infinite;z-index:7}
 @keyframes breathe{50%{filter:drop-shadow(0 0 7px rgba(207,162,74,.95)) drop-shadow(0 3px 4px rgba(0,0,0,.5));transform:translateY(-3px)}}
+.tok.pending{animation:tokpress .16s cubic-bezier(.2,1.35,.35,1);z-index:8}
+@keyframes tokpress{50%{transform:translateY(-6px) scale(1.08);filter:drop-shadow(0 0 8px rgba(207,162,74,.96))}}
 .tok.hop{animation:hop .16s}
 @keyframes hop{50%{transform:translateY(-9px) scale(1.12)}}
 .tok.dead{animation:dead .42s}
@@ -247,6 +249,8 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
   transition:transform .58s cubic-bezier(.2,.9,.25,1)}
 .die3d.press{animation:diepress .26s ease}
 @keyframes diepress{40%{transform:scale(.86)}100%{transform:scale(1)}}
+.die3d.pending::after{content:"";position:absolute;inset:-15%;border:2px solid var(--brass);border-radius:50%;animation:diepending .32s cubic-bezier(.2,1,.3,1) both;pointer-events:none}
+@keyframes diepending{from{opacity:.9;transform:scale(.72)}to{opacity:0;transform:scale(1.3)}}
 .face{position:absolute;inset:0;border-radius:var(--br,14px);overflow:hidden;backface-visibility:hidden;display:grid;padding:14%;gap:7%;
   grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
   background:linear-gradient(150deg,rgba(255,255,255,.42),rgba(255,255,255,.02) 62%),var(--dc,#EFE7D8);
@@ -1794,7 +1798,7 @@ function rollDie(p){
 const FACE_ROT={1:[0,0],2:[-90,0],3:[0,-90],4:[0,90],5:[90,0],6:[0,180]};
 let spinX=0,spinY=0;
 function stopWaitSpin(){
-  const d=$('die'); if(d) d.classList.remove('press');
+  const d=$('die'); if(d) d.classList.remove('press','pending');
 }
 function buildDie(bd){
   const b=document.createElement('button'); b.className='die3d'; b.id='die';
@@ -1947,7 +1951,7 @@ function roll(){
     if(lBusy||lDie) return;
     lBusy=true; $('die').disabled=true;
     /* ردّ لمسة فوري بلا تدوير — التدوير الحقيقي يحدث مرة واحدة فقط عند وصول النتيجة */
-    const d=$('die'); d.classList.remove('press'); void d.offsetWidth; d.classList.add('press');
+    const d=$('die'); d.classList.remove('press','pending'); void d.offsetWidth; d.classList.add('press','pending');
     N().input('ludoRoll',{});
     return;
   }
@@ -1973,7 +1977,12 @@ function roll(){
 function clearCan(){ document.querySelectorAll('.tok.can').forEach(x=>x.classList.remove('can')); }
 function tokClick(p,i){
   if(netOn()&&!myTurn('ludo')) return;
-  if(netOn()&&!netHost()){ N().input('ludoPick',{p,i}); return; }
+  if(netOn()&&!netHost()){
+    const el=$(`t${p}_${i}`);
+    if(!el||!el.classList.contains('can')||lBusy) return;
+    lBusy=true; clearCan(); el.classList.add('pending');
+    N().input('ludoPick',{p,i}); return;
+  }
   if(lOver||lBusy||!lDie||p!==CP()||!HUM[lCur]) return;
   if(!$(`t${p}_${i}`).classList.contains('can')) return;
   lBusy=true; clearCan(); move(p,i);
@@ -2801,7 +2810,7 @@ function netPlayFx(f){
     }else if(f.type==='step'){                // حجر يتحرك خطوة
       if(cur!=='ludo'||!LT[f.p]) return;
       LT[f.p][f.i]=f.v; ludoPlace(); sfx('step'); buzz(8);
-      const el=$(`t${f.p}_${f.i}`); if(el) hop(el);
+      const el=$(`t${f.p}_${f.i}`); if(el){ el.classList.remove('pending'); hop(el); }
     }else if(f.type==='can'){                 // إبراز الأحجار القابلة للتحريك
       if(cur!=='ludo') return;
       clearCan();
@@ -3389,7 +3398,7 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.addEventListener('controllerchange',()=>{
       if(!refreshed){ refreshed=true; location.reload(); }
     });
-    navigator.serviceWorker.register('./sw.js?v=7.6.2-live',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
+    navigator.serviceWorker.register('./sw.js?v=7.6.3-live',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
   });
 }
 </script>
