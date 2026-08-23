@@ -69,14 +69,11 @@
     },
 
     disconnect() {
-      /* المغادرة صريحة: ألغِ أي إعادة اتصال معلّقة حتى لا تعود الغرفة وحدها. */
       this.closedByUser = true;
-      clearTimeout(this._reTimer); this._reTimer = null;
       this.send({ t: 'leave' });
       this._stopPing(); Voice.stopAll();
       try { this.ws && this.ws.close(); } catch {}
       this.ws = null; this.room = null; this.you = null; this.connected = false;
-      this._openCode = null; this.seq = 0;
       this._setQuality('offline');
     },
 
@@ -114,31 +111,33 @@
       return true;
     },
     async _plain() { if (!this.connected) await this.connect(this.url); return true; },
+    /* ننتظر فعلياً وصول رد 'joined' من الخادم، لا فقط إرسال الطلب */
+    _waitJoined(timeoutMs = 8000) {
+      return new Promise((resolve, reject) => {
+        const done = ok => { clearTimeout(timer); this._joinWait = null; ok ? resolve(this.room) : reject(new Error('join failed')); };
+        const timer = setTimeout(() => done(false), timeoutMs);
+        this._joinWait = done;
+      });
+    },
     async create(name, game) {
       Net.myName = name;
       const code = await this._newCode();          // Cloudflare يعطينا رمزاً مسبقاً
       if (code) await this.openFor(code); else await this._plain();
-      return this.send({ t: 'create', name, game, code });
+      const wait = this._waitJoined();
+      this.send({ t: 'create', name, game, code });
+      return wait;
     },
     rejoin(code) {
       return this.send({ t: 'join', code, name: Net.myName, rejoin: this.you });
     },
-    async join(code, name, rejoinId = null) {
+    async join(code, name) {
       Net.myName = name;
       const c = String(code || '').toUpperCase().trim();
       const pre = await this._newCode();           // هل الخادم يوجّه كل غرفة إلى مسار خاص؟
       if (pre !== null) await this.openFor(c); else await this._plain();
-      return this.send({ t: 'join', code: c, name, rejoin: rejoinId || undefined });
-    },
-    async roomInfo(code, excludeId = null, dropIfEmpty = false) {
-      const base = this._base().replace(/^wss:/, 'https:').replace(/^ws:/, 'http:');
-      if (!base) return null;
-      const q = new URLSearchParams({ code: String(code || '').toUpperCase() });
-      if (excludeId) q.set('exclude', excludeId);
-      if (dropIfEmpty) q.set('drop', '1');
-      const r = await fetch(`${base}/room?${q}`, { cache: 'no-store' });
-      if (!r.ok) return null;
-      return r.json();
+      const wait = this._waitJoined();
+      this.send({ t: 'join', code: c, name });
+      return wait;
     },
     setGame(game) { return this.send({ t: 'game', game }); },
 
@@ -173,6 +172,7 @@
           this.seq = m.seq || 0;
           this.emit('room', this.room);
           if (m.state) this.emit('state', { state: m.state, seq: m.seq, game: m.room.game });
+          if (this._joinWait) this._joinWait(true);
           break;
         case 'room':
           this.room = m.room; this.emit('room', m.room); Voice.reconcile(); break;
@@ -185,7 +185,10 @@
         case 'game':   this.game = m.game; this.emit('game', m.game); break;
         case 'emote':  this.emit('emote', m); break;
         case 'sys':    this.emit('sys', m); break;
-        case 'err':    this.emit('sys', { code: 'err_' + m.code }); break;
+        case 'err':
+          this.emit('sys', { code: 'err_' + m.code });
+          if (this._joinWait) this._joinWait(false);
+          break;
         case 'voice':  Voice.onPeerVoice(m.id, m.on); this.emit('voice', m); break;
         case 'signal': Voice.onSignal(m.from, m.data); break;
         case 'pong': {
