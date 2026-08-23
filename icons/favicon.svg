@@ -1,5 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-<rect width="64" height="64" rx="14" fill="#100E0C"/>
-<circle cx="32" cy="32" r="24" fill="#1B3A32" stroke="#CFA24A" stroke-opacity=".6" stroke-width="1.4"/>
-<path d="M32 8 L37 25 L54 32 L37 39 L32 56 L27 39 L10 32 L27 25 Z" fill="#CFA24A"/>
-<circle cx="32" cy="32" r="5" fill="#EFE7D8"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">أيقونة المجلس</title>
+  <desc id="desc">بلاطة هندسية نحاسية داكنة بأربع نقاط تمثل اللاعبين</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#211914"/>
+      <stop offset="1" stop-color="#0c0a09"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0.86" y2="1">
+      <stop offset="0" stop-color="#ffd39a"/>
+      <stop offset="0.25" stop-color="#d5965c"/>
+      <stop offset="0.55" stop-color="#9c5934"/>
+      <stop offset="1" stop-color="#f0ad6c"/>
+    </linearGradient>
+    <linearGradient id="inner" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3a271d"/>
+      <stop offset="1" stop-color="#17110f"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="30" stdDeviation="28" flood-color="#000" flood-opacity="0.58"/>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="225" fill="url(#bg)"/>
+  <rect x="32" y="32" width="960" height="960" rx="198" fill="none" stroke="#f2b77a" stroke-opacity="0.22" stroke-width="4"/>
+  <path d="M192 780V443C192 269 333 150 512 150s320 119 320 293v337" fill="none" stroke="#a65f39" stroke-width="34" stroke-linecap="round" opacity="0.3" filter="url(#soft)"/>
+  <g filter="url(#shadow)">
+    <rect x="230" y="230" width="564" height="564" rx="126" fill="url(#inner)" stroke="url(#metal)" stroke-width="28"/>
+    <rect x="274" y="274" width="476" height="476" rx="92" fill="none" stroke="#ffca8f" stroke-opacity="0.24" stroke-width="6"/>
+    <path d="M512 350c-58 0-105 47-105 105v45h-46c-29 0-52 23-52 52s23 52 52 52h46v46c0 58 47 105 105 105s105-47 105-105v-46h46c29 0 52-23 52-52s-23-52-52-52h-46v-45c0-58-47-105-105-105Z" fill="#221713" stroke="url(#metal)" stroke-width="18" stroke-linejoin="round"/>
+    <circle cx="512" cy="449" r="29" fill="url(#metal)"/>
+    <circle cx="615" cy="552" r="29" fill="url(#metal)"/>
+    <circle cx="512" cy="655" r="29" fill="url(#metal)"/>
+    <circle cx="409" cy="552" r="29" fill="url(#metal)"/>
+    <circle cx="512" cy="449" r="11" fill="#fff0d8" opacity="0.78"/>
+    <circle cx="615" cy="552" r="11" fill="#fff0d8" opacity="0.78"/>
+    <circle cx="512" cy="655" r="11" fill="#fff0d8" opacity="0.78"/>
+    <circle cx="409" cy="552" r="11" fill="#fff0d8" opacity="0.78"/>
+  </g>
+  <path d="M300 735c102 67 322 87 424-5" fill="none" stroke="#ffd5a5" stroke-opacity="0.16" stroke-width="12" stroke-linecap="round"/>
+</svg>
