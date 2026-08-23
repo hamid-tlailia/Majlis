@@ -7,16 +7,16 @@
 <meta name="referrer" content="no-referrer">
 <title>المجلس · Majlis</title>
 <meta name="description" content="خمس ألعاب لوحية على جهاز واحد: إكس أو، لودو، الذاكرة، خطوط ومربّعات، ماهجونج. تعمل دون إنترنت. Five board games on one device, fully offline.">
-<link rel="manifest" href="./manifest.webmanifest?v=7.6.1-live">
+<link rel="manifest" href="./manifest.webmanifest?v=7.6.2-live">
 <meta name="theme-color" content="#12100E">
 <meta name="color-scheme" content="dark">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="المجلس">
-<link rel="icon" href="./icons/favicon-64.png?v=7.6.1-live" type="image/png">
-<link rel="icon" sizes="192x192" href="./icons/icon-192.png?v=7.6.1-live" type="image/png">
-<link rel="apple-touch-icon" href="./icons/icon-180.png?v=7.6.1-live">
+<link rel="icon" href="./icons/favicon-64.png?v=7.6.2-live" type="image/png">
+<link rel="icon" sizes="192x192" href="./icons/icon-192.png?v=7.6.2-live" type="image/png">
+<link rel="apple-touch-icon" href="./icons/icon-180.png?v=7.6.2-live">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -2516,7 +2516,6 @@ function mjPushFx(p,ci,kind,popped){
   const ghost=makeFly(hr, mjFace(kind), false);
   const s0=clampSc(liveRect.w/hr.w);
   $('mjlive').classList.add('empty');
-  headEl.style.visibility='hidden';
   if(ghost) ghost.animate([
     {transform:`translate(${liveRect.x-hr.x}px,${liveRect.y-hr.y}px) scale(${s0})`},
     {transform:'translate(0,0) scale(1)'}],{duration:340,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
@@ -2531,7 +2530,6 @@ function mjPushFx(p,ci,kind,popped){
     sfx('match'); buzz([12,30,12]); burstAt(colEl,16);
     setTimeout(()=>{
       if(ghost) ghost.remove();
-      headEl.style.visibility='';
       /* البلاطة المطرودة تطير إلى المنتصف وتنقلب */
       if(popped && lr){
         const target=rectOf($('mjlive'))||rectOf($('mjdeck'));
@@ -2541,9 +2539,9 @@ function mjPushFx(p,ci,kind,popped){
           const dx=target.x-from.x, dy=target.y-from.y, sc=clampSc(target.w/from.w);
           sfx('flip');
           f2.animate([
-            {transform:'rotateY(180deg) translate(0,0) scale(1)',offset:0},
-            {transform:`rotateY(90deg) translate(${dx*.45}px,${dy*.45}px) scale(${(sc+1)/2*1.08})`,offset:.55},
-            {transform:`rotateY(0deg) translate(${dx}px,${dy}px) scale(${sc})`,offset:1}
+            {transform:'translate(0,0) rotateY(180deg) scale(1)',offset:0},
+            {transform:`translate(${dx*.45}px,${dy*.45}px) rotateY(90deg) scale(${(sc+1)/2*1.08})`,offset:.55},
+            {transform:`translate(${dx}px,${dy}px) rotateY(0deg) scale(${sc})`,offset:1}
           ],{duration:640,easing:'cubic-bezier(.3,.85,.32,1)',fill:'forwards'});
           setTimeout(()=>f2.remove(),660);
         }
@@ -2599,7 +2597,6 @@ function mjPush(p,ci){
   const ghost=makeFly(hr, mjFace(kind), false);
   const s0=clampSc(liveRect.w/hr.w);
   const preY = -away*stepPx;         // موضع خارج العمود من جهة الوسط
-  headEl.style.visibility='hidden';
   ghost.animate([
     {transform:`translate(${liveRect.x-hr.x}px,${liveRect.y-hr.y}px) scale(${s0}) rotate(-8deg)`},
     {transform:`translate(0px,${preY}px) scale(1.04) rotate(0deg)`}
@@ -2607,7 +2604,7 @@ function mjPush(p,ci){
   sfx('step');
 
   setTimeout(()=>{
-    if(cur!=='mj'){ ghost.remove(); headEl.style.visibility=''; return; }
+    if(cur!=='mj'){ ghost.remove(); return; }
 
     /* ٢) الدفع: البلاطة تدخل مكان الرأس، والعمود كله ينزلق للخلف، والذيل يخرج */
     ghost.animate([
@@ -2630,7 +2627,7 @@ function mjPush(p,ci){
     sfx('match'); buzz([12,30,12]);
 
     setTimeout(()=>{
-      if(cur!=='mj'){ ghost.remove(); headEl.style.visibility=''; return; }
+      if(cur!=='mj'){ ghost.remove(); return; }
       /* ٣) تحديث الحالة ثم طيران الذيل المكشوف إلى الوسط */
       col.unshift(kind);
       const popped=col.pop();
@@ -2652,11 +2649,11 @@ function mjPush(p,ci){
       sfx('flip');
       const dx=target.x-from.x, dy=target.y-from.y, sc=clampSc(target.w/from.w);
       f2.animate([
-        {transform:'rotateY(180deg) translate(0,0) scale(1)',offset:0},
-        {transform:`rotateY(180deg) translate(${dx*.16}px,${dy*.16-away*10}px) scale(${1+(sc-1)*.1})`,offset:.18},
-        {transform:`rotateY(90deg) translate(${dx*.55}px,${dy*.55}px) scale(${(sc+1)/2*1.12})`,offset:.55},
-        {transform:`rotateY(-10deg) translate(${dx*.86}px,${dy*.86}px) scale(${1+(sc-1)*.9})`,offset:.84},
-        {transform:`rotateY(0deg) translate(${dx}px,${dy}px) scale(${sc})`,offset:1}
+        {transform:'translate(0,0) rotateY(180deg) scale(1)',offset:0},
+        {transform:`translate(${dx*.16}px,${dy*.16-away*10}px) rotateY(180deg) scale(${1+(sc-1)*.1})`,offset:.18},
+        {transform:`translate(${dx*.55}px,${dy*.55}px) rotateY(90deg) scale(${(sc+1)/2*1.12})`,offset:.55},
+        {transform:`translate(${dx*.86}px,${dy*.86}px) rotateY(-10deg) scale(${1+(sc-1)*.9})`,offset:.84},
+        {transform:`translate(${dx}px,${dy}px) rotateY(0deg) scale(${sc})`,offset:1}
       ],{duration:720,easing:'cubic-bezier(.3,.85,.32,1)',fill:'forwards'});
       setTimeout(()=>{
         f2.remove();
@@ -3002,8 +2999,10 @@ function netRenderInvite(){
 function uniqOnline(){
   const L=N().Lobby; if(!L) return [];
   const seen=new Set();
+  const roomIds=new Set((N().room?.players||[]).map(p=>p.id));
   return L.others().filter(p=>{
     if(!p.online) return false;
+    if(roomIds.has(p.id)) return false;         // عضو موجود في الغرفة الحالية، فلا يعرض كدعوة
     if(p.name===profile.name) return false;    // استبعد نفسي دائماً بالاسم أيضاً
     if(seen.has(p.name)) return false;
     seen.add(p.name); return true;
@@ -3127,9 +3126,11 @@ function inviteDecline(){
 }
 /* دعوة شخص متصل إلى اللعبة الحالية */
 async function invitePerson(id){
+  if((N().room?.players||[]).some(p=>p.id===id)){ netRenderInvite(); return; }
   if(!netOn()||!netHost()){ await inviteHere(); }
   setTimeout(()=>{
     if(!netOn()){ toast(t('net.failed')); return; }
+    if((N().room?.players||[]).some(p=>p.id===id)){ netRenderInvite(); return; }
     const ok=N().Lobby.invite(id, N().room.code, cur);
     toast(t(ok?'inv.sent':'net.failed'));
     netRenderPresence();
@@ -3388,7 +3389,7 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.addEventListener('controllerchange',()=>{
       if(!refreshed){ refreshed=true; location.reload(); }
     });
-    navigator.serviceWorker.register('./sw.js?v=7.6.1-live',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
+    navigator.serviceWorker.register('./sw.js?v=7.6.2-live',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
   });
 }
 </script>
