@@ -7,16 +7,16 @@
 <meta name="referrer" content="no-referrer">
 <title>المجلس · Majlis</title>
 <meta name="description" content="خمس ألعاب لوحية على جهاز واحد: إكس أو، لودو، الذاكرة، خطوط ومربّعات، ماهجونج. تعمل دون إنترنت. Five board games on one device, fully offline.">
-<link rel="manifest" href="./manifest.webmanifest?v=7.6.3-live">
+<link rel="manifest" href="./manifest.webmanifest?v=7.6.4-live">
 <meta name="theme-color" content="#12100E">
 <meta name="color-scheme" content="dark">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="المجلس">
-<link rel="icon" href="./icons/favicon-64.png?v=7.6.3-live" type="image/png">
-<link rel="icon" sizes="192x192" href="./icons/icon-192.png?v=7.6.3-live" type="image/png">
-<link rel="apple-touch-icon" href="./icons/icon-180.png?v=7.6.3-live">
+<link rel="icon" href="./icons/favicon-64.png?v=7.6.4-live" type="image/png">
+<link rel="icon" sizes="192x192" href="./icons/icon-192.png?v=7.6.4-live" type="image/png">
+<link rel="apple-touch-icon" href="./icons/icon-180.png?v=7.6.4-live">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -2523,6 +2523,10 @@ function mjPushFx(p,ci,kind,popped){
   if(!hr||!liveRect) return;
   const step=hr.h+3, away=isMine?1:-1;
   const ghost=makeFly(hr, mjFace(kind), false);
+  if(ghost){
+    ghost.classList.add('mjin'); ghost.dataset.mjP=p; ghost.dataset.mjC=ci;
+    setTimeout(()=>{ if(ghost.isConnected) ghost.remove(); },2200);
+  }
   const s0=clampSc(liveRect.w/hr.w);
   $('mjlive').classList.add('empty');
   if(ghost) ghost.animate([
@@ -2538,7 +2542,7 @@ function mjPushFx(p,ci,kind,popped){
     });
     sfx('match'); buzz([12,30,12]); burstAt(colEl,16);
     setTimeout(()=>{
-      if(ghost) ghost.remove();
+      if(ghost && !ghost.classList.contains('mjin')) ghost.remove();
       /* البلاطة المطرودة تطير إلى المنتصف وتنقلب */
       if(popped && lr){
         const target=rectOf($('mjlive'))||rectOf($('mjdeck'));
@@ -2574,6 +2578,29 @@ function makeFly(r,faceHTML,showBack){
   f.style.setProperty('--lc',MJC[mjCur]||BRASS);
   if(showBack) f.style.transform='rotateY(180deg)';
   document.body.appendChild(f); return f;
+}
+/* نحمل البلاطة الداخلة عبر إعادة الرسم الشبكية كي لا يختفي رأس الصف للحظة. */
+function mjCaptureIncoming(){
+  const f=document.querySelector('.mjfly.mjin');
+  if(!f) return null;
+  const r=rectOf(f); if(!r) return null;
+  f.getAnimations().forEach(a=>a.cancel());
+  f.style.left=r.x+'px'; f.style.top=r.y+'px'; f.style.width=r.w+'px'; f.style.height=r.h+'px';
+  f.style.transform=''; f.classList.add('mjin-handoff');
+  return f;
+}
+function mjReleaseIncoming(f){
+  if(!f||!f.isConnected) return;
+  const p=+f.dataset.mjP, ci=+f.dataset.mjC;
+  const col=p===mjView()?$(`mc${ci}`):$(`fc${p}_${ci}`);
+  const target=rectOf(col&&col.children[0]), from=rectOf(f);
+  if(!target||!from){ f.remove(); return; }
+  const dx=target.x-from.x, dy=target.y-from.y, sc=clampSc(target.w/from.w);
+  f.animate([
+    {transform:'translate(0,0) scale(1)'},
+    {transform:`translate(${dx}px,${dy}px) scale(${sc})`}
+  ],{duration:110,easing:'cubic-bezier(.23,1,.32,1)',fill:'forwards'});
+  setTimeout(()=>f.remove(),125);
 }
 function mjPush(p,ci){
   mjLock=true;
@@ -2774,12 +2801,12 @@ const SNAP={
       if(rebuild) ludoBuild();
       ludoPlace(); lrail(); setDie(CP());
       if(lDie>0 && lDie!==lastFace){ showFace(lDie,true); lastFace=lDie; }
-      $('die').disabled = !(netHost()? true : false) || lOver; }
+      $('die').disabled = !(myTurn('ludo') && !lOver && !lBusy && !lDie); }
   },
   mj:{
     get:()=>({w:mjWall,p:mjPile,d:mjDisc,k:mjDrawn,c:mjCur,o:mjOver,h:mjHum,r:mjRound,g:cfgJ}),
-    set:s=>{ Object.assign(cfgJ,s.g); mjLotting=false; mjRound=s.r; mjWall=s.w; mjPile=s.p; mjDisc=s.d;
-      mjDrawn=s.k; mjCur=s.c; mjOver=s.o; mjHum=s.h; mjLock=false; mjRender(); }
+    set:s=>{ const incoming=mjCaptureIncoming(); Object.assign(cfgJ,s.g); mjLotting=false; mjRound=s.r; mjWall=s.w; mjPile=s.p; mjDisc=s.d;
+      mjDrawn=s.k; mjCur=s.c; mjOver=s.o; mjHum=s.h; mjLock=false; mjRender(); mjReleaseIncoming(incoming); }
   }
 };
 function netPush(){
@@ -2844,7 +2871,8 @@ function netPlayFx(f){
       LT[f.q][f.j]=-1; ludoPlace(); sfx('cap'); shake(); buzz([30,40,60]);
     }else if(f.type==='mjdraw'){              // بلاطة سُحبت
       if(cur!=='mj') return;
-      mjDrawn=f.k; mjRender(); sfx('flip'); buzz(10);
+      const incoming=mjCaptureIncoming();
+      mjDrawn=f.k; mjRender(); mjReleaseIncoming(incoming); sfx('flip'); buzz(10);
       const lv=$('mjlive'); lv.classList.remove('out'); void lv.offsetWidth; lv.classList.add('out');
     }else if(f.type==='memflip'){
       if(cur!=='mem') return;
@@ -3398,7 +3426,7 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.addEventListener('controllerchange',()=>{
       if(!refreshed){ refreshed=true; location.reload(); }
     });
-    navigator.serviceWorker.register('./sw.js?v=7.6.3-live',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
+    navigator.serviceWorker.register('./sw.js?v=7.6.4-live',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
   });
 }
 </script>
