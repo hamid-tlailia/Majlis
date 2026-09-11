@@ -22,8 +22,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
+  /* --page = خلفية الصفحة، --ink = لون نص داكن على السطوح الفاتحة (بطاقة/زر..).
+     كلاهما يتساوى في الثيمات الداكنة، ويفترقان في الثيم النهاري فقط. */
+  --page:var(--ink);
   --ink:#100E0C; --ink2:#1A1714; --ink3:#241F1A; --line:rgba(237,228,211,.10);
   --felt:#1B3A32; --felt2:#265144;
+  /* --text = لون نص الصفحة الافتراضي، --bone = لون سطح فاتح (بطاقات/أزرار).
+     كلاهما يتساوى في الثيمات الداكنة، ويفترقان في الثيم النهاري فقط. */
+  --text:var(--bone); --text2:var(--bone2);
   --bone:#EFE7D8; --bone2:#DCCFB8; --bone3:#B9AB92;
   --brass:#CFA24A; --brass2:#8A6A26;
   --clay:#AC4529; --indigo:#375480; --muted:#8C8375;
@@ -34,7 +40,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%;overscroll-behavior:none}
 body{
-  background:var(--ink);color:var(--bone);
+  background:var(--page);color:var(--text);
   font-family:"IBM Plex Sans Arabic","IBM Plex Sans",system-ui,sans-serif;
   overflow-x:hidden;overflow-y:auto;-webkit-user-select:none;user-select:none;
   padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
@@ -75,7 +81,7 @@ h1,h2,h3{font-weight:700}
 .who b{display:block;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .who span{display:block;font-size:12px;color:var(--muted)}
 .mini{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;
-  background:transparent;border:1px solid var(--line);color:var(--bone2);cursor:pointer;
+  background:transparent;border:1px solid var(--line);color:var(--text2);cursor:pointer;
   font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;transition:.15s}
 .mini:hover{border-color:var(--brass);color:var(--brass)}
 .mini.off{opacity:.4}
@@ -90,7 +96,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-
 .hero p{margin:0 auto;color:var(--muted);font-size:clamp(12.5px,1.7vh,14.5px);max-width:34ch;line-height:1.55}
 
 .strip{display:flex;align-items:center;gap:10px;margin:clamp(10px,2vh,18px) 0 0;padding:clamp(9px,1.5vh,12px) 13px;flex:none;border-radius:13px;
-  background:rgba(207,162,74,.07);border:1px solid rgba(207,162,74,.26);font-size:13px;color:var(--bone2)}
+  background:rgba(207,162,74,.07);border:1px solid rgba(207,162,74,.26);font-size:13px;color:var(--text2)}
 .strip button{margin-inline-start:auto;background:var(--brass);border:none;color:var(--ink);
   border-radius:9px;padding:7px 14px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer}
 .strip button:active{transform:scale(.96)}
@@ -145,7 +151,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-
 .gbar .title .ar{font-family:"Aref Ruqaa",serif}
 .gbar .title .en{font-family:"Fraunces",serif}
 .icon{width:38px;height:38px;border-radius:12px;flex:none;display:grid;place-items:center;
-  background:var(--ink3);border:1px solid var(--line);color:var(--bone2);cursor:pointer;font-size:16px}
+  background:var(--ink3);border:1px solid var(--line);color:var(--text2);cursor:pointer;font-size:16px}
 .icon:hover{border-color:var(--brass);color:var(--brass)}
 html[dir=ltr] .icon.back{transform:scaleX(-1)}
 
@@ -186,7 +192,7 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 .winline{position:absolute;height:6px;border-radius:4px;background:var(--brass);
   box-shadow:0 2px 16px rgba(207,162,74,.8);animation:grow .35s ease}
 @keyframes grow{from{width:0!important}}
-.result{margin:0;text-align:center;min-height:22px;font-size:14px;color:var(--bone2)}
+.result{margin:0;text-align:center;min-height:22px;font-size:14px;color:var(--text2)}
 #mjres{display:none}
 .result b{color:var(--brass);font-size:19px}
 
@@ -216,8 +222,8 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 .lp.act{transform:translateY(-3px);border-color:rgba(207,162,74,.4)}
 .lp.act .swatch{opacity:1;height:6px;margin-bottom:3px}
 .lp .nm{font-size:11.5px;font-weight:600;color:var(--muted)}
-.lp.act .nm{color:var(--bone)}
-.lp .fin{font-family:"IBM Plex Mono",monospace;font-size:14px;color:var(--bone2)}
+.lp.act .nm{color:var(--text)}
+.lp .fin{font-family:"IBM Plex Mono",monospace;font-size:14px;color:var(--text2)}
 .lp .who2{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:#5E574C}
 .board{position:relative;width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(15,1fr);
   grid-template-rows:repeat(15,1fr);background:var(--ink2);border-radius:18px;overflow:hidden;
@@ -290,12 +296,12 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 .sheet .sub{color:var(--muted);font-size:13px;margin:0 0 16px;line-height:1.6}
 .fl{display:block;font-size:12px;color:var(--muted);margin:16px 0 7px;letter-spacing:.04em}
 .fl:first-of-type{margin-top:0}
-input.txt{width:100%;background:var(--ink3);border:1px solid rgba(239,231,216,.16);color:var(--bone);
+input.txt{width:100%;background:var(--ink3);border:1px solid rgba(239,231,216,.16);color:var(--text);
   border-radius:12px;padding:12px 13px;font-family:inherit;font-size:15px}
 input.txt:focus{outline:none;border-color:var(--brass)}
 .opts{display:flex;gap:8px}
 .opt{flex:1;padding:12px 6px;border-radius:13px;background:var(--ink3);border:1px solid var(--line);
-  color:var(--bone2);font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;transition:.15s;text-align:center}
+  color:var(--text2);font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;transition:.15s;text-align:center}
 .opt:hover{border-color:rgba(207,162,74,.45)}
 .opt.sel{border-color:var(--brass);color:var(--brass);background:rgba(207,162,74,.10)}
 .opt small{display:block;font-size:10.5px;color:var(--muted);margin-top:4px;font-weight:400}
@@ -310,16 +316,16 @@ input.txt:focus{outline:none;border-color:var(--brass)}
 .col.off{opacity:.32;filter:grayscale(.5)}
 .col.sel::after{content:"✓";position:absolute;inset-inline-end:6px;top:2px;color:#fff;font-size:13px}
 .note{color:var(--muted);font-size:12.5px;margin:14px 0 0;line-height:1.7}
-.note b{color:var(--bone2);font-weight:500}
+.note b{color:var(--text2);font-weight:500}
 .primary{width:100%;margin-top:20px;background:linear-gradient(180deg,var(--brass),var(--brass2));
   border:none;color:var(--ink);font-family:inherit;font-weight:700;font-size:15px;padding:14px;border-radius:13px;cursor:pointer}
 .primary:active{transform:scale(.985)}
-.secondary{width:100%;margin-top:9px;background:transparent;border:1px solid var(--line);color:var(--bone2);
+.secondary{width:100%;margin-top:9px;background:transparent;border:1px solid var(--line);color:var(--text2);
   font-family:inherit;font-size:14.5px;padding:13px;border-radius:13px;cursor:pointer}
 .empty{text-align:center;padding:26px 10px 8px;color:var(--muted)}
 .empty .mark{width:64px;height:64px;margin:0 auto 14px;border-radius:18px;background:var(--ink3);
   display:grid;place-items:center;border:1px solid var(--line)}
-.empty b{display:block;color:var(--bone);font-size:15.5px;margin-bottom:7px;font-weight:600}
+.empty b{display:block;color:var(--text);font-size:15.5px;margin-bottom:7px;font-weight:600}
 .empty p{margin:0;font-size:13px;line-height:1.7}
 
 .banner{position:fixed;inset:0;z-index:110;display:none;place-items:center;background:rgba(6,5,4,.62);backdrop-filter:blur(2px)}
@@ -328,7 +334,7 @@ input.txt:focus{outline:none;border-color:var(--brass)}
 @keyframes zoom{from{transform:scale(.5);opacity:0}}
 .banner h2{font-size:42px;margin:0 0 6px;color:var(--brass);text-shadow:0 4px 26px rgba(207,162,74,.5)}
 .banner h2 .ar{font-family:"Aref Ruqaa",serif}.banner h2 .en{font-family:"Fraunces",serif}
-.banner p{color:var(--bone2);margin:0 0 20px}
+.banner p{color:var(--text2);margin:0 0 20px}
 .banner .primary{width:auto;padding:12px 30px}
 .toast{position:fixed;bottom:calc(26px + env(safe-area-inset-bottom));left:50%;z-index:120;
   transform:translateX(-50%) translateY(20px);background:var(--bone);color:var(--ink);padding:11px 18px;
@@ -392,7 +398,7 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
 .mjframe.turn .orn{animation:ornspin 3.4s linear infinite}
 @keyframes ornspin{to{transform:rotate(360deg)}}
 .mjlbl{align-self:flex-end;display:flex;align-items:center;gap:6px;
-  background:rgba(0,0,0,.42);padding:2px 11px;border-radius:20px;font-size:11.5px;color:var(--bone2);
+  background:rgba(0,0,0,.42);padding:2px 11px;border-radius:20px;font-size:11.5px;color:var(--text2);
   border:1px solid color-mix(in srgb,var(--pc) 60%,transparent);white-space:nowrap}
 .mjlbl b{font-family:"IBM Plex Mono",monospace;color:var(--pc);font-weight:600}
 .mjlbl i{width:6px;height:6px;border-radius:50%;background:var(--pc);display:none}
@@ -467,20 +473,20 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
 .mjlot .l{min-width:66px;padding:10px 6px;border-radius:12px;background:var(--ink2);
   border:1px solid var(--line);text-align:center}
 .mjlot .l .nm{font-size:11.5px;color:var(--muted)}
-.mjlot .l .v{font-family:"IBM Plex Mono",monospace;font-size:23px;color:var(--bone)}
+.mjlot .l .v{font-family:"IBM Plex Mono",monospace;font-size:23px;color:var(--text)}
 .mjlot .l.top{border-color:var(--brass)}
 .mjlot .l.top .v{color:var(--brass)}
 
 /* ===== أونلاين ===== */
 .netbar{display:flex;align-items:center;gap:7px;margin:8px 0 0;padding:7px 11px;border-radius:12px;
-  background:var(--ink2);border:1px solid var(--line);font-size:12px;color:var(--bone2)}
+  background:var(--ink2);border:1px solid var(--line);font-size:12px;color:var(--text2)}
 .netbar .dotq{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
 .netbar.good .dotq{background:var(--ok)} .netbar.ok .dotq{background:var(--brass)}
 .netbar.weak .dotq{background:var(--clay);animation:mjdot 1s infinite}
 .netbar.offline .dotq{background:#6a6a6a}
 .netbar .code{font-family:"IBM Plex Mono",monospace;letter-spacing:.18em;color:var(--brass);font-weight:600}
 .netbar .rtt{margin-inline-start:auto;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
-.netbar button{background:none;border:1px solid var(--line);color:var(--bone2);border-radius:8px;
+.netbar button{background:none;border:1px solid var(--line);color:var(--text2);border-radius:8px;
   padding:3px 9px;font-family:inherit;font-size:11.5px;cursor:pointer}
 .netbar button.mic.on{border-color:var(--ok);color:var(--ok)}
 .netbar button.mic.mut{border-color:var(--clay);color:var(--clay)}
@@ -509,7 +515,7 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
   display:grid;place-items:center;font-family:"Aref Ruqaa",serif;font-size:14px;font-weight:700}
 .micfab{position:fixed;z-index:60;inset-inline-end:14px;bottom:calc(16px + env(safe-area-inset-bottom));
   width:52px;height:52px;border-radius:50%;border:1px solid var(--line);display:none;
-  background:var(--ink2);color:var(--bone2);font-size:21px;cursor:pointer;
+  background:var(--ink2);color:var(--text2);font-size:21px;cursor:pointer;
   box-shadow:0 6px 16px rgba(0,0,0,.55)}
 body.playing .micfab.live{display:grid;place-items:center}
 .micfab.on{border-color:var(--ok);color:var(--ok);box-shadow:0 0 0 2px rgba(79,168,138,.35),0 6px 16px rgba(0,0,0,.55)}
@@ -525,7 +531,7 @@ body.playing .micfab.live{display:grid;place-items:center}
   box-shadow:0 10px 26px rgba(0,0,0,.6)}
 .micmenu.on{display:flex}
 .micmenu button{display:flex;align-items:center;gap:9px;background:none;border:none;cursor:pointer;
-  color:var(--bone2);font-family:inherit;font-size:13.5px;padding:9px 12px;border-radius:10px;white-space:nowrap}
+  color:var(--text2);font-family:inherit;font-size:13.5px;padding:9px 12px;border-radius:10px;white-space:nowrap}
 .micmenu button:hover{background:var(--ink3)}
 .micmenu button.sel{color:var(--brass)}
 .micmenu svg{width:18px;height:18px;flex:none}
@@ -535,13 +541,16 @@ body.playing .micfab.live{display:grid;place-items:center}
 .prow .st{font-size:10.5px;color:var(--muted)}
 .codein{text-align:center;font-family:"IBM Plex Mono",monospace;letter-spacing:.28em;font-size:20px;text-transform:uppercase}
 /* ===== ثيمات ===== */
-html[data-theme="night"]{
-  --ink:#0A0E18; --ink2:#141A28; --ink3:#1D2536; --line:rgba(214,226,245,.10);
-  --felt:#16283F; --felt2:#223C5C;
-  --bone:#E7EDF7; --bone2:#CBD6E6; --bone3:#96A5BC;
-  --brass:#7FB2E8; --brass2:#3B6C9E;
-  --clay:#C25A6E; --indigo:#4C7FD1; --muted:#7C89A0; --ok:#4FB0A8;
-  --tileA:#8FC6F2; --tileB:#4E8BC8; --tileC:#31608F; --tileEdge:#21456B; --tileFace:#F2F6FC;
+/* ثيم نهاري: خلفية فاتحة تُقرأ بوضوح في ضوء النهار. --page/--ink و --text/--text2
+   يفترقان هنا فقط (خلفية فاتحة + نص داكن)، بعكس بقية الثيمات الداكنة. */
+html[data-theme="day"]{
+  --page:#FAF5E9;
+  --ink:#2A1E10; --ink2:#F1E7D2; --ink3:#E8DBBD; --line:rgba(42,30,16,.14);
+  --felt:#1B3A32; --felt2:#265144;
+  --text:#2A2013; --text2:#6B6150;
+  --bone:#FFFEFA; --bone2:#EDE3CD; --bone3:#C9BCA0;
+  --brass:#B4791C; --brass2:#7A501A;
+  --clay:#B8392A; --indigo:#35578F; --muted:#6E6350; --ok:#2F8F6E;
 }
 html[data-theme="emerald"]{
   --ink:#0A140F; --ink2:#12211A; --ink3:#1A2E24; --line:rgba(226,240,231,.10);
@@ -567,6 +576,9 @@ html[data-theme="sand"]{
   --muted:#9A8C6C; --ok:#5AA37F;
   --tileA:#F5D99A; --tileB:#D9A94F; --tileC:#B0812C; --tileEdge:#7E5A15; --tileFace:#FCF6E7;
 }
+/* زخارف صغيرة كانت بلون فاتح ثابت يفترض خلفية داكنة — تحتاج نقيضها في الثيم النهاري */
+html[data-theme="day"] .grab{background:rgba(42,30,16,.22)}
+html[data-theme="day"] input.txt{border-color:rgba(42,30,16,.16)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -773,7 +785,7 @@ html[data-theme="sand"]{
     <label class="fl" data-i="profile.theme"></label>
     <div class="opts" id="themes">
       <button class="opt sel" data-g="theme" data-v="majlis" onclick="setOpt(this);applyTheme()" data-i="th.majlis"></button>
-      <button class="opt" data-g="theme" data-v="night" onclick="setOpt(this);applyTheme()" data-i="th.night"></button>
+      <button class="opt" data-g="theme" data-v="day" onclick="setOpt(this);applyTheme()" data-i="th.day"></button>
       <button class="opt" data-g="theme" data-v="emerald" onclick="setOpt(this);applyTheme()" data-i="th.emerald"></button>
     </div>
     <div class="opts" style="margin-top:8px">
@@ -1081,7 +1093,7 @@ ar:{
  footer:'صُنع في المجلس',privacy:'الخصوصية',
  'profile.t':'ملفك','profile.s':'يظهر اسمك وحالتك على هذا الجهاز فقط.',
  'profile.name':'الاسم المعروض','profile.status':'الحالة','profile.theme':'الثيم',
- 'th.majlis':'مجلس','th.night':'ليل','th.emerald':'زمرد','th.rose':'عنّاب','th.sand':'رمال',
+ 'th.majlis':'مجلس','th.day':'نهاري','th.emerald':'زمرد','th.rose':'عنّاب','th.sand':'رمال',
  'st.free':'متاح','st.busy':'مشغول','st.away':'بعيد',
  'stf.free':'متاح للعب','stf.busy':'مشغول الآن','stf.away':'بعيد عن الجهاز',
  save:'احفظ التغييرات',saved:'حُفظ ملفك',needName:'اكتب اسماً أولاً',
@@ -1158,7 +1170,7 @@ en:{
  footer:'Made in Majlis',privacy:'Privacy',
  'profile.t':'Your profile','profile.s':'Your name and status stay on this device.',
  'profile.name':'Display name','profile.status':'Status','profile.theme':'Theme',
- 'th.majlis':'Majlis','th.night':'Night','th.emerald':'Emerald','th.rose':'Rose','th.sand':'Sand',
+ 'th.majlis':'Majlis','th.day':'Day','th.emerald':'Emerald','th.rose':'Rose','th.sand':'Sand',
  'st.free':'Free','st.busy':'Busy','st.away':'Away',
  'stf.free':'Free to play','stf.busy':'Busy right now','stf.away':'Away from the device',
  save:'Save changes',saved:'Profile saved',needName:'Enter a name first',
@@ -1417,7 +1429,9 @@ function applyTheme(){
   if(t==='majlis') document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme',t);
   const m=document.querySelector('meta[name=theme-color]');
-  if(m) m.setAttribute('content',getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()||'#100E0C');
+  if(m) m.setAttribute('content',getComputedStyle(document.documentElement).getPropertyValue('--page').trim()||'#100E0C');
+  const cs=document.querySelector('meta[name=color-scheme]');
+  if(cs) cs.setAttribute('content',t==='day'?'light':'dark');
   requestAnimationFrame(()=>{ if(mjWall.length) mjRender(); ludoPlace&&ludoPlace(); });
   save();
 }
