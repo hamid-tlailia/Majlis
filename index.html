@@ -233,8 +233,7 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
   clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
 .center{background:var(--ink3)}
 .yardpad{position:absolute;border-radius:22%;background:rgba(248,243,232,.95);z-index:1}
-.yardlink{position:absolute;z-index:2;border:2px dashed;border-radius:50%;opacity:.48;
-  transform:translate(-50%,-50%)}
+.yardlink{position:absolute;z-index:2;border:2px dashed;border-radius:50%;opacity:.48}
 .center-home{border-radius:8px;box-shadow:inset 0 0 0 1.5px rgba(16,14,12,.35);
   display:grid;place-items:center}
 .ludo-badge{width:48%;height:48%;border-radius:50%;display:grid;place-items:center;
@@ -1740,10 +1739,6 @@ function chevron(dir,color){
   const rot={r:0,d:90,l:180,u:270}[dir]||0;
   return `<svg viewBox="0 0 24 24" style="transform:rotate(${rot}deg)"><path d="M8 4l8 8-8 8" fill="none" stroke="${color}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
-function yardSlotCenter(p,i){
-  const [r,c]=PL[p].yard;
-  return [ r+3+(i>1?1.25:-1.25), c+3+(i%2?1.25:-1.25) ];
-}
 function buildColors(){
   const box=$('colors'); if(!box) return; box.innerHTML='';
   const online=netOn(), seat=netSeat();
@@ -1895,10 +1890,12 @@ function ludoBuild(){
     bd.appendChild(d);
   }
   ACT.forEach(pi=>{ for(let i=0;i<4;i++){
-    const [r,c]=yardSlotCenter(pi,i);
+    const [r,c]=yardSlot(pi,i);           // نفس نقطة استقرار الحجر تمامًا
+    const RW=TW*1.55;
     const lk=document.createElement('div'); lk.className='yardlink';
-    lk.style.top=(r*U)+'%'; lk.style.insetInlineStart=(c*U)+'%';
-    lk.style.width=(TW*1.55)+'%'; lk.style.height=(TW*1.55)+'%';
+    lk.style.insetInlineStart=(c*U+U/2-RW/2)+'%';
+    lk.style.top=(r*U+U/2-RW/2)+'%';
+    lk.style.width=RW+'%'; lk.style.height=RW+'%';
     lk.style.borderColor=PL[pi].c;
     bd.appendChild(lk);
   }});
