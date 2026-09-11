@@ -240,12 +240,12 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 .center{background:var(--ink3)}
 .yardpad{position:absolute;border-radius:22%;background:rgba(248,243,232,.95);z-index:1}
 .yardlink{position:absolute;z-index:2;border:2px dashed;border-radius:50%;opacity:.48}
-.center-home{border-radius:8px;box-shadow:inset 0 0 0 1.5px rgba(16,14,12,.35);
+.center-home{border-radius:8px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22);
   display:grid;place-items:center}
-.ludo-badge{width:48%;height:48%;border-radius:50%;display:grid;place-items:center;
-  background:radial-gradient(circle at 35% 30%,#FFF3D6,var(--brass) 55%,var(--brass2) 100%);
-  box-shadow:0 2px 6px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.5);
-  font-size:min(3.6vw,19px);line-height:1;color:#5A3F12;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+.ludo-badge{width:50%;height:50%;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 30%,#FFFDF6,#FBF1D9 100%);
+  box-shadow:0 2px 6px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.8),0 0 0 1.5px rgba(207,162,74,.5)}
+.ludo-badge svg{width:56%;height:56%;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
 .tok{position:absolute;z-index:4;border:none;background:none;padding:0;cursor:default;
   transition:inset-inline-start .2s ease,top .2s ease;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}
 .tok svg{width:100%;height:100%;display:block}
@@ -408,7 +408,7 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
 .mjboards{display:flex;flex-direction:column;align-items:center;gap:clamp(6px,1.4vh,12px);width:100%}
 .mjframe .mjside{width:100%}
 .mjcol{background:none;border:none;padding:0;border-radius:10px;cursor:default;display:flex;
-  flex-direction:column;gap:clamp(2px,.5vw,4px);transform-style:preserve-3d;position:relative;
+  flex-direction:column;gap:clamp(5px,1.6vw,9px);transform-style:preserve-3d;position:relative;
   transition:background .25s}
 .mjcol.full{background:rgba(207,162,74,.16);box-shadow:0 0 0 2px var(--brass) inset}
 .mjcol.full .mjt{box-shadow:0 2px 0 #C9BEA6,0 4px 7px rgba(0,0,0,.42)}
@@ -430,8 +430,8 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
 .mjt.slideup{animation:mjslideup .45s cubic-bezier(.25,1.3,.4,1)}
 @keyframes mjslideup{from{transform:translateY(140%) rotateX(-70deg);opacity:0}}
 
-.mjstage{display:flex;align-items:center;justify-content:center;gap:clamp(16px,6vw,34px);width:100%;
-  padding:clamp(2px,.8vh,7px) 0;perspective:900px}
+.mjstage{position:relative;display:flex;align-items:center;justify-content:flex-start;width:100%;
+  padding:clamp(2px,.8vh,7px) 0;perspective:900px;min-height:calc(var(--mjh) * 1.34)}
 .mjpile{display:flex;flex-direction:column;align-items:center;gap:4px}
 .mjpile .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
 .mjdeck{width:calc(var(--mjw) * .92);height:calc(var(--mjh) * .92);border-radius:var(--tr,10px);border:none;padding:0;cursor:pointer;
@@ -443,8 +443,8 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
 .mjdeck[disabled]{opacity:.4;cursor:default}
 .mjdeck.ready{animation:mjpulse 1.5s ease-in-out infinite}
 @keyframes mjpulse{50%{box-shadow:0 4px 0 var(--tileEdge),0 0 18px var(--brass)}}
-.mjlive{width:calc(var(--mjw) * 1.22);height:calc(var(--mjh) * 1.22);transform-style:preserve-3d;position:relative;
-  transition:transform .5s cubic-bezier(.3,1.2,.4,1)}
+.mjlive{position:absolute;inset:0;margin:auto;width:calc(var(--mjw) * 1.22);height:calc(var(--mjh) * 1.22);
+  transform-style:preserve-3d;transition:transform .5s cubic-bezier(.3,1.2,.4,1)}
 .mjlive.empty{opacity:0}
 .mjlive .fc{position:absolute;inset:0;border-radius:var(--tr,10px);overflow:hidden;backface-visibility:hidden;
   box-shadow:0 0 0 3px var(--lc,var(--brass)),0 0 14px color-mix(in srgb,var(--lc,#CFA24A) 55%,transparent),0 8px 18px rgba(0,0,0,.6)}
@@ -634,8 +634,8 @@ html[data-theme="day"] input.txt{border-color:rgba(42,30,16,.16)}
     </button>
     <button class="card" onclick="sfx('tap');go('ludo',true);openLudoSetup()">
       <div class="thumb"><div class="t-lu" style="background:var(--bone)">
-        <i style="background:#375480"></i><i style="background:#CFA24A"></i>
-        <i style="background:#1B3A32"></i><i style="background:#AC4529"></i>
+        <i style="background:#E3922C"></i><i style="background:#3B6FD6"></i>
+        <i style="background:#DD3A4D"></i><i style="background:#289460"></i>
       </div></div>
       <div><h3 data-i="g.ludo"></h3><div class="meta" data-i="m.ludo"></div></div>
       <span class="go">‹</span>
@@ -1889,10 +1889,10 @@ function ludoBuild(){
     if(yard!==null){ d.style.background=PL[yard].c; d.style.border='none'; d.style.opacity=ACT.includes(yard)?.92:.2; }
     else if(hp>=0){
       d.classList.add('path');
-      d.style.background=mix(PL[hp].c,BONE,.58); d.style.opacity=ACT.includes(hp)?1:.2;
+      d.style.background=mix(PL[hp].c,BONE,.26); d.style.opacity=ACT.includes(hp)?1:.2;
       const rtl=document.documentElement.dir!=='ltr';
       const dir = r===7 ? (c<7?(rtl?'l':'r'):(rtl?'r':'l')) : (r<7?'d':'u');
-      d.innerHTML=chevron(dir,PL[hp].c);
+      d.innerHTML=chevron(dir,mix(PL[hp].c,BONE,.78));
     }
     else if(r>=6&&r<=8&&c>=6&&c<=8) d.classList.add('center');
     else if(idx>=0){
@@ -1925,7 +1925,8 @@ function ludoBuild(){
   const rtl=document.documentElement.dir!=='ltr';
   const [right,bottom,left,top]= rtl?[LC_BLUE,LC_GREEN,LC_RED,LC_GOLD]:[LC_RED,LC_GREEN,LC_BLUE,LC_GOLD];
   ctr.style.background=`conic-gradient(from 45deg,${right} 0 25%,${bottom} 0 50%,${left} 0 75%,${top} 0 100%)`;
-  const badge=document.createElement('div'); badge.className='ludo-badge'; badge.textContent='♛';
+  const badge=document.createElement('div'); badge.className='ludo-badge';
+  badge.innerHTML=`<svg viewBox="0 0 24 24"><path d="M4 18l-1.7-8.2 5 3.7L12 6l4.7 7.5 5-3.7L20 18H4z" fill="#C8891A" stroke="#8A5A0E" stroke-width=".6" stroke-linejoin="round"/><rect x="4" y="18" width="16" height="2.6" rx="1" fill="#C8891A" stroke="#8A5A0E" stroke-width=".6"/></svg>`;
   ctr.appendChild(badge);
   bd.appendChild(ctr);
   buildDie(bd);
