@@ -178,7 +178,6 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 /* ===== إكس أو ===== */
 .xo{margin:0 auto;width:min(100%,360px,max(220px,50vh));aspect-ratio:1;position:relative;padding:10px;
   border-radius:20px;background:linear-gradient(180deg,var(--bone),var(--bone2));
-  box-shadow:0 16px 34px rgba(0,0,0,.5),inset 0 -4px 0 rgba(0,0,0,.13);
   display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
 .xo button{background:none;border:none;padding:0;cursor:pointer;position:relative;display:grid;place-items:center;
   font-size:min(13vw,52px);color:var(--ink);font-family:"IBM Plex Sans Arabic",sans-serif}
@@ -226,8 +225,7 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 .lp .fin{font-family:"IBM Plex Mono",monospace;font-size:14px;color:var(--text2)}
 .lp .who2{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:#5E574C}
 .board{position:relative;width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(15,1fr);
-  grid-template-rows:repeat(15,1fr);background:var(--ink2);border-radius:18px;overflow:hidden;
-  box-shadow:0 16px 36px rgba(0,0,0,.55)}
+  grid-template-rows:repeat(15,1fr);background:var(--ink2);border-radius:18px;overflow:hidden}
 .cell{border:.5px solid rgba(16,14,12,.10);display:grid;place-items:center}
 .cell svg{width:44%;height:44%;display:block}
 .path{background:var(--bone)}
@@ -317,6 +315,17 @@ input.txt:focus{outline:none;border-color:var(--brass)}
 .col.sel::after{content:"✓";position:absolute;inset-inline-end:6px;top:2px;color:#fff;font-size:13px}
 .note{color:var(--muted);font-size:12.5px;margin:14px 0 0;line-height:1.7}
 .note b{color:var(--text2);font-weight:500}
+/* ===== الخصوصية (مودال) ===== */
+.pv2-date{color:var(--muted);font-size:11.5px;margin:2px 0 0}
+.pv2 h2{font-size:15px;margin:20px 0 6px;color:var(--brass);font-weight:700}
+.pv2 p,.pv2 li{font-size:13.5px;color:var(--text2);line-height:1.8}
+.pv2 p{margin:0 0 6px}
+.pv2 ul{padding-inline-start:18px;margin:4px 0}
+.pv2 .card{background:var(--ink3);border:1px solid var(--line);border-radius:14px;padding:13px 15px;margin:10px 0 4px}
+.pv2 .card p{margin:0}
+.pv2 hr{border:none;border-top:1px solid var(--line);margin:26px 0}
+.pv2 .en{direction:ltr;text-align:left}
+.pv2 .en h2:first-child{margin-top:0}
 .primary{width:100%;margin-top:20px;background:linear-gradient(180deg,var(--brass),var(--brass2));
   border:none;color:var(--ink);font-family:inherit;font-weight:700;font-size:15px;padding:14px;border-radius:13px;cursor:pointer}
 .primary:active{transform:scale(.985)}
@@ -343,8 +352,7 @@ input.txt:focus{outline:none;border-color:var(--brass)}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 /* ===== خطوط ومربعات ===== */
 .dbwrap{margin:0 auto;width:min(100%,400px,max(230px,52vh));position:relative;aspect-ratio:1;
-  background:linear-gradient(180deg,var(--bone),var(--bone2));border-radius:20px;
-  box-shadow:0 16px 34px rgba(0,0,0,.5),inset 0 -4px 0 rgba(0,0,0,.13);padding:8%}
+  background:linear-gradient(180deg,var(--bone),var(--bone2));border-radius:20px;padding:8%}
 .dbin{position:relative;width:100%;height:100%}
 .dbdot{position:absolute;width:3.6%;height:3.6%;border-radius:50%;background:rgba(16,14,12,.55);
   transform:translate(50%,-50%);z-index:3;pointer-events:none}
@@ -378,8 +386,6 @@ html[dir=ltr] .dbbox span{font-family:"Fraunces",serif}
   background:
     linear-gradient(180deg,color-mix(in srgb,var(--pc) 20%,transparent),color-mix(in srgb,var(--pc) 6%,transparent)),
     repeating-linear-gradient(45deg,rgba(255,255,255,.035) 0 6px,transparent 6px 13px);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.10),inset 0 0 26px color-mix(in srgb,var(--pc) 22%,transparent),
-    0 8px 22px rgba(0,0,0,.5);
   transition:box-shadow .3s,transform .3s}
 .mjframe::before{content:"";position:absolute;inset:4px;border-radius:15px;pointer-events:none;
   border:1px dashed color-mix(in srgb,var(--pc) 45%,transparent);opacity:.65}
@@ -665,7 +671,7 @@ html[data-theme="day"] input.txt{border-color:rgba(42,30,16,.16)}
   </div>
 
   <div class="foot">
-    <span data-i="footer"></span> · <a href="./privacy.html" target="_blank" rel="noopener" data-i="privacy"></a>
+    <span data-i="footer"></span> · <a href="#" onclick="event.preventDefault();openPrivacy()" data-i="privacy"></a>
   </div>
 </section>
 
@@ -1028,6 +1034,127 @@ html[data-theme="day"] input.txt{border-color:rgba(42,30,16,.16)}
   </div>
 </div>
 
+<div class="overlay" id="ovPrivacy" onclick="if(event.target===this)closeAll()">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2><span class="ar">الخصوصية</span></h2><p class="sub pv2-date">آخر تحديث: أغسطس 2026 · الإصدار 7.6</p>
+    <div class="pv2">
+      <div class="card"><p><strong>باختصار:</strong> «المجلس» بلا حساب ولا تسجيل دخول ولا إعلانات ولا تتبّع. اللعب المحلي لا يغادر جهازك إطلاقاً. أما اللعب عبر الشبكة فيمرّر ما تحتاجه اللعبة فقط، ولا يُحفظ بعد انتهاء الغرفة.</p></div>
+
+      <h2>وضعان مختلفان</h2>
+      <p>للتطبيق وضعان، ولكلٍّ منهما سلوك مختلف تماماً — يهمّنا أن تعرف الفرق:</p>
+      <ul>
+        <li><strong>اللعب المحلي:</strong> يعمل دون إنترنت بالكامل. لا شيء يخرج من جهازك.</li>
+        <li><strong>اللعب عبر الشبكة:</strong> يبدأ فقط حين تُنشئ غرفة أو تقبل دعوة. عندها يتصل التطبيق بخادم اللعب.</li>
+      </ul>
+
+      <h2>ماذا يُحفظ في جهازك؟</h2>
+      <ul>
+        <li>الاسم الذي تختاره لنفسك وحالتك.</li>
+        <li>اللغة، والثيم، وتشغيل الصوت أو كتمه.</li>
+        <li>إعدادات الألعاب: عدد اللاعبين، لونك، الرمز الذي اخترته.</li>
+        <li>رمز آخر غرفة لعبت فيها، ليقترح عليك استئنافها.</li>
+      </ul>
+      <p>هذه المعلومات تبقى في جهازك، ولا تُرسل إلى أي جهة.</p>
+
+      <h2>ماذا يمرّ عبر الخادم أثناء اللعب الشبكي؟</h2>
+      <ul>
+        <li><strong>الاسم الذي اخترته</strong> — ليراه من تلعب معه. اختر أي اسم تشاء؛ لا نطلب اسمك الحقيقي.</li>
+        <li><strong>حالة اللوح وحركات اللعب</strong> — لتتزامن اللعبة بين الأجهزة.</li>
+        <li><strong>رمز الغرفة وزمن الاستجابة</strong> — لإدارة الغرفة وإظهار جودة الاتصال.</li>
+      </ul>
+      <p>كل هذا يعيش في ذاكرة الخادم ما دامت الغرفة قائمة فقط. حين يغادر الجميع تُحذف الغرفة وكل ما فيها. لا قاعدة بيانات، ولا سجلّات للمباريات، ولا حفظ دائم.</p>
+
+      <h2>المحادثة الصوتية</h2>
+      <p>الصوت اختياري تماماً ولا يبدأ إلا بضغطك على زر الميكروفون وموافقتك على إذن المتصفح. ويمكنك كتمه أو إغلاقه في أي لحظة.</p>
+      <p><strong>صوتك ينتقل مباشرة بين جهازك وجهاز من تلعب معه</strong> (اتصال نظير لنظير)، ولا يمرّ عبر خادمنا ولا يُسجَّل ولا يُخزَّن في أي مكان. الخادم يساعد الجهازين على التعارف فقط، ثم ينسحب. في بعض الشبكات المغلقة قد يحتاج الاتصال خادم تمرير وسيطاً لإيصال الصوت.</p>
+
+      <h2>من يرى أنك متصل؟</h2>
+      <p>عند فتح التطبيق يظهر اسمك وحالتك (متاح / في لعبة) لمن يفتح التطبيق في الوقت نفسه، ليتمكّن من دعوتك. تختفي هذه المعلومة فور إغلاقك التطبيق ولا يبقى منها أثر.</p>
+
+      <h2>ماذا لا يحدث أبداً؟</h2>
+      <ul>
+        <li>لا تتبّع لما تفعله، ولا إحصاءات، ولا ملفات تعريف عنك.</li>
+        <li>لا إعلانات ولا بيع لأي بيانات لأي جهة.</li>
+        <li>لا وصول إلى جهات الاتصال أو الصور أو الموقع أو الكاميرا.</li>
+        <li>لا تسجيل للصوت ولا حفظ لأي محادثة.</li>
+        <li>لا يُطلب منك بريد ولا رقم هاتف ولا أي معلومة شخصية.</li>
+      </ul>
+
+      <h2>الخطوط</h2>
+      <p>تُحمَّل خطوط الواجهة مرة واحدة عند أول فتح من خدمة خطوط Google، ثم تبقى محفوظة في جهازك.</p>
+
+      <h2>كيف تحذف بياناتك؟</h2>
+      <p>احذف التطبيق أو امسح بيانات الموقع من إعدادات المتصفح، فيختفي كل ما حُفظ في جهازك فوراً. وما يخصّ الغرف يزول تلقائياً بمغادرتها.</p>
+
+      <h2>الأطفال</h2>
+      <p>اللعبة مناسبة لجميع الأعمار ولا تطلب أي معلومة شخصية. ننبّه أن اللعب الشبكي يتيح محادثة صوتية مع الطرف الآخر، فيُستحسن أن يكون اللعب مع أشخاص معروفين.</p>
+
+      <h2>الشيفرة مفتوحة</h2>
+      <p>التطبيق والخادم مفتوحا المصدر، ويمكنك مراجعة الشيفرة بنفسك للتأكّد من كل ما ورد هنا، بل ويمكنك تشغيل خادمك الخاص.</p>
+
+      <hr>
+
+      <div class="en">
+        <h2 style="font-size:19px;color:var(--text)">Privacy</h2>
+        <p class="pv2-date">Last updated: August 2026 · Version 7.6</p>
+        <div class="card"><p><strong>In short:</strong> Majlis has no account, no sign-in, no ads and no tracking. Local play never leaves your device. Online play sends only what the game needs, and nothing is kept once the room ends.</p></div>
+
+        <h2>Two different modes</h2>
+        <ul>
+          <li><strong>Local play:</strong> fully offline. Nothing leaves your device.</li>
+          <li><strong>Online play:</strong> starts only when you create a room or accept an invite. Only then does the app connect to a game server.</li>
+        </ul>
+
+        <h2>What is stored on your device</h2>
+        <ul>
+          <li>The name and status you choose.</li>
+          <li>Your language, theme, and whether sound is on.</li>
+          <li>Game settings: number of players, your colour, your symbol.</li>
+          <li>The code of your last room, so it can offer to resume it.</li>
+        </ul>
+
+        <h2>What passes through the server during online play</h2>
+        <ul>
+          <li><strong>The name you chose</strong> — so your opponent can see it. Pick any name; we never ask for your real one.</li>
+          <li><strong>Board state and moves</strong> — to keep the game in sync.</li>
+          <li><strong>Room code and latency</strong> — to run the room and show connection quality.</li>
+        </ul>
+        <p>All of it lives in the server's memory only while the room exists. When everyone leaves, the room and its contents are deleted. No database, no match history, no permanent storage.</p>
+
+        <h2>Voice chat</h2>
+        <p>Voice is entirely optional and starts only when you press the microphone button and grant browser permission. You can mute or switch it off at any moment.</p>
+        <p><strong>Your audio travels directly between your device and your opponent's</strong> (peer-to-peer). It does not pass through our server, is never recorded, and is never stored. The server only helps the two devices find each other, then steps aside. On some restrictive networks a relay server may be needed to carry the audio.</p>
+
+        <h2>Who can see you are online</h2>
+        <p>While the app is open, your name and status (free / in a game) are visible to others who have it open at the same time, so they can invite you. This disappears the moment you close the app.</p>
+
+        <h2>What never happens</h2>
+        <ul>
+          <li>No tracking, no analytics, no profiling.</li>
+          <li>No advertising and no selling of data.</li>
+          <li>No access to contacts, photos, location or camera.</li>
+          <li>No voice recording and no chat is ever stored.</li>
+          <li>No email, phone number or personal detail is requested.</li>
+        </ul>
+
+        <h2>Fonts</h2>
+        <p>Interface fonts load once on first open from Google Fonts, then stay cached on your device.</p>
+
+        <h2>Deleting your data</h2>
+        <p>Uninstall the app or clear the site data in your browser settings and everything stored locally is gone at once. Anything room-related disappears when you leave the room.</p>
+
+        <h2>Children</h2>
+        <p>The game suits all ages and asks for no personal information. Note that online play allows voice chat with the other player, so playing with people you know is advisable.</p>
+
+        <h2>Open source</h2>
+        <p>Both the app and the server are open source. You can read the code yourself to verify everything stated here — and you can even run your own server.</p>
+      </div>
+    </div>
+    <button class="secondary" onclick="closeAll()" data-i="close2"></button>
+  </div>
+</div>
+
 <div class="banner" id="banner" onclick="closeBanner()">
   <div class="in"><h2 id="bTitle"></h2><p id="bText"></p>
     <button class="primary" onclick="closeBanner()" data-i="continue"></button></div>
@@ -1090,7 +1217,7 @@ ar:{
  'mj.took':'أخذها','mj.none':'لا أحد يطابقها','mj.left':'باقٍ','mj.reshuffle':'أُعيد خلط البلاطات','mj.cleared':'كشف لوحته وطابَق كل أعمدته',
  'dots.s':'أغلق المربّع تكسبه وتلعب مرة أخرى.','dots.size':'حجم الشبكة',
  'dots.boxes':'مربّع','dots.again':'مربّع لك — العب ثانية',
- footer:'صُنع في المجلس',privacy:'الخصوصية',
+ footer:'صُنع في المجلس',privacy:'الخصوصية',close2:'إغلاق',
  'profile.t':'ملفك','profile.s':'يظهر اسمك وحالتك على هذا الجهاز فقط.',
  'profile.name':'الاسم المعروض','profile.status':'الحالة','profile.theme':'الثيم',
  'th.majlis':'مجلس','th.day':'نهاري','th.emerald':'زمرد','th.rose':'عنّاب','th.sand':'رمال',
@@ -1167,7 +1294,7 @@ en:{
  'mj.took':'took it','mj.none':'nobody matches it','mj.left':'left','mj.reshuffle':'Tiles reshuffled','mj.cleared':'revealed and matched every column',
  'dots.s':'Close a box to claim it and play again.','dots.size':'Grid size',
  'dots.boxes':'boxes','dots.again':'Box claimed — go again',
- footer:'Made in Majlis',privacy:'Privacy',
+ footer:'Made in Majlis',privacy:'Privacy',close2:'Close',
  'profile.t':'Your profile','profile.s':'Your name and status stay on this device.',
  'profile.name':'Display name','profile.status':'Status','profile.theme':'Theme',
  'th.majlis':'Majlis','th.day':'Day','th.emerald':'Emerald','th.rose':'Rose','th.sand':'Sand',
@@ -1441,6 +1568,7 @@ function openProfile(){ sfx('tap');
   document.querySelectorAll('[data-g="theme"]').forEach(b=>b.classList.toggle('sel',b.dataset.v===(profile.theme||'majlis')));
   $('ovProfile').classList.add('on');
 }
+function openPrivacy(){ sfx('tap'); $('ovPrivacy').classList.add('on'); }
 function saveProfile(){
   const n=$('inName').value.trim();
   if(!n){ sfx('miss'); toast(t('needName')); return; }
