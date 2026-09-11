@@ -222,15 +222,25 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 .board{position:relative;width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(15,1fr);
   grid-template-rows:repeat(15,1fr);background:var(--ink2);border-radius:18px;overflow:hidden;
   box-shadow:0 16px 36px rgba(0,0,0,.55)}
-.cell{border:.5px solid rgba(16,14,12,.10)}
+.cell{border:.5px solid rgba(16,14,12,.10);display:grid;place-items:center}
+.cell svg{width:44%;height:44%;display:block}
 .path{background:var(--bone)}
 .safe{position:relative}
-.safe::after{content:"";position:absolute;inset:24%;background:rgba(16,14,12,.20);
-  clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%)}
+.safe::before{content:"";position:absolute;inset:8%;border-radius:50%;
+  background:radial-gradient(circle,rgba(221,58,77,.20),transparent 72%)}
+.safe::after{content:"";position:absolute;inset:27%;background:rgba(255,255,255,.92);
+  box-shadow:0 1px 2px rgba(0,0,0,.28);
+  clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
 .center{background:var(--ink3)}
-.yardpad{position:absolute;border-radius:12px;background:rgba(239,231,216,.92);z-index:1}
-.yardlink{position:absolute;z-index:2;border:2px dashed;border-radius:26%;opacity:.42}
-.center-home{border-radius:5px;box-shadow:inset 0 0 0 1.5px rgba(16,14,12,.35)}
+.yardpad{position:absolute;border-radius:22%;background:rgba(248,243,232,.95);z-index:1}
+.yardlink{position:absolute;z-index:2;border:2px dashed;border-radius:50%;opacity:.48;
+  transform:translate(-50%,-50%)}
+.center-home{border-radius:8px;box-shadow:inset 0 0 0 1.5px rgba(16,14,12,.35);
+  display:grid;place-items:center}
+.ludo-badge{width:48%;height:48%;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 30%,#FFF3D6,var(--brass) 55%,var(--brass2) 100%);
+  box-shadow:0 2px 6px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.5);
+  font-size:min(3.6vw,19px);line-height:1;color:#5A3F12;text-shadow:0 1px 0 rgba(255,255,255,.35)}
 .tok{position:absolute;z-index:4;border:none;background:none;padding:0;cursor:default;
   transition:inset-inline-start .2s ease,top .2s ease;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}
 .tok svg{width:100%;height:100%;display:block}
@@ -1694,11 +1704,13 @@ function memEnd(){
 /* ================= لودو ================= */
 const TRACK=[[6,1],[6,2],[6,3],[6,4],[6,5],[5,6],[4,6],[3,6],[2,6],[1,6],[0,6],[0,7],[0,8],[1,8],[2,8],[3,8],[4,8],[5,8],[6,9],[6,10],[6,11],[6,12],[6,13],[6,14],[7,14],[8,14],[8,13],[8,12],[8,11],[8,10],[8,9],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[14,7],[14,6],[13,6],[12,6],[11,6],[10,6],[9,6],[8,5],[8,4],[8,3],[8,2],[8,1],[8,0],[7,0],[6,0]];
 const SAFE=[0,8,13,21,26,34,39,47];
+/* لوحة لودو فقط: أربعة ألوان نضِرة خاصة بهذه اللوحة (لا تؤثر على ماهجونج أو خطوط ومربعات) */
+const LC_BLUE='#3B6FD6', LC_GOLD='#E3922C', LC_RED='#DD3A4D', LC_GREEN='#289460';
 const PL=[
- {c:INDIGO,start:0, yard:[0,0],home:[[7,1],[7,2],[7,3],[7,4],[7,5]]},
- {c:BRASS, start:13,yard:[0,9],home:[[1,7],[2,7],[3,7],[4,7],[5,7]]},
- {c:CLAY,  start:26,yard:[9,9],home:[[7,13],[7,12],[7,11],[7,10],[7,9]]},
- {c:FELT,  start:39,yard:[9,0],home:[[13,7],[12,7],[11,7],[10,7],[9,7]]}
+ {c:LC_BLUE,start:0, yard:[0,0],home:[[7,1],[7,2],[7,3],[7,4],[7,5]]},
+ {c:LC_GOLD,start:13,yard:[0,9],home:[[1,7],[2,7],[3,7],[4,7],[5,7]]},
+ {c:LC_RED, start:26,yard:[9,9],home:[[7,13],[7,12],[7,11],[7,10],[7,9]]},
+ {c:LC_GREEN,start:39,yard:[9,0],home:[[13,7],[12,7],[11,7],[10,7],[9,7]]}
 ];
 const U=100/15, TW=5.8, TH=7.4;
 function mix(a,b,t){
@@ -1712,16 +1724,25 @@ let stuck=[0,0,0,0],drought=[0,0,0,0],lStop=false,moveIV=null;
 const CP=()=>ACT[lCur];
 const cname=p=>COLNAME[lang][p];
 const nameOf=p=>{ const s=ACT.indexOf(p); const nm=s>=0?seatName(s):null; return nm || ((cfg.mode==='solo'&&p===ACT[0])?t('you'):cname(p)); };
-const PAWN_D='M4.4 26.4c-.6 0-1-.5-.9-1.1.7-4.4 2.9-7.6 5.3-9.4a5.6 5.6 0 1 1 6.4 0c2.4 1.8 4.6 5 5.3 9.4.1.6-.3 1.1-.9 1.1H4.4z';
+/* الكرة تقف في مُنتصف صندوقها الرأسي بدقّة — يطابق ذلك الثابت PAWN_ANCHOR
+   في ludoPlace() لتستقر الأحجار بالضبط في وسط حلقاتها المنقّطة */
 function pawn(c){
-  const id='g'+c.slice(1), light=mix(c,'#FFFFFF',.42);
-  return `<svg viewBox="0 0 24 31"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="${light}"/><stop offset=".55" stop-color="${c}"/><stop offset="1" stop-color="${mix(c,'#000000',.35)}"/></linearGradient></defs>
-    <ellipse cx="12" cy="28.4" rx="8.4" ry="2.2" fill="rgba(0,0,0,.35)"/>
-    <path d="${PAWN_D}" fill="url(#${id})" stroke="#F3EDE1" stroke-width="1.5" stroke-linejoin="round"/>
-    <path d="${PAWN_D}" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="2.6" stroke-linejoin="round" opacity=".28" transform="scale(.985) translate(.18 .2)"/>
-    <path d="M4.6 25.4h14.8" stroke="rgba(0,0,0,.25)" stroke-width="1.3" stroke-linecap="round"/>
-    <ellipse cx="10.4" cy="8.4" rx="1.9" ry="2.2" fill="rgba(255,255,255,.85)" transform="rotate(-18 10.4 8.4)"/></svg>`;
+  const id='g'+c.slice(1), light=mix(c,'#FFFFFF',.55), dark=mix(c,'#000000',.32);
+  return `<svg viewBox="0 0 24 31"><defs><radialGradient id="${id}" cx="38%" cy="32%" r="72%">
+    <stop offset="0" stop-color="${light}"/><stop offset=".55" stop-color="${c}"/><stop offset="1" stop-color="${dark}"/></radialGradient></defs>
+    <ellipse cx="12" cy="24.4" rx="7.4" ry="1.9" fill="rgba(0,0,0,.32)"/>
+    <circle cx="12" cy="15.5" r="9.6" fill="url(#${id})" stroke="#F3EDE1" stroke-width="1.4"/>
+    <circle cx="12" cy="15.5" r="9.6" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1"/>
+    <ellipse cx="8.9" cy="11" rx="3" ry="1.9" fill="rgba(255,255,255,.62)" transform="rotate(-25 8.9 11)"/></svg>`;
+}
+const PAWN_ANCHOR=.5;   // موضع مركز الكرة رأسيًا داخل صندوقها (15.5 من 31)
+function chevron(dir,color){
+  const rot={r:0,d:90,l:180,u:270}[dir]||0;
+  return `<svg viewBox="0 0 24 24" style="transform:rotate(${rot}deg)"><path d="M8 4l8 8-8 8" fill="none" stroke="${color}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function yardSlotCenter(p,i){
+  const [r,c]=PL[p].yard;
+  return [ r+3+(i>1?1.25:-1.25), c+3+(i%2?1.25:-1.25) ];
 }
 function buildColors(){
   const box=$('colors'); if(!box) return; box.innerHTML='';
@@ -1840,8 +1861,7 @@ function setDie(p){
 function yardSlot(p,i){
   const [r,c]=PL[p].yard;
   // مركز اللبنة = yard+3 ، والأحجار على بعد 1.25 خانة منه في الاتجاهات الأربعة
-  const dy=0.16*TH/U;                    // تعويض ارتفاع الحجر
-  return [ r+3-0.5+dy+(i>1?1.25:-1.25), c+3-0.5+(i%2?1.25:-1.25) ];
+  return [ r+3-0.5+(i>1?1.25:-1.25), c+3-0.5+(i%2?1.25:-1.25) ];
 }
 function coordOf(p,i){
   const v=LT[p][i];
@@ -1858,7 +1878,13 @@ function ludoBuild(){
     const idx=TRACK.findIndex(([a,b])=>a===r&&b===c);
     const hp=PL.findIndex(p=>p.home.some(([a,b])=>a===r&&b===c));
     if(yard!==null){ d.style.background=PL[yard].c; d.style.border='none'; d.style.opacity=ACT.includes(yard)?.92:.2; }
-    else if(hp>=0){ d.classList.add('path'); d.style.background=mix(PL[hp].c,BONE,.58); d.style.opacity=ACT.includes(hp)?1:.2; }
+    else if(hp>=0){
+      d.classList.add('path');
+      d.style.background=mix(PL[hp].c,BONE,.58); d.style.opacity=ACT.includes(hp)?1:.2;
+      const rtl=document.documentElement.dir!=='ltr';
+      const dir = r===7 ? (c<7?(rtl?'l':'r'):(rtl?'r':'l')) : (r<7?'d':'u');
+      d.innerHTML=chevron(dir,PL[hp].c);
+    }
     else if(r>=6&&r<=8&&c>=6&&c<=8) d.classList.add('center');
     else if(idx>=0){
       d.classList.add('path');
@@ -1868,15 +1894,14 @@ function ludoBuild(){
     }
     bd.appendChild(d);
   }
-  ACT.forEach(pi=>{
-    const p=PL[pi];
+  ACT.forEach(pi=>{ for(let i=0;i<4;i++){
+    const [r,c]=yardSlotCenter(pi,i);
     const lk=document.createElement('div'); lk.className='yardlink';
-    lk.style.top=((p.yard[0]+3-1.25)*U)+'%';
-    lk.style.insetInlineStart=((p.yard[1]+3-1.25)*U)+'%';
-    lk.style.width=(2.5*U)+'%'; lk.style.height=(2.5*U)+'%';
-    lk.style.borderColor=p.c;
+    lk.style.top=(r*U)+'%'; lk.style.insetInlineStart=(c*U)+'%';
+    lk.style.width=(TW*1.55)+'%'; lk.style.height=(TW*1.55)+'%';
+    lk.style.borderColor=PL[pi].c;
     bd.appendChild(lk);
-  });
+  }});
   PL.forEach(p=>{
     const pad=document.createElement('div'); pad.className='yardpad';
     pad.style.top=(p.yard[0]*U+U*.8)+'%'; pad.style.insetInlineStart=(p.yard[1]*U+U*.8)+'%';
@@ -1887,8 +1912,10 @@ function ludoBuild(){
   ctr.style.top=(6*U)+'%'; ctr.style.insetInlineStart=(6*U)+'%';
   ctr.style.width=(U*3)+'%'; ctr.style.height=(U*3)+'%';
   const rtl=document.documentElement.dir!=='ltr';
-  const [right,bottom,left,top]= rtl?[INDIGO,FELT,CLAY,BRASS]:[CLAY,FELT,INDIGO,BRASS];
+  const [right,bottom,left,top]= rtl?[LC_BLUE,LC_GREEN,LC_RED,LC_GOLD]:[LC_RED,LC_GREEN,LC_BLUE,LC_GOLD];
   ctr.style.background=`conic-gradient(from 45deg,${right} 0 25%,${bottom} 0 50%,${left} 0 75%,${top} 0 100%)`;
+  const badge=document.createElement('div'); badge.className='ludo-badge'; badge.textContent='♛';
+  ctr.appendChild(badge);
   bd.appendChild(ctr);
   buildDie(bd);
   ACT.forEach(pi=>{ for(let i=0;i<4;i++){
@@ -1908,7 +1935,7 @@ function ludoPlace(){
     const off=g.length>1?(k-(g.length-1)/2)*.42:0;
     const el=$(`t${tk.pi}_${tk.i}`); if(!el) return;
     el.style.insetInlineStart=(tk.c*U+U/2-TW/2+off*U)+'%';
-    el.style.top=(tk.r*U+U/2-TH*.66-off*U*.4)+'%';
+    el.style.top=(tk.r*U+U/2-TH*PAWN_ANCHOR-off*U*.4)+'%';
     el.style.zIndex=LT[tk.pi][tk.i]>=0?5:3;
   }));
 }
@@ -2511,6 +2538,14 @@ function mjAuto(p){
   if(ci>=0) mjPush(p,ci);
 }
 /* حركة الدفع كما يراها الضيف (بلا تغيير الحالة) */
+/* حماية الرسم من مقاطعة حركة عمود قيد التشغيل — تحديدًا داخل الغرف حيث تصل
+   لقطة حالة كاملة لاحقًا وقد تُعيد mjRender() بناء العمود قبل انتهاء حركته،
+   فتُقطَع حركات WAAPI الحيّة على عناصره الحقيقية وتبدو القفزة مفاجئة. */
+let mjColBusyUntil=0;
+function mjRenderGuarded(cb){
+  const wait=mjColBusyUntil-performance.now();
+  if(wait>8) setTimeout(cb,wait); else cb();
+}
 function mjPushFx(p,ci,kind,popped){
   const isMine=(p===mjView());
   const colEl = isMine ? $(`mc${ci}`) : $(`fc${p}_${ci}`);
@@ -2534,6 +2569,7 @@ function mjPushFx(p,ci,kind,popped){
     {transform:'translate(0,0) scale(1)'}],{duration:340,easing:'cubic-bezier(.3,1.15,.4,1)',fill:'forwards'});
   sfx('step');
   setTimeout(()=>{
+    mjColBusyUntil=performance.now()+430;      // نافذة انزلاق العمود الحقيقي — لا تُعاد كتابته قبل انتهائها
     kids.forEach((k,i)=>{
       const tail=(k===lastEl);
       k.animate([{transform:'translateY(0)',opacity:1},
@@ -2805,8 +2841,9 @@ const SNAP={
   },
   mj:{
     get:()=>({w:mjWall,p:mjPile,d:mjDisc,k:mjDrawn,c:mjCur,o:mjOver,h:mjHum,r:mjRound,g:cfgJ}),
-    set:s=>{ const incoming=mjCaptureIncoming(); Object.assign(cfgJ,s.g); mjLotting=false; mjRound=s.r; mjWall=s.w; mjPile=s.p; mjDisc=s.d;
-      mjDrawn=s.k; mjCur=s.c; mjOver=s.o; mjHum=s.h; mjLock=false; mjRender(); mjReleaseIncoming(incoming); }
+    set:s=>{ Object.assign(cfgJ,s.g); mjLotting=false; mjRound=s.r; mjWall=s.w; mjPile=s.p; mjDisc=s.d;
+      mjDrawn=s.k; mjCur=s.c; mjOver=s.o; mjHum=s.h; mjLock=false;
+      mjRenderGuarded(()=>{ const incoming=mjCaptureIncoming(); mjRender(); mjReleaseIncoming(incoming); }); }
   }
 };
 function netPush(){
@@ -2871,9 +2908,12 @@ function netPlayFx(f){
       LT[f.q][f.j]=-1; ludoPlace(); sfx('cap'); shake(); buzz([30,40,60]);
     }else if(f.type==='mjdraw'){              // بلاطة سُحبت
       if(cur!=='mj') return;
-      const incoming=mjCaptureIncoming();
-      mjDrawn=f.k; mjRender(); mjReleaseIncoming(incoming); sfx('flip'); buzz(10);
-      const lv=$('mjlive'); lv.classList.remove('out'); void lv.offsetWidth; lv.classList.add('out');
+      mjDrawn=f.k; sfx('flip'); buzz(10);
+      mjRenderGuarded(()=>{
+        const incoming=mjCaptureIncoming();
+        mjRender(); mjReleaseIncoming(incoming);
+        const lv=$('mjlive'); lv.classList.remove('out'); void lv.offsetWidth; lv.classList.add('out');
+      });
     }else if(f.type==='memflip'){
       if(cur!=='mem') return;
       const el=document.querySelector(`.mcard[data-idx="${f.i}"]`);
