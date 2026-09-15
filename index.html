@@ -238,8 +238,9 @@ html[dir=ltr] .turnrail.p2 .slider{transform:translateX(calc(100% + 2px))}
 .center{background:var(--ink3)}
 .yardpad{position:absolute;border-radius:22%;background:rgba(248,243,232,.95);z-index:1}
 .yardlink{position:absolute;z-index:2;border:2px dashed;border-radius:50%;opacity:.48}
-.center-home{border-radius:8px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22);
+.center-home{border-radius:0;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22);
   display:grid;place-items:center}
+.tok.finished{transform:scale(.56)}
 .ludo-badge{width:50%;height:50%;border-radius:50%;display:grid;place-items:center;
   background:radial-gradient(circle at 35% 30%,#FFFDF6,#FBF1D9 100%);
   box-shadow:0 2px 6px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.8),0 0 0 1.5px rgba(207,162,74,.5)}
@@ -2001,12 +2002,20 @@ function yardSlot(p,i){
   // مركز اللبنة = yard+3 ، والأحجار على بعد 1.25 خانة منه في الاتجاهات الأربعة
   return [ r+3-0.5+(i>1?1.25:-1.25), c+3-0.5+(i%2?1.25:-1.25) ];
 }
+/* موضع الحجر المكتمل: داخل مثلث لونه في اللبنة المركزية، لا فوق التاج مباشرة */
+function finishedSlot(p,i){
+  const [hr,hc]=PL[p].home[4];
+  const ar=-Math.sign(7-hr), ac=-Math.sign(7-hc);   // وحدة بعيدًا عن المركز نحو جهة هذا اللاعب
+  const tr=ac!==0?1:0, tc=ar!==0?1:0;                // وحدة عمودية على ذلك الاتجاه
+  const rad=0.84+(i>1?0.3:0), tan=(i%2?1:-1)*0.3;
+  return [7+ar*rad+tr*tan, 7+ac*rad+tc*tan];
+}
 function coordOf(p,i){
   const v=LT[p][i];
   if(v<0) return yardSlot(p,i);
   if(v<=50) return TRACK[(PL[p].start+v)%52];
   if(v<=55) return PL[p].home[v-51];
-  return [7,7];
+  return finishedSlot(p,i);
 }
 function ludoBuild(){
   const bd=$('lboard'); bd.innerHTML='';
@@ -2075,6 +2084,7 @@ function ludoPlace(){
   Object.values(groups).forEach(g=>g.forEach((tk,k)=>{
     const off=g.length>1?(k-(g.length-1)/2)*.42:0;
     const el=$(`t${tk.pi}_${tk.i}`); if(!el) return;
+    el.classList.toggle('finished',LT[tk.pi][tk.i]===56);
     el.style.insetInlineStart=(tk.c*U+U/2-TW/2+off*U)+'%';
     el.style.top=(tk.r*U+U/2-TH*PAWN_ANCHOR-off*U*.4)+'%';
     el.style.zIndex=LT[tk.pi][tk.i]>=0?5:3;
