@@ -2220,6 +2220,7 @@ function land(p,i,cap){
       const isYou=cfg.mode==='solo'&&p===ACT[0];
       hint(`<b>${isYou?t('youWon'):t('won')+' '+cname(p)}</b>`);
       winBanner(Math.max(0,ACT.indexOf(p)),t('finished'),[PL[p].c,BONE,BRASS]);
+      setTimeout(()=>{ if(cur==='ludo'&&lOver) ludoStart(); },3200);
       return;
     }
     if(cur==='ludo'&&!lStop) toast(t('homeIn'));
